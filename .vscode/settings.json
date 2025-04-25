@@ -1,0 +1,32 @@
+{
+    "git.enabled": true,
+    "files.exclude": {
+        ".index-build": true,
+        ".git": true,
+        "Package.resolved": true,
+    },
+    "[swift]": {
+        "editor.defaultFormatter": "swiftlang.swift-vscode",
+        "editor.rulers": [ 120 ]
+    },
+    "errorLens.enabledDiagnosticLevels": [
+        "error",
+        "warning"
+    ],
+    "errorLens.gutterIconsEnabled": true,
+    "errorLens.gutterIconSet": "letter",
+    "errorLens.messageTemplate": "$message $source($code)",
+    "errorLens.replace": [
+
+        {
+            "matcher": "Initialization of immutable value '(.*?)' was never used; consider replacing with assignment to '_' or removing it",
+            "message": "'$1' -> '_'"
+        }, {
+            "matcher": "Cannot convert value of type '(.*?)' to expected argument type '(.*?)'",
+            "message": "Require '$2' but got '$1'"
+        }, {
+            "matcher": "'(.*?)' modifier is redundant for (.*?) in a .*? extension",
+            "message": "Remove '$1'"
+        }
+    ],
+}
