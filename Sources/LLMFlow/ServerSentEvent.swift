@@ -7,12 +7,7 @@
 import Foundation
 import RegexBuilder
 import AsyncAlgorithms
-
-#if canImport(NIOConcurrencyHelpers)
-    import NIOConcurrencyHelpers
-#else
-    import os.lock
-#endif
+import WantLazy
 
 public struct ServerSentEvent: Sendable, Codable {
     static let MIME_String: String = "text/event-stream"
@@ -29,11 +24,7 @@ public struct ServerSentEvent: Sendable, Codable {
 /// The Interpreter will process as [specification](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation) descried.
 final class ServerSentEventsInterpreter: Sendable {
 
-#if canImport(NIOConcurrencyHelpers)
-    private let clientLastEventId: NIOLockedValueBox<String?> = .init(nil)
-#else
-    private let clientLastEventId: OSAllocatedUnfairLock<String?> = .init(initialState: nil)
-#endif
+    private let clientLastEventId: LazyLock<String?> = .init(nil)
 
     func process(buffer: Data) -> [ServerSentEvent] {
         // Streams must be decoded using the UTF-8 decode algorithm.
@@ -108,23 +99,14 @@ final class ServerSentEventsInterpreter: Sendable {
             data.removeLast()
         }
 
-#if canImport(NIOConcurrencyHelpers)
-        let id = clientLastEventId.withLockedValue { $0 }
-#else
         let id = clientLastEventId.withLock { $0 }
-#endif
 
         let event = ServerSentEvent(id: id, event: eventType, data: data, retry: nil)
 
-#if canImport(NIOConcurrencyHelpers)
-        clientLastEventId.withLockedValue { id in
-            id = fields["id"] ?? id
+        clientLastEventId.withLock { theID in
+            theID = fields["id"] ?? theID
         }
-#else
-        clientLastEventId.withLock { id in
-            id = fields["id"] ?? id
-        }
-#endif
+        
         return event
     }
 }
