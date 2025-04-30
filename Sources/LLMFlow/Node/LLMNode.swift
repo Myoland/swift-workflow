@@ -120,8 +120,14 @@ extension LLMNode {
         case .Gemini:
             todo("Support Gemini")
         case .Dify(let difyConfiguration):
+            
+            let decoder = LazyDecoder()
+            let keyes = request.compactMapValuesAsString()
+            let values = context.store.asAny.mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let body: DifyBody = try decoder.decode(from: values)
+            
             // TODO: Support dispatch by `llmProvider`
-            let body: DifyBody = try .init(request: request, store: context.store)
+            // let body: DifyBody = try .init(request: request, store: context.store)
             
             let difyClient = DifyClient(httpClient: client, cfg: difyConfiguration)
             let response = try await difyClient.send(body: body)

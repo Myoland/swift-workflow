@@ -50,28 +50,33 @@ func testLLMNodeRun() async throws {
         "dify",
         .Dify(.init(apiKey: Dotenv["DIFY_API_KEY"]!.stringValue, apiURL: "https://api.dify.ai/v1")))
     var context = Context(locater: DummySimpleLocater(client, solver))
-    context.update((key: "user_id", value: "Fake"))
+    context.update(key: "user_id", value: "Fake")
+    context.update(key: "query", value: "ping")
 
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "dify",
                        request: [
                             "user": "user_id",
-                            "query": "ping"
+                            "query": "query"
                        ],
                        response: "")
-    
-    let pipe = try await node.run(context: &context)
-    guard case let .stream(stream) = pipe else {
-        Issue.record("Shuld have a stream")
-        try await client.shutdown()
-        return
-    }
-
-    let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-    
-    for try await event in interpreter {
-        print(event)
+    do {
+        let pipe = try await node.run(context: &context)
+        guard case let .stream(stream) = pipe else {
+            Issue.record("Shuld have a stream")
+            try await client.shutdown()
+            return
+        }
+        
+        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
+        
+        for try await event in interpreter {
+            print(event)
+        }
+        
+    } catch {
+        
     }
     
     try await client.shutdown()

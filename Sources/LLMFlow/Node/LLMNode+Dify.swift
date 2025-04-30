@@ -20,32 +20,37 @@ struct DifyBody: Codable {
     let inputs: [String: String]
     let query: String
     let response_mode: String
-    let conversation_id: String
-    let user: String
-    let files: [String]
+    let conversation_id: String?
+    let user: String?
+    let files: [String]?
 }
 
 extension DifyBody {
-    init(request: [String: FlowData], store: [String: FlowData]) throws {
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        let inputKeys = request["inputs"]?.asAny as? [String]
-        let conversationIdKey = request["conversation_id"]?.stringValue
-        let userIdKey = request["user"]?.stringValue
+        guard let query = try container.decodeIfPresent(String.self, forKey: .query) else {
+            throw DecodingError.valueNotFound(String.self, .init(codingPath: [CodingKeys.query], debugDescription: "Missing Query"))
+        }
         
-        let input = store.extract(inputKeys).compactMapValuesAsString()
+        // TODO: Using Template
+//        let queryTemplate = Template(content: request["query"]?.stringValue ?? "")
+//        let query = try queryTemplate.render(store)
+
+        guard let user = try container.decodeIfPresent(String.self, forKey: .user) else {
+            throw DecodingError.valueNotFound(String.self, .init(codingPath: [CodingKeys.user], debugDescription: "Missing User"))
+        }
         
-        let queryTemplate = Template(content: request["query"]?.stringValue ?? "")
-        let query = try queryTemplate.render(store)
+        let inputs = try container.decodeIfPresent([String: String].self, forKey: .inputs)
+        let conversation_id = try container.decodeIfPresent(String.self, forKey: .conversation_id)
+        let files = try container.decodeIfPresent([String].self, forKey: .files)
         
-        
-        self.init(
-            inputs: input,
-            query: query,
-            response_mode: "streaming",
-            conversation_id: store[conversationIdKey]?.stringValue ?? "",
-            user: store[userIdKey]?.stringValue ?? "",
-            files: []
-        )
+        self.inputs = inputs ?? [:]
+        self.query = query
+        self.response_mode = "streaming"
+        self.conversation_id = conversation_id
+        self.user = user
+        self.files = files
     }
 }
 

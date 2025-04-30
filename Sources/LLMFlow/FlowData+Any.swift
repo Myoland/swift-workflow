@@ -80,3 +80,13 @@ extension Dictionary where Key: Equatable {
         }
     }
 }
+
+extension Dictionary {
+    func mapKeys(keys: [Key: Key]) -> Dictionary<Key, Value> {
+        var reuslt: [Key: Value] = [:]
+        for (to, from) in keys {
+            reuslt[to] = self[from]
+        }
+        return reuslt
+    }
+}

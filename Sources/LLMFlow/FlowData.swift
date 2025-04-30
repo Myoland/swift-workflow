@@ -32,6 +32,10 @@ public struct Context: Sendable {
     mutating func update(_ variable: Variable) {
         store[variable.key] = variable.value
     }
+    
+    mutating func update(key: Key, value: Value) {
+        store[key] = value
+    }
 }
 
 public enum FlowData: Sendable {
