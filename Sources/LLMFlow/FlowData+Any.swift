@@ -23,6 +23,8 @@ extension FlowData {
 extension FlowData.Single {
     public var asAny: Any {
         switch self {
+        case .bool(let value):
+            return value
         case .int(let value):
             return value
         case .string(let value):

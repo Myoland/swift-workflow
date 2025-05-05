@@ -11,6 +11,7 @@ extension FlowData {
 
 extension FlowData.Single {
     public enum TypeDecl: Hashable, Sendable {
+        case bool
         case int
         case string
         case any
@@ -78,6 +79,8 @@ extension FlowData.Single.TypeDecl: LosslessStringConvertible {
 
     public var description: String {
         switch self {
+        case .bool:
+            "Bool"
         case .int:
             "Int"
         case .string:
@@ -131,6 +134,8 @@ extension FlowData {
 extension FlowData.Single {
     var decl: FlowData.Single.TypeDecl {
         switch self {
+        case .bool:
+            .bool
         case .int:
             .int
         case .string:

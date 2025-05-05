@@ -22,6 +22,12 @@ extension FlowData.Map: ExpressibleByDictionaryLiteral {
     }
 }
 
+extension FlowData: ExpressibleByBooleanLiteral {
+    public init(booleanLiteral value: Bool) {
+        self = .single(.bool(value))
+    }
+}
+
 extension FlowData: ExpressibleByIntegerLiteral {
     public init(integerLiteral value: IntegerLiteralType) {
         self = .single(.int(value))

@@ -2,7 +2,9 @@ extension FlowData.Single: Codable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
 
-        if let value = try? container.decode(Int.self) {
+        if let value = try? container.decode(Bool.self) {
+            self = .bool(value)
+        } else if let value = try? container.decode(Int.self) {
             self = .int(value)
         } else if let value = try? container.decode(String.self) {
             self = .string(value)
@@ -18,6 +20,8 @@ extension FlowData.Single: Codable {
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
+        case .bool(let value):
+            try container.encode(value)
         case .int(let value):
             try container.encode(value)
         case .string(let value):
