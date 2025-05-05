@@ -94,14 +94,42 @@ func testLLMNodeOpenAiRun() async throws {
     )
     var context = Context(locater: DummySimpleLocater(client, solver))
     context.update(key: "model", value: "gpt-4o-mini")
-    context.update(key: "input", value: "ping")
+    context.update(key: "stream", value: true)
+    context.update(key: "input", value: [
+        [
+            "role": "system",
+            "content": [
+                [
+                    "type": "input_text",
+                    "text": """
+                        be an echo server.
+                        what I send to you, you send back.
+
+                        the exceptions:
+                        1. send "ping", back "pong"
+                        2. send "ding", back "dang"
+                    """
+                ]
+            ]
+        ],
+        [
+            "role": "user",
+            "content": [
+                [
+                    "type": "input_text",
+                    "text": "ping"
+                ]
+            ]
+        ]
+    ])
 
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "openai",
                        request: [
                            "input": "input",
-                           "model": "model"
+                           "model": "model",
+                           "stream": "stream"
                        ],
                        response: "")
     do {
@@ -115,10 +143,10 @@ func testLLMNodeOpenAiRun() async throws {
         let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
 
         for try await event in interpreter {
-            print(event.event)
+            print(event)
         }
     } catch {
-
+        Issue.record("Unexpected \(error)")
     }
 
     try await client.shutdown()

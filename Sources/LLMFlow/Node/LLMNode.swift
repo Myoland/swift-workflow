@@ -116,7 +116,6 @@ extension LLMNode {
             }
             
             return .stream(.init(stream))
-//            todo("Support OpenAICompatible")
         case .OpenAICompatible:
             todo("Support OpenAICompatible")
         case .AwsBedrock:
