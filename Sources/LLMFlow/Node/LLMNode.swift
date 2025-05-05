@@ -27,7 +27,7 @@ public func unreachable(file: StaticString = #file, line: UInt = #line)
 
 
 enum LLMProvider: Hashable, Codable {
-    case OpenAI
+    case OpenAI(OpenAIConfiguration)
     case OpenAICompatible
     case AwsBedrock
     case Gemini
@@ -89,11 +89,15 @@ extension LLMNode {
         }
         
         switch llmProvider {
-        case .OpenAI:
-            let client = OpenAIClient(httpClient: client)
+        case .OpenAI(let configuration):
+            let client = OpenAIClient(httpClient: client, configuration: configuration)
             
-            let response = try await client.send(body: "ssss")
-            
+            let decoder = LazyDecoder()
+            let keyes = request.compactMapValuesAsString()
+            let values = context.store.asAny.mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let request: ModelReponseRequest = try decoder.decode(from: values)
+            let response = try await client.send(request: request)
+
             let stream = response.body.map { buffer in
                 Foundation.Data.init(buffer: buffer)
             }
@@ -112,7 +116,7 @@ extension LLMNode {
             }
             
             return .stream(.init(stream))
-            
+//            todo("Support OpenAICompatible")
         case .OpenAICompatible:
             todo("Support OpenAICompatible")
         case .AwsBedrock:
@@ -126,8 +130,8 @@ extension LLMNode {
             let values = context.store.asAny.mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
             let body: DifyBody = try decoder.decode(from: values)
             
-            // TODO: Support dispatch by `llmProvider`
-            // let body: DifyBody = try .init(request: request, store: context.store)
+//             TODO: Support dispatch by `llmProvider`
+//             let body: DifyBody = try .init(request: request, store: context.store)
             
             let difyClient = DifyClient(httpClient: client, cfg: difyConfiguration)
             let response = try await difyClient.send(body: body)

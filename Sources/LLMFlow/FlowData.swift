@@ -29,11 +29,11 @@ public struct Context: Sendable {
         self.locator = locater
     }
 
-    mutating func update(_ variable: Variable) {
+    public mutating func update(_ variable: Variable) {
         store[variable.key] = variable.value
     }
-    
-    mutating func update(key: Key, value: Value) {
+
+    public mutating func update(key: Key, value: Value) {
         store[key] = value
     }
 }

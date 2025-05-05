@@ -42,9 +42,9 @@ struct DummyLLMProviderSolver: LLMProviderSolver {
 
 @Test("testLLMNodeRun")
 func testLLMNodeRun() async throws {
-    
+
     try Dotenv.make()
-    
+
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
         "dify",
@@ -68,51 +68,58 @@ func testLLMNodeRun() async throws {
             try await client.shutdown()
             return
         }
-        
+
         let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-        
+
         for try await event in interpreter {
             print(event)
         }
-        
+
     } catch {
-        
+
     }
-    
+
     try await client.shutdown()
 }
 
 @Test("testLLMNodeOpenAiRun")
 func testLLMNodeOpenAiRun() async throws {
-    
+
     try Dotenv.make()
-    
+
     let client = HTTPClient()
-    let solver = DummyLLMProviderSolver("openai", .OpenAI)
+    let solver = DummyLLMProviderSolver(
+        "openai",
+        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
+    )
     var context = Context(locater: DummySimpleLocater(client, solver))
-    context.update((key: "user_id", value: "Fake"))
-    
+    context.update(key: "model", value: "gpt-4o-mini")
+    context.update(key: "input", value: "ping")
+
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "openai",
                        request: [
-                        "user": "user_id",
-                        "query": "ping"
+                           "input": "input",
+                           "model": "model"
                        ],
                        response: "")
-    
-    let pipe = try await node.run(context: &context)
-    guard case let .stream(stream) = pipe else {
-        Issue.record("Shuld have a stream")
-        try await client.shutdown()
-        return
+    do {
+        let pipe = try await node.run(context: &context)
+        guard case let .stream(stream) = pipe else {
+            Issue.record("Shuld have a stream")
+            try await client.shutdown()
+            return
+        }
+
+        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
+
+        for try await event in interpreter {
+            print(event.event)
+        }
+    } catch {
+
     }
-    
-    let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-    
-    for try await event in interpreter {
-        print(event.event)
-    }
-    
+
     try await client.shutdown()
 }

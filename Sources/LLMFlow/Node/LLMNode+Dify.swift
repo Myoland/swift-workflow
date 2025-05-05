@@ -32,10 +32,6 @@ extension DifyBody {
         guard let query = try container.decodeIfPresent(String.self, forKey: .query) else {
             throw DecodingError.valueNotFound(String.self, .init(codingPath: [CodingKeys.query], debugDescription: "Missing Query"))
         }
-        
-        // TODO: Using Template
-//        let queryTemplate = Template(content: request["query"]?.stringValue ?? "")
-//        let query = try queryTemplate.render(store)
 
         guard let user = try container.decodeIfPresent(String.self, forKey: .user) else {
             throw DecodingError.valueNotFound(String.self, .init(codingPath: [CodingKeys.user], debugDescription: "Missing User"))
