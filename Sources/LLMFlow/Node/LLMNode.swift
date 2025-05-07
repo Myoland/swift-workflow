@@ -95,7 +95,7 @@ extension LLMNode {
             let decoder = LazyDecoder()
             let keyes = request.compactMapValuesAsString()
             let values = context.store.asAny.mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
-            let request: ModelReponseRequest = try decoder.decode(from: values)
+            let request: OpenAIModelReponseRequest = try decoder.decode(from: values)
             let response = try await client.send(request: request)
 
             let stream = response.body.map { buffer in

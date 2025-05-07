@@ -24,7 +24,7 @@ struct OpenAIClient {
         self.configuration = configuration
     }
 
-    func send(request: ModelReponseRequest) async throws -> HttpClientAbstract.Response {
+    func send(request: OpenAIModelReponseRequest) async throws -> HttpClientAbstract.Response {
 
         let headers: HTTPHeaders = [
             "Content-Type": "application/json",
