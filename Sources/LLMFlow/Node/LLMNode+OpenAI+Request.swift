@@ -99,6 +99,10 @@ public enum OpenAIModelReponseRequestInputItemMessageContentItem: Codable {
     case image(OpenAIModelReponseRequestInputItemMessageContentItemImageInput)
     case file(OpenAIModelReponseRequestInputItemMessageContentItemFileInput)
     
+    public enum CodingKeys: String, CodingKey {
+        case type
+    }
+    
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
@@ -112,31 +116,17 @@ public enum OpenAIModelReponseRequestInputItemMessageContentItem: Codable {
     }
     
     public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // Try to decode as each possible type and check which one succeeds
-        if let textInput = try? container.decode(OpenAIModelReponseRequestInputItemMessageContentItemTextInput.self) {
-            if textInput.type == .text {
-                self = .text(textInput)
-                return
-            }
+        let type = try container.decode(OpenAIModelReponseRequestInputItemMessageContentType.self, forKey: .type)
+        switch type {
+        case .text:
+            self = try .text(.init(from: decoder))
+        case .image:
+            self = try .image(.init(from: decoder))
+        case .file:
+            self = try .file(.init(from: decoder))
         }
-        
-        if let imageInput = try? container.decode(OpenAIModelReponseRequestInputItemMessageContentItemImageInput.self) {
-            if imageInput.type == .image {
-                self = .image(imageInput)
-                return
-            }
-        }
-        
-        if let fileInput = try? container.decode(OpenAIModelReponseRequestInputItemMessageContentItemFileInput.self) {
-            if fileInput.type == .file {
-                self = .file(fileInput)
-                return
-            }
-        }
-        
-        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode ModelReponseRequestInputItemMessageContentItem")
     }
 }
 
@@ -157,13 +147,11 @@ public enum OpenAIModelReponseRequestInputItemMessageContent: Codable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         
-        // First try to decode as a simple string
         if let stringValue = try? container.decode(String.self) {
             self = .text(stringValue)
             return
         }
         
-        // Then try to decode as an array of content items
         if let itemArray = try? container.decode([OpenAIModelReponseRequestInputItemMessageContentItem].self) {
             self = .inputs(itemArray)
             return
@@ -279,6 +267,10 @@ public enum OpenAIModelReponseContextOutputContentTextOutputAnnotation: Codable 
     case url(OpenAIModelReponseContextOutputContentTextOutputAnnotationURLCitation)
     case filePath(OpenAIModelReponseContextOutputContentTextOutputAnnotationFilePath)
     
+    public enum CodingKeys: String, CodingKey {
+        case type
+    }
+    
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
@@ -292,30 +284,17 @@ public enum OpenAIModelReponseContextOutputContentTextOutputAnnotation: Codable 
     }
     
     public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        if let fileCitation = try? container.decode(OpenAIModelReponseContextOutputContentTextOutputAnnotationFileCitation.self) {
-            if fileCitation.type == .file_citation {
-                self = .fileCitation(fileCitation)
-                return
-            }
+        let type = try container.decode(OpenAIModelReponseContextOutputContentTextOutputAnnotationType.self, forKey: .type)
+        switch type {
+        case .file_citation:
+            self = try .fileCitation(.init(from: decoder))
+        case .url_citation:
+            self = try .url(.init(from: decoder))
+        case .file_path:
+            self = try .filePath(.init(from: decoder))
         }
-        
-        if let urlCitation = try? container.decode(OpenAIModelReponseContextOutputContentTextOutputAnnotationURLCitation.self) {
-            if urlCitation.type == .url_citation {
-                self = .url(urlCitation)
-                return
-            }
-        }
-        
-        if let filePath = try? container.decode(OpenAIModelReponseContextOutputContentTextOutputAnnotationFilePath.self) {
-            if filePath.type == .file_path {
-                self = .filePath(filePath)
-                return
-            }
-        }
-        
-        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode ModelReponseRequestInputItemContextOutputContentTextOutputAnnotation")
     }
 }
 
@@ -323,7 +302,7 @@ public enum OpenAIModelReponseContextOutputContentTextOutputAnnotation: Codable 
 public struct OpenAIModelReponseContextOutputContentTextOutput: Codable {
     let annotations: [OpenAIModelReponseContextOutputContentTextOutputAnnotation]
     let text: String
-    let type: String = "output_text"
+    let type: OpenAIModelReponseContextOutputContentType = .output_text
     
     public enum CodingKeys: String, CodingKey {
         case annotations
@@ -335,7 +314,7 @@ public struct OpenAIModelReponseContextOutputContentTextOutput: Codable {
 // The refusal explanationfrom the model.
 public struct OpenAIModelReponseContextOutputContentRefusal: Codable {
     let refusal: String
-    let type: String = "refusal"
+    let type: OpenAIModelReponseContextOutputContentType = .refusal
     
     public enum CodingKeys: String, CodingKey {
         case refusal
@@ -343,9 +322,18 @@ public struct OpenAIModelReponseContextOutputContentRefusal: Codable {
     }
 }
 
+public enum OpenAIModelReponseContextOutputContentType: String, Codable {
+    case output_text
+    case refusal
+}
+
 public enum OpenAIModelReponseContextOutputContent: Codable {
     case text(OpenAIModelReponseContextOutputContentTextOutput)
     case refusal(OpenAIModelReponseContextOutputContentRefusal)
+    
+    public enum CodingKeys: String, CodingKey {
+        case type
+    }
     
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
@@ -358,23 +346,15 @@ public enum OpenAIModelReponseContextOutputContent: Codable {
     }
     
     public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        if let textOutput = try? container.decode(OpenAIModelReponseContextOutputContentTextOutput.self) {
-            if textOutput.type == "output_text" {
-                self = .text(textOutput)
-                return
-            }
+        let type = try container.decode(OpenAIModelReponseContextOutputContentType.self, forKey: .type)
+        switch type {
+        case .output_text:
+            self = try .text(.init(from: decoder))
+        case .refusal:
+            self = try  .refusal(.init(from: decoder))
         }
-        
-        if let refusal = try? container.decode(OpenAIModelReponseContextOutputContentRefusal.self) {
-            if refusal.type == "refusal" {
-                self = .refusal(refusal)
-                return
-            }
-        }
-        
-        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode ModelReponseRequestInputItemContextOutputContent")
     }
 }
 
@@ -385,13 +365,13 @@ public struct OpenAIModelReponseContextOutput: Codable {
     let id: String
     let content: OpenAIModelReponseContextOutputContent
     let role: String
-    let type: String
+    let type: OpenAIModelReponseContextType
     
     init(id: String, content: OpenAIModelReponseContextOutputContent) {
         self.id = id
         self.content = content
         self.role = "assistant"
-        self.type = "message"
+        self.type = .message
     }
 }
 
@@ -402,7 +382,7 @@ public struct OpenAIModelReponseContextInput: Codable {
     let content: [OpenAIModelReponseRequestInputItemMessageContentItem]
     let role: OpenAIModelReponseContextInputRole
     let status: OpenAIModelReponseContextInputStatus?
-    let type: String
+    let type: OpenAIModelReponseContextType
     
     init(content: [OpenAIModelReponseRequestInputItemMessageContentItem],
          role: OpenAIModelReponseContextInputRole,
@@ -411,7 +391,7 @@ public struct OpenAIModelReponseContextInput: Codable {
         self.content = content
         self.role = role
         self.status = status
-        self.type = "message"
+        self.type = .message
     }
 }
 
@@ -451,7 +431,7 @@ public struct OpenAIModelReponseContextFileSearchToolCall: Codable {
     let id: String
     let queries: [OpenAIModelReponseContextFileSearchToolCallResultQuery]
     let status: OpenAIModelReponseContextWebSearchToolCallStatus
-    let type: String = "file_search_call"
+    let type: OpenAIModelReponseContextType = .file_search_call
     let results: [OpenAIModelReponseContextFileSearchToolCallResult]?
     
     public enum CodingKeys: String, CodingKey {
@@ -473,7 +453,7 @@ public enum ModelReponseRequestInputItemContextComputerToolCallActionClickButton
 
 public struct OpenAIModelReponseContextComputerToolCallActionActionClick: Codable {
     let button: ModelReponseRequestInputItemContextComputerToolCallActionClickButton
-    let type: String = "click"
+    let type: OpenAIModelReponseContextComputerToolCallActionType = .click
     let x: Int
     let y: Int
     
@@ -486,7 +466,7 @@ public struct OpenAIModelReponseContextComputerToolCallActionActionClick: Codabl
 }
 
 public struct OpenAIModelReponseContextComputerToolCallActionDoubleClick: Codable {
-    let type: String = "double_click"
+    let type: OpenAIModelReponseContextComputerToolCallActionType = .double_click
     let x: Int
     let y: Int
     
@@ -515,7 +495,7 @@ public struct OpenAIModelReponseContextComputerToolCallActionDrag: Codable {
 
 /// A collection of keypresses the model would like to perform.
 public struct OpenAIModelReponseContextComputerToolCallActionKeyPress: Codable {
-    let type: String = "keypress"
+    let type: OpenAIModelReponseContextComputerToolCallActionType = .keypress
     /// The combination of keys the model is requesting to be pressed. This is an array of strings, each representing a key.
     let keys: [String]
     
@@ -527,7 +507,7 @@ public struct OpenAIModelReponseContextComputerToolCallActionKeyPress: Codable {
 
 /// A mouse move action.
 public struct OpenAIModelReponseContextComputerToolCallActionMove: Codable {
-    let type: String = "move"
+    let type: OpenAIModelReponseContextComputerToolCallActionType = .move
     /// The x-coordinate to move to.
     let x: Int
     /// The y-coordinate to move to.
@@ -542,7 +522,7 @@ public struct OpenAIModelReponseContextComputerToolCallActionMove: Codable {
 
 /// A screenshot action.
 public struct OpenAIModelReponseContextComputerToolCallActionScreenshot: Codable {
-    let type: String = "screenshot"
+    let type: OpenAIModelReponseContextComputerToolCallActionType = .screenshot
     
     public enum CodingKeys: String, CodingKey {
         case type
@@ -551,7 +531,7 @@ public struct OpenAIModelReponseContextComputerToolCallActionScreenshot: Codable
 
 /// A scroll action.
 public struct OpenAIModelReponseContextComputerToolCallActionScroll: Codable {
-    let type: String = "scroll"
+    let type: OpenAIModelReponseContextComputerToolCallActionType = .scroll
     /// The horizontal scroll distance.
     let scrollX: Int
     /// The vertical scroll distance.
@@ -571,9 +551,9 @@ public struct OpenAIModelReponseContextComputerToolCallActionScroll: Codable {
 }
 
 /// An action to type in text.
-public struct OpenAIModelReponseContextComputerToolCallActionType: Codable {
+public struct OpenAIModelReponseContextComputerToolCallActionTypeText: Codable {
     let text: String
-    let type: String = "type"
+    let type: OpenAIModelReponseContextComputerToolCallActionType = .type
     
     public enum CodingKeys: String, CodingKey {
         case text
@@ -583,11 +563,23 @@ public struct OpenAIModelReponseContextComputerToolCallActionType: Codable {
 
 /// A wait action.
 public struct OpenAIModelReponseContextComputerToolCallActionWait: Codable {
-    let type: String = "wait"
+    let type: OpenAIModelReponseContextComputerToolCallActionType = .wait
     
     public enum CodingKeys: String, CodingKey {
         case type
     }
+}
+
+public enum OpenAIModelReponseContextComputerToolCallActionType: String, Codable {
+    case click
+    case double_click
+    case drag
+    case keypress
+    case move
+    case screenshot
+    case scroll
+    case type
+    case wait
 }
 
 public enum OpenAIModelReponseContextComputerToolCallAction: Codable {
@@ -598,8 +590,12 @@ public enum OpenAIModelReponseContextComputerToolCallAction: Codable {
     case move(OpenAIModelReponseContextComputerToolCallActionMove)
     case screenshot(OpenAIModelReponseContextComputerToolCallActionScreenshot)
     case scroll(OpenAIModelReponseContextComputerToolCallActionScroll)
-    case type(OpenAIModelReponseContextComputerToolCallActionType)
+    case type(OpenAIModelReponseContextComputerToolCallActionTypeText)
     case wait(OpenAIModelReponseContextComputerToolCallActionWait)
+    
+    public enum CodingKeys: String, CodingKey {
+        case type
+    }
     
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
@@ -627,73 +623,29 @@ public enum OpenAIModelReponseContextComputerToolCallAction: Codable {
     }
     
     public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // Try to decode each type based on the "type" field
-        if let click = try? container.decode(OpenAIModelReponseContextComputerToolCallActionActionClick.self) {
-            if click.type == "click" {
-                self = .click(click)
-                return
-            }
+        let type = try container.decode(OpenAIModelReponseContextComputerToolCallActionType.self, forKey: .type)
+        switch type {
+        case .click:
+            self = try .click(.init(from: decoder))
+        case .double_click:
+            self = try .doubleClick(.init(from: decoder))
+        case .drag:
+            self = try .drag(.init(from: decoder))
+        case .keypress:
+            self = try .keyPress(.init(from: decoder))
+        case .move:
+            self = try .move(.init(from: decoder))
+        case .screenshot:
+            self = try .screenshot(.init(from: decoder))
+        case .scroll:
+            self = try .scroll(.init(from: decoder))
+        case .type:
+            self = try .type(.init(from: decoder))
+        case .wait:
+            self = try .wait(.init(from: decoder))
         }
-        
-        if let doubleClick = try? container.decode(OpenAIModelReponseContextComputerToolCallActionDoubleClick.self) {
-            if doubleClick.type == "double_click" {
-                self = .doubleClick(doubleClick)
-                return
-            }
-        }
-        
-        if let drag = try? container.decode(OpenAIModelReponseContextComputerToolCallActionDrag.self) {
-            if drag.type == "drag" {
-                self = .drag(drag)
-                return
-            }
-        }
-        
-        if let keyPress = try? container.decode(OpenAIModelReponseContextComputerToolCallActionKeyPress.self) {
-            if keyPress.type == "keypress" {
-                self = .keyPress(keyPress)
-                return
-            }
-        }
-        
-        if let move = try? container.decode(OpenAIModelReponseContextComputerToolCallActionMove.self) {
-            if move.type == "move" {
-                self = .move(move)
-                return
-            }
-        }
-        
-        if let screenshot = try? container.decode(OpenAIModelReponseContextComputerToolCallActionScreenshot.self) {
-            if screenshot.type == "screenshot" {
-                self = .screenshot(screenshot)
-                return
-            }
-        }
-        
-        if let scroll = try? container.decode(OpenAIModelReponseContextComputerToolCallActionScroll.self) {
-            if scroll.type == "scroll" {
-                self = .scroll(scroll)
-                return
-            }
-        }
-        
-        if let type = try? container.decode(OpenAIModelReponseContextComputerToolCallActionType.self) {
-            if type.type == "type" {
-                self = .type(type)
-                return
-            }
-        }
-        
-        if let wait = try? container.decode(OpenAIModelReponseContextComputerToolCallActionWait.self) {
-            if wait.type == "wait" {
-                self = .wait(wait)
-                return
-            }
-        }
-        
-        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode ModelReponseRequestInputItemContextComputerToolCallAction")
     }
 }
 
@@ -722,7 +674,7 @@ public struct OpenAIModelReponseContextComputerToolCallRequest: Codable {
     let id: String
     let pendingSafetyChecks: [ModelReponseRequestInputItemContextComputerToolCallSafetyCheck]
     let status: ModelReponseRequestInputItemContextComputerToolCallStatus
-    let type: String = "computer_call"
+    let type: OpenAIModelReponseContextType = .computer_call
     
     public enum CodingKeys: String, CodingKey {
         case action
@@ -756,7 +708,7 @@ public struct ModelReponseRequestInputItemContextComputerToolCallOutputObject: C
 
 /// The output of a computer tool call.
 public struct OpenAIModelReponseContextComputerToolCallReponse: Codable {
-    let type: String = "computer_call_output"
+    let type: OpenAIModelReponseContextType = .computer_call_output
     /// The ID of the computer tool call that produced the output.
     let callId: String
     /// The ID of the computer tool call output.
@@ -782,7 +734,7 @@ public struct OpenAIModelReponseContextComputerToolCallReponse: Codable {
 public struct OpenAIModelReponseContextWebSearchToolCall: Codable {
     let id: String
     let status: OpenAIModelReponseContextWebSearchToolCallStatus
-    let type: String = "web_search_call"
+    let type: OpenAIModelReponseContextType = .web_search_call
     
     public enum CodingKeys: String, CodingKey {
         case id
@@ -809,7 +761,7 @@ public struct OpenAIModelReponseContextFuncToolCall: Codable {
     /// The name of the function to run.
     let name: String
     
-    let type: String = "function_call"
+    let type: OpenAIModelReponseContextType = .function_call
     
     /// The unique ID of the function tool call.
     let id: String?
@@ -840,7 +792,7 @@ public struct OpenAIModelReponseContextFuncToolCallOutput: Codable {
     /// A JSON string of the output of the function tool call.
     let output: String
     
-    let type: String = "function_call_output"
+    let type: OpenAIModelReponseContextType = .function_call_output
     
     /// The unique ID of the function tool call output. Populated when this item is returned via API.
     let id: String?
@@ -878,7 +830,7 @@ public struct OpenAIModelReponseContextReasoningSummaryTextContent: Codable {
 public struct OpenAIModelReponseContextReasoning: Codable {
     let id: String
     let summary: [OpenAIModelReponseContextReasoningSummaryTextContent]
-    let type: String = "reasoning"
+    let type: OpenAIModelReponseContextType = .reasoning
     /// The status of the item. Populated when items are returned via API.
     let status: OpenAIModelReponseContextReasoningStatus?
     
@@ -888,6 +840,17 @@ public struct OpenAIModelReponseContextReasoning: Codable {
         case type
         case status
     }
+}
+
+public enum OpenAIModelReponseContextType: String, Codable {
+    case message
+    case file_search_call
+    case computer_call
+    case computer_call_output
+    case web_search_call
+    case function_call
+    case function_call_output
+    case reasoning
 }
 
 /// An item representing part of the context for the response to be generated by the model.
@@ -902,6 +865,10 @@ public enum OpenAIModelReponseContext: Codable {
     case funcToolCall(OpenAIModelReponseContextFuncToolCall)
     case funcToolCallResponse(OpenAIModelReponseContextFuncToolCallOutput)
     case reasoning(OpenAIModelReponseContextReasoning)
+    
+    public enum CodingKeys: String, CodingKey {
+        case type
+    }
     
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
@@ -929,73 +896,33 @@ public enum OpenAIModelReponseContext: Codable {
     }
     
     public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // Try decoding each possible type and check based on specific type fields
-        if let input = try? container.decode(OpenAIModelReponseContextInput.self) {
-            if input.type == "message" {
+        let type = try container.decode(OpenAIModelReponseContextType.self, forKey: .type)
+        switch type {
+        case .message:
+            if let input = try? OpenAIModelReponseContextInput(from: decoder) {
                 self = .input(input)
-                return
+            } else if let input = try? OpenAIModelReponseContextOutput(from: decoder) {
+                self = .output(input)
+            } else {
+                throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Cannot decode OpenAIModelReponseContext"))
             }
+        case .file_search_call:
+            self = try .fileSearchToolCall(.init(from: decoder))
+        case .computer_call:
+            self = try .computerToolCallRequest(.init(from: decoder))
+        case .computer_call_output:
+            self = try .computerToolResponse(.init(from: decoder))
+        case .web_search_call:
+            self = try .webSearchToolCall(.init(from: decoder))
+        case .function_call:
+            self = try .funcToolCall(.init(from: decoder))
+        case .function_call_output:
+            self = try .funcToolCallResponse(.init(from: decoder))
+        case .reasoning:
+            self = try .reasoning(.init(from: decoder))
         }
-        
-        if let output = try? container.decode(OpenAIModelReponseContextOutput.self) {
-            if output.type == "message" {
-                self = .output(output)
-                return
-            }
-        }
-        
-        if let fileSearchToolCall = try? container.decode(OpenAIModelReponseContextFileSearchToolCall.self) {
-            if fileSearchToolCall.type == "file_search_call" {
-                self = .fileSearchToolCall(fileSearchToolCall)
-                return
-            }
-        }
-        
-        if let computerToolCallRequest = try? container.decode(OpenAIModelReponseContextComputerToolCallRequest.self) {
-            if computerToolCallRequest.type == "computer_call" {
-                self = .computerToolCallRequest(computerToolCallRequest)
-                return
-            }
-        }
-        
-        if let computerToolResponse = try? container.decode(OpenAIModelReponseContextComputerToolCallReponse.self) {
-            if computerToolResponse.type == "computer_call_output" {
-                self = .computerToolResponse(computerToolResponse)
-                return
-            }
-        }
-        
-        if let webSearchToolCall = try? container.decode(OpenAIModelReponseContextWebSearchToolCall.self) {
-            if webSearchToolCall.type == "web_search_call" {
-                self = .webSearchToolCall(webSearchToolCall)
-                return
-            }
-        }
-        
-        if let funcToolCall = try? container.decode(OpenAIModelReponseContextFuncToolCall.self) {
-            if funcToolCall.type == "function_call" {
-                self = .funcToolCall(funcToolCall)
-                return
-            }
-        }
-        
-        if let funcToolCallResponse = try? container.decode(OpenAIModelReponseContextFuncToolCallOutput.self) {
-            if funcToolCallResponse.type == "function_call_output" {
-                self = .funcToolCallResponse(funcToolCallResponse)
-                return
-            }
-        }
-        
-        if let reasoning = try? container.decode(OpenAIModelReponseContextReasoning.self) {
-            if reasoning.type == "reasoning" {
-                self = .reasoning(reasoning)
-                return
-            }
-        }
-        
-        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode ModelReponseRequestInputItemContext")
     }
 }
 
@@ -1521,11 +1448,23 @@ public struct OpenAIModelReponseRequestToolWebSearch: Codable {
     }
 }
 
+public enum OpenAIModelReponseRequestToolType: String, Codable {
+    case file_search
+    case function
+    case computer_use_preview
+    case web_search_preview
+    case web_search_preview_2025_03_11
+}
+
 public enum OpenAIModelReponseRequestTool: Codable {
     case fileSearch(OpenAIModelReponseRequestToolFileSearch)
     case function(OpenAIModelReponseRequestToolFunction)
     case computerUse(OpenAIModelReponseRequestToolComputerUse)
     case webSearch(OpenAIModelReponseRequestToolWebSearch)
+    
+    public enum CodingKeys: String, CodingKey {
+        case type
+    }
     
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
@@ -1542,36 +1481,21 @@ public enum OpenAIModelReponseRequestTool: Codable {
     }
     
     public init(from decoder: any Decoder) throws {
-        let container = try decoder.singleValueContainer()
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // Try to decode each possible tool type
-        if let fileSearch = try? container.decode(OpenAIModelReponseRequestToolFileSearch.self) {
-            if fileSearch.type == "file_search" {
-                self = .fileSearch(fileSearch)
-                return
-            }
+        let type = try container.decode(OpenAIModelReponseRequestToolType.self, forKey: .type)
+        switch type {
+        case .file_search:
+            self = try .fileSearch(.init(from: decoder))
+        case .function:
+            self = try .function(.init(from: decoder))
+        case .computer_use_preview:
+            self = try .computerUse(.init(from: decoder))
+        case .web_search_preview:
+            self = try .webSearch(.init(from: decoder))
+        case .web_search_preview_2025_03_11:
+            self = try .webSearch(.init(from: decoder))
         }
-        
-        if let function = try? container.decode(OpenAIModelReponseRequestToolFunction.self) {
-            if function.type == "function" {
-                self = .function(function)
-                return
-            }
-        }
-        
-        if let computerUse = try? container.decode(OpenAIModelReponseRequestToolComputerUse.self) {
-            if computerUse.type == "computer_use_preview" {
-                self = .computerUse(computerUse)
-                return
-            }
-        }
-        
-        if let webSearch = try? container.decode(OpenAIModelReponseRequestToolWebSearch.self) {
-            self = .webSearch(webSearch)
-            return
-        }
-        
-        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode ModelReponseRequestTool")
     }
 }
 
