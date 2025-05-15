@@ -29,7 +29,8 @@ final class ServerSentEventsInterpreter: Sendable {
     func process(buffer: Data) -> [ServerSentEvent] {
         // Streams must be decoded using the UTF-8 decode algorithm.
         let raw = String(data: buffer, encoding: ServerSentEvent.encoding)
-
+        print("[*] \(raw)")
+        
         guard let raw, !raw.isEmpty else {
             return []
         }

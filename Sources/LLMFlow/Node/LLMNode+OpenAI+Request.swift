@@ -180,24 +180,6 @@ public struct OpenAIModelReponseRequestInputItemMessage: Codable {
     public let role: OpenAIModelReponseRequestInputItemMessageRole
     
     public let type: ModelReponseRequestInputItemType?
-    
-    init(content: OpenAIModelReponseRequestInputItemMessageContent, role: OpenAIModelReponseRequestInputItemMessageRole) {
-        self.content = content
-        self.role = role
-        self.type = .message
-    }
-    
-    public init(from decoder: any Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        let type = try container.decodeIfPresent(ModelReponseRequestInputItemType.self, forKey: .type)
-        let role = try container.decode(OpenAIModelReponseRequestInputItemMessageRole.self, forKey: .role)
-        let content = try container.decode(OpenAIModelReponseRequestInputItemMessageContent.self, forKey: .content)
-        
-        self.role = role
-        self.content = content
-        self.type = type
-    }
 }
 
 /// Populated when items are returned via API.
@@ -363,11 +345,11 @@ public struct OpenAIModelReponseContextOutput: Codable {
     
     /// The unique ID of the output message.
     let id: String
-    let content: OpenAIModelReponseContextOutputContent
+    let content: [OpenAIModelReponseContextOutputContent]
     let role: String
     let type: OpenAIModelReponseContextType
     
-    init(id: String, content: OpenAIModelReponseContextOutputContent) {
+    init(id: String, content: [OpenAIModelReponseContextOutputContent]) {
         self.id = id
         self.content = content
         self.role = "assistant"
@@ -903,8 +885,8 @@ public enum OpenAIModelReponseContext: Codable {
         case .message:
             if let input = try? OpenAIModelReponseContextInput(from: decoder) {
                 self = .input(input)
-            } else if let input = try? OpenAIModelReponseContextOutput(from: decoder) {
-                self = .output(input)
+            } else if let output = try? OpenAIModelReponseContextOutput(from: decoder) {
+                self = .output(output)
             } else {
                 throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Cannot decode OpenAIModelReponseContext"))
             }
@@ -1063,7 +1045,7 @@ public struct OpenAIModelReponseRequestResoning: Codable {
 }
 
 public struct ModelReponseRequestTextConfigurationFormatText: Codable {
-    let type: String = "text"
+    let type: ModelReponseRequestTextConfigurationFormatType = .text
     
     public enum CodingKeys: String, CodingKey {
         case type
@@ -1073,7 +1055,7 @@ public struct ModelReponseRequestTextConfigurationFormatText: Codable {
 /// JSON Schema response format. Used to generate structured JSON responses.
 /// Learn more about [Structured Outputs](https://platform.openai.com/docs/guides/structured-outputs).
 public struct ModelReponseRequestTextConfigurationFormatJsonSchema: Codable {
-    let type: String = "json_schema"
+    let type: ModelReponseRequestTextConfigurationFormatType = .jsonSchema
     /// The name of the response format.
     /// Must be a-z, A-Z, 0-9, or contain underscores and dashes, with a maximum length of 64.
     let name: String
@@ -1105,17 +1087,54 @@ public struct ModelReponseRequestTextConfigurationFormatJsonSchema: Codable {
 /// Using `json_schema` is recommended for models that support it.
 /// Note that the model will not generate JSON without a system or user message instructing it to do so.
 public struct ModelReponseRequestTextConfigurationFormatJson: Codable {
-    let type: String = "json_object"
+    let type: ModelReponseRequestTextConfigurationFormatType = .json
     
     public enum CodingKeys: String, CodingKey {
         case type
     }
 }
 
+public enum ModelReponseRequestTextConfigurationFormatType: String, Codable {
+    case text = "text"
+    case jsonSchema = "json_schema"
+    case json = "json_object"
+}
+
 public enum ModelReponseRequestTextConfigurationFormat: Codable {
     case text(ModelReponseRequestTextConfigurationFormatText)
     case jsonSchema(ModelReponseRequestTextConfigurationFormatJsonSchema)
     case json(ModelReponseRequestTextConfigurationFormatJson)
+    
+    public enum CodingKeys: String, CodingKey {
+        case type
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        
+        switch self {
+        case .text(let text):
+            try container.encode(text)
+        case .jsonSchema(let jsonSchema):
+            try container.encode(jsonSchema)
+        case .json(let json):
+            try container.encode(json)
+        }
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        let type = try container.decode(ModelReponseRequestTextConfigurationFormatType.self, forKey: .type)
+        switch type {
+        case .text:
+            self = try .text(ModelReponseRequestTextConfigurationFormatText(from: decoder))
+        case .jsonSchema:
+            self = try .jsonSchema(ModelReponseRequestTextConfigurationFormatJsonSchema(from: decoder))
+        case .json:
+            self = try .json(ModelReponseRequestTextConfigurationFormatJson(from: decoder))
+        }
+    }
 }
 
 public struct openAIModelReponseRequestTextConfiguration: Codable {
@@ -1593,7 +1612,7 @@ public struct OpenAIModelReponseRequest: Codable {
     ///   - Function calls (custom tools): Functions that are defined by you,
     ///     enabling the model to call your own code.
     ///     Learn more about [function calling](https://platform.openai.com/docs/guides/function-calling).
-    let tools: OpenAIModelReponseRequestTool?
+    let tools: [OpenAIModelReponseRequestTool]?
     
     /// An alternative to sampling with temperature, called nucleus sampling,
     /// where the model considers the results of the tokens with `top_p` probability mass.

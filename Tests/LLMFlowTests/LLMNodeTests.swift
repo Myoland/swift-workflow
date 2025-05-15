@@ -139,11 +139,20 @@ func testLLMNodeOpenAiRun() async throws {
             try await client.shutdown()
             return
         }
+        
+        let decoder = JSONDecoder()
+//        decoder.dateDecodingStrategy = .secondsSince1970
 
         let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
 
         for try await event in interpreter {
-            print(event)
+            print("[*]", event)
+            if let data = event.data.data(using: .utf8) {
+                let reponse = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
+                print(reponse)
+            }
+            
+            
         }
     } catch {
         Issue.record("Unexpected \(error)")
