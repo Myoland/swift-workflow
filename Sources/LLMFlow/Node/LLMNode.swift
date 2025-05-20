@@ -28,7 +28,7 @@ public func unreachable(file: StaticString = #file, line: UInt = #line)
 
 enum LLMProvider: Hashable, Codable {
     case OpenAI(OpenAIConfiguration)
-    case OpenAICompatible
+    case OpenAICompatible(OpenAICompatibleConfiguration)
     case AwsBedrock
     case Gemini
     case Dify(DifyConfiguration)
@@ -97,10 +97,6 @@ extension LLMNode {
             let values = context.store.asAny.mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
             let request: OpenAIModelReponseRequest = try decoder.decode(from: values)
             let response = try await client.send(request: request)
-
-            let stream = response.body.map { buffer in
-                Foundation.Data.init(buffer: buffer)
-            }
             
             let contentLength: Int = if let header = response.headers[HTTPField.Name.contentLength.rawName].first,
                                         let length = Int(header) {
@@ -115,9 +111,38 @@ extension LLMNode {
                 todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
             }
             
+            let stream = response.body.map { buffer in
+                Foundation.Data.init(buffer: buffer)
+            }
+            
             return .stream(.init(stream))
-        case .OpenAICompatible:
-            todo("Support OpenAICompatible")
+        case .OpenAICompatible(let configuration):
+            let client = OpenAICompatibleClient(httpClient: client, configuration: configuration)
+            
+            let decoder = LazyDecoder()
+            let keyes = request.compactMapValuesAsString()
+            let values = context.store.asAny.mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let request: OpenAIChatCompletionRequest = try decoder.decode(from: values)
+            let response = try await client.send(request: request)
+            
+            let contentLength: Int = if let header = response.headers[HTTPField.Name.contentLength.rawName].first,
+                                        let length = Int(header) {
+                length
+            } else {
+                .max
+            }
+            
+            guard response.status == .ok else {
+                var buffer = try? await response.body.collect(upTo: .max)
+                let msg = buffer?.readString(length: contentLength, encoding: .utf8)
+                todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
+            }
+            
+            let stream = response.body.map { buffer in
+                Foundation.Data.init(buffer: buffer)
+            }
+            
+            return .stream(.init(stream))
         case .AwsBedrock:
             todo("Support AwsBedrock")
         case .Gemini:

@@ -236,48 +236,26 @@ public struct OpenAIChatCompletionRequestUserMessage: Codable {
     public let name: String?
 }
 
-/// Represents content for an assistant message (optional text or refusal)
-public enum AssistantMessageContent: Codable {
-    case text(String)
-    // case parts([AssistantContentPart]) // Doc says array of text or exactly one refusal part
-    // Let's simplify based on common usage: Optional text content. Tool calls/function calls handle non-text actions.
-    // If refusal part is needed, it might be handled differently (e.g., specific error state).
-    // For simplicity, let's assume optional text. If parts are strictly needed, need AssistantContentPart enum.
-    
-    // Custom Codable to handle optional string content
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        // Attempt to decode as string, if fails, assume no text content (nil string equivalent)
-        if let text = try? container.decode(String.self) {
-            self = .text(text)
-        } else {
-            // This handles cases where content might be null or an empty object/array if not text
-            // Depending on API behavior, might need refinement
-            throw DecodingError.typeMismatch(AssistantMessageContent.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Expected String content or structure indicating no text"))
-        }
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        switch self {
-        case .text(let text):
-            try container.encode(text)
-        }
-    }
-}
-
-
-public struct AssistantAudio: Codable {
+public struct OpenAIChatCompletionRequestAssistantAudioMessage: Codable {
     public let id: String
 }
 
 public struct OpenAIChatCompletionRequestAssistantMessage: Codable {
     public let role: MessageRole = .assistant
-    public let audio: AssistantAudio?
+    public let audio: OpenAIChatCompletionRequestAssistantAudioMessage?
     public let content: OpenAIChatCompletionRequestMessageContent?
     public let name: String?
     public let refusal: String?
     public let tool_calls: [OpenAIChatCompletionRequestAssistantMessageToolCall]?
+    
+    enum CodingKeys: CodingKey {
+        case role
+        case audio
+        case content
+        case name
+        case refusal
+        case tool_calls
+    }
 }
 
 public struct OpenAIChatCompletionRequestToolMessage: Codable {
@@ -292,7 +270,13 @@ public struct OpenAIChatCompletionRequestToolMessage: Codable {
 }
 
 
-// MARK: - Content Parts (for User Messages)
+public enum OpenAIChatCompletionRequestMessageContentPartType: String, Codable {
+    case text
+    case image_url // JSON uses image_url for image type
+    case input_audio // JSON uses input_audio for audio type
+    case file
+    case refusal
+}
 
 /// Represents different types of content parts within a user message.
 public enum OpenAIChatCompletionRequestMessageContentPart: Codable {
@@ -305,7 +289,7 @@ public enum OpenAIChatCompletionRequestMessageContentPart: Codable {
     // Custom Codable implementation
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let type = try container.decode(ContentType.self, forKey: .type)
+        let type = try container.decode(OpenAIChatCompletionRequestMessageContentPartType.self, forKey: .type)
         
         switch type {
         case .text:
@@ -341,24 +325,15 @@ public enum OpenAIChatCompletionRequestMessageContentPart: Codable {
     private enum CodingKeys: String, CodingKey {
         case type
     }
-    
-    // Maps JSON type strings to Swift cases
-    private enum ContentType: String, Codable {
-        case text
-        case image_url // JSON uses image_url for image type
-        case input_audio // JSON uses input_audio for audio type
-        case file
-        case refusal
-    }
 }
 
 public struct OpenAIChatCompletionRequestMessageContentTextPart: Codable {
-    public let type: String
+    public let type: OpenAIChatCompletionRequestMessageContentPartType = .text
     public let text: String
     
-    public init(text: String) {
-        self.text = text
-        self.type = "text" // - Warning: Not Sure
+    enum CodingKeys: CodingKey {
+        case type
+        case text
     }
 }
 
@@ -400,7 +375,7 @@ public struct OpenAIChatCompletionRequestMessageContentImageContentPartImageURL:
 
 /// https://platform.openai.com/docs/guides/images?api-mode=chat&format=base64-encoded
 public struct OpenAIChatCompletionRequestMessageContentImagePart: Codable {
-    public let type: String
+    public let type: OpenAIChatCompletionRequestMessageContentPartType = .image_url
     public let imageUrl: OpenAIChatCompletionRequestMessageContentImageContentPartImageURL
     
     enum CodingKeys: String, CodingKey {
@@ -420,7 +395,7 @@ public struct OpenAIChatCompletionRequestMessageContentAudioPartInput: Codable {
 
 /// https://platform.openai.com/docs/guides/audio
 public struct OpenAIChatCompletionRequestMessageContentAudioPart: Codable {
-    public let type: String = "input_audio"
+    public let type: OpenAIChatCompletionRequestMessageContentPartType = .input_audio
     public let inputAudio: OpenAIChatCompletionRequestMessageContentAudioPartInput
     
     enum CodingKeys: String, CodingKey {
@@ -444,17 +419,22 @@ public struct OpenAIChatCompletionRequestMessageContentFilePartDetail: Codable {
 }
 
 public struct OpenAIChatCompletionRequestMessageContentFilePart: Codable {
-    public let type: String = "file"
+    public let type: OpenAIChatCompletionRequestMessageContentPartType = .file
     public let file: OpenAIChatCompletionRequestMessageContentFilePartDetail
+    
+    enum CodingKeys: CodingKey {
+        case type
+        case file
+    }
 }
 
 public struct OpenAIChatCompletionRequestMessageContentRefusalPart: Codable {
-    public let type: String
+    public let type: OpenAIChatCompletionRequestMessageContentPartType = .refusal
     public let refusal: String
     
-    public init(refusal: String) {
-        self.refusal = refusal
-        self.type = "refusal"
+    enum CodingKeys: CodingKey {
+        case type
+        case refusal
     }
 }
 
@@ -524,6 +504,11 @@ public struct OpenAIChatCompletionRequestToolChoiceSpecificToolFunction: Codable
 public struct OpenAIChatCompletionRequestToolChoiceSpecificTool: Codable {
     public let type: String = "function"
     public let function: OpenAIChatCompletionRequestToolChoiceSpecificToolFunction // Reusing NamedFunction structure
+    
+    enum CodingKeys: CodingKey {
+        case type
+        case function
+    }
 }
 
 
@@ -531,6 +516,11 @@ public struct OpenAIChatCompletionRequestToolChoiceSpecificTool: Codable {
 public struct OpenAIChatCompletionRequestTool: Codable {
     public let type: String = "function"
     public let function: OpenAIChatCompletionRequestToolFunction
+    
+    enum CodingKeys: CodingKey {
+        case type
+        case function
+    }
 }
 
 /// Describes a function tool available to the model.
@@ -575,6 +565,13 @@ public enum OpenAIChatCompletionRequestReasoningEffort: String, Codable {
     case low, medium, high
 }
 
+
+public enum OpenAIChatCompletionRequestResponseFormatType: String, Codable {
+    case text
+    case json_schema
+    case json_object
+}
+
 /// Specifies the desired response format.
 public enum OpenAIChatCompletionRequestResponseFormat: Codable {
     case text(OpenAIChatCompletionRequestResponseTextFormat)
@@ -584,7 +581,7 @@ public enum OpenAIChatCompletionRequestResponseFormat: Codable {
     // Custom Codable
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        let type = try container.decode(FormatType.self, forKey: .type)
+        let type = try container.decode(OpenAIChatCompletionRequestResponseFormatType.self, forKey: .type)
         
         switch type {
         case .text:
@@ -613,20 +610,18 @@ public enum OpenAIChatCompletionRequestResponseFormat: Codable {
     private enum CodingKeys: String, CodingKey {
         case type
     }
-    
-    private enum FormatType: String, Codable {
-        case text
-        case json_schema
-        case json_object
-    }
 }
 
 public struct OpenAIChatCompletionRequestResponseTextFormat: Codable {
-    public let type: String = "text"
+    public let type: OpenAIChatCompletionRequestResponseFormatType = .text
+    
+    enum CodingKeys: CodingKey {
+        case type
+    }
 }
 
 public struct OpenAIChatCompletionRequestResponseFormatJSONSchemaFormat: Codable {
-    public let type: String = "json_schema"
+    public let type: OpenAIChatCompletionRequestResponseFormatType = .json_schema
     public let jsonSchema: OpenAIChatCompletionRequestResponseFormatJSONSchemaFormatDefinition
     
     enum CodingKeys: String, CodingKey {
@@ -644,7 +639,11 @@ public struct OpenAIChatCompletionRequestResponseFormatJSONSchemaFormatDefinitio
 
 
 public struct OpenAIChatCompletionRequestResponseFormatJSONObjectFormat: Codable {
-    public let type: String = "json_object"
+    public let type: OpenAIChatCompletionRequestResponseFormatType = .json_object
+    
+    enum CodingKeys: CodingKey {
+        case type
+    }
 }
 
 public enum OpenAIChatCompletionRequestServiceTier: String, Codable {

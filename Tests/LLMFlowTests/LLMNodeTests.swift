@@ -90,7 +90,7 @@ func testLLMNodeOpenAiRun() async throws {
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
         "openai",
-        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
+        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
     )
     var context = Context(locater: DummySimpleLocater(client, solver))
     context.update(key: "model", value: "gpt-4o-mini")
@@ -139,9 +139,8 @@ func testLLMNodeOpenAiRun() async throws {
             try await client.shutdown()
             return
         }
-        
+
         let decoder = JSONDecoder()
-//        decoder.dateDecodingStrategy = .secondsSince1970
 
         let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
 
@@ -151,12 +150,80 @@ func testLLMNodeOpenAiRun() async throws {
                 let reponse = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
                 print(reponse)
             }
-            
-            
+
+
         }
     } catch {
         Issue.record("Unexpected \(error)")
     }
 
+    try await client.shutdown()
+}
+
+@Test("testLLMNodeOpenAICompatibleRun")
+func testLLMNodeOpenAICompatibleRun() async throws {
+    
+    try Dotenv.make()
+    
+    let client = HTTPClient()
+    let solver = DummyLLMProviderSolver(
+        "openai",
+        .OpenAICompatible(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
+    )
+    var context = Context(locater: DummySimpleLocater(client, solver))
+    context.update(key: "model", value: "gpt-4o-mini")
+    context.update(key: "stream", value: true)
+    context.update(key: "messages", value: [
+        [
+            "role": "system",
+            "content": """
+                be an echo server.
+                what I send to you, you send back.
+            
+                the exceptions:
+                1. send "ping", back "pong"
+                2. send "ding", back "dang"
+            """
+        ],
+        [
+            "role": "user",
+            "content": "ping"
+        ]
+    ])
+    
+    let node = LLMNode(id: "ID",
+                       name: nil,
+                       modelName: "openai",
+                       request: [
+                        "messages": "messages",
+                        "model": "model",
+                        "stream": "stream"
+                       ],
+                       response: "")
+    do {
+        let pipe = try await node.run(context: &context)
+        guard case let .stream(stream) = pipe else {
+            Issue.record("Shuld have a stream")
+            try await client.shutdown()
+            return
+        }
+        
+        let decoder = JSONDecoder()
+        
+        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
+        
+        for try await event in interpreter {
+            print("[*]", event)
+//            if let data = event.data.data(using: .utf8) {
+//                let reponse = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
+//                print(reponse)
+//            }
+//            
+            
+        }
+    } catch {
+        Issue.record("Unexpected \(error)")
+    }
+    
     try await client.shutdown()
 }
