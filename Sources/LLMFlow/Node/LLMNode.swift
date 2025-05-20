@@ -138,6 +138,19 @@ extension LLMNode {
                 todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
             }
             
+            guard let contentType = response.headers[HTTPField.Name.contentType.rawName].first,
+                  contentType.starts(with: ServerSentEvent.MIME_String)
+            else {
+                
+                let data = try await response.body.collect(upTo: .max)
+                let decoder = JSONDecoder()
+                let result = try decoder.decode(OpenAIChatCompletionResponse.self, from: data)
+                    
+                print("[*]", result)
+                
+                return .block(key: self.response, value: .single(.string("")))
+            }
+            
             let stream = response.body.map { buffer in
                 Foundation.Data.init(buffer: buffer)
             }

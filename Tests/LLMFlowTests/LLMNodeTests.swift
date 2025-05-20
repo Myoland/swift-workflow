@@ -202,6 +202,7 @@ func testLLMNodeOpenAICompatibleRun() async throws {
                        response: "")
     do {
         let pipe = try await node.run(context: &context)
+        
         guard case let .stream(stream) = pipe else {
             Issue.record("Shuld have a stream")
             try await client.shutdown()
@@ -213,13 +214,14 @@ func testLLMNodeOpenAICompatibleRun() async throws {
         let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
         
         for try await event in interpreter {
-            print("[*]", event)
-//            if let data = event.data.data(using: .utf8) {
-//                let reponse = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
-//                print(reponse)
-//            }
-//            
-            
+            // print("[*]", event)
+            if event.data == "[DONE]" {
+                break
+            }
+            if let data = event.data.data(using: .utf8) {
+                let reponse = try decoder.decode(OpenAIChatCompletionStreamResponse.self, from: data)
+                print(reponse)
+            }
         }
     } catch {
         Issue.record("Unexpected \(error)")

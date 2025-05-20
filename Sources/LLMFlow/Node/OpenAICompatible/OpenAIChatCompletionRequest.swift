@@ -60,7 +60,7 @@ public struct OpenAIChatCompletionRequest: Codable {
     public let seed: Int?
     
     /// Latency tier to use for processing the request (auto, default).
-    public let serviceTier: OpenAIChatCompletionRequestServiceTier?
+    public let serviceTier: OpenAIChatCompletionServiceTier?
     
     /// Up to 4 sequences where the API will stop generating further tokens. Can be a single string or an array of strings.
     public let stop: String?
@@ -646,8 +646,8 @@ public struct OpenAIChatCompletionRequestResponseFormatJSONObjectFormat: Codable
     }
 }
 
-public enum OpenAIChatCompletionRequestServiceTier: String, Codable {
-    case auto, `default`
+public enum OpenAIChatCompletionServiceTier: String, Codable {
+    case auto, flex, `default`
 }
 
 /// Options for streaming responses.
