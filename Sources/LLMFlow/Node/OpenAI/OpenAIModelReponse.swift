@@ -52,6 +52,11 @@ public struct OpenAIModelReponseUsage: Codable {
 }
 
 public struct OpenAIModelReponse: Codable {
+
+    /// Whether to run the model response in the background.
+    /// [Learn more](https://platform.openai.com/docs/guides/background).
+    let background: Bool?
+
     /// Unix timestamp (in seconds) of when this Response was created.
     public let created_at: Int
 
@@ -167,26 +172,57 @@ public struct OpenAIModelReponse: Codable {
     /// Represents token usage details including input tokens,
     /// output tokens, a breakdown of output tokens, and the total tokens used.
     let usage: OpenAIModelReponseUsage?
+
+    enum CodingKeys: String, CodingKey {
+        case background
+        case created_at
+        case error
+        case id
+        case incomplete_details
+        case instructions
+        case max_output_tokens
+        case metadata
+        case model
+        case object
+        case output
+        case output_text
+        case parallel_tool_calls
+        case previous_response_id
+        case reasoning
+        case status
+        case temperature
+        case text
+        case toolChoice = "tool_choice"
+        case tools
+        case topP = "top_p"
+        case truncation
+        case user
+        case usage
+    }
 }
 
 
 
 struct OpenAIModelStreamResponseCreated: Codable {
     let type: OpenAIModelStreamResponseType = .response_created
+    let sequence_number: Int
     let response: OpenAIModelReponse
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case response
     }
 }
 
 struct OpenAIModelStreamResponseInProgess: Codable {
     let type: OpenAIModelStreamResponseType = .response_in_progress
+    let sequence_number: Int
     let response: OpenAIModelReponse
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case response
     }
 }
@@ -194,41 +230,49 @@ struct OpenAIModelStreamResponseInProgess: Codable {
 
 struct OpenAIModelStreamResponseCompleted: Codable {
     let type: OpenAIModelStreamResponseType = .response_completed
+    let sequence_number: Int
     let response: OpenAIModelReponse
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case response
     }
 }
 
 struct OpenAIModelStreamResponseFailed: Codable {
     let type: OpenAIModelStreamResponseType = .response_failed
+    let sequence_number: Int
     let response: OpenAIModelReponse
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case response
     }
 }
 
 struct OpenAIModelStreamResponseInCompleted: Codable {
-    let type: OpenAIModelStreamResponseType = .response_incomplete  
+    let type: OpenAIModelStreamResponseType = .response_incomplete
+    let sequence_number: Int
     let response: OpenAIModelReponse
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case response
     }
 }
 
 struct OpenAIModelStreamResponseOutputItemAdd: Codable {
     let type: OpenAIModelStreamResponseType = .response_output_item_added
+    let sequence_number: Int
     let output_index: Int
     let item: OpenAIModelReponseContext
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case output_index
         case item
     }
@@ -236,11 +280,13 @@ struct OpenAIModelStreamResponseOutputItemAdd: Codable {
 
 struct OpenAIModelStreamResponseOutputItemDone: Codable {
     let type: OpenAIModelStreamResponseType = .response_output_item_done
+    let sequence_number: Int
     let output_index: Int
     let item: OpenAIModelReponseContext
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case output_index
         case item
     }
@@ -248,6 +294,7 @@ struct OpenAIModelStreamResponseOutputItemDone: Codable {
 
 struct OpenAIModelStreamResponseContentPartAdded: Codable {
     let type: OpenAIModelStreamResponseType = .response_content_part_added
+    let sequence_number: Int
     let content_index: Int
     let item_id: String
     let output_index: Int
@@ -255,6 +302,7 @@ struct OpenAIModelStreamResponseContentPartAdded: Codable {
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case content_index
         case item_id
         case output_index
@@ -264,6 +312,7 @@ struct OpenAIModelStreamResponseContentPartAdded: Codable {
 
 struct OpenAIModelStreamResponseContentPartDone: Codable {
     let type: OpenAIModelStreamResponseType = .response_content_part_done
+    let sequence_number: Int
     let content_index: Int
     let item_id: String
     let output_index: Int
@@ -271,6 +320,7 @@ struct OpenAIModelStreamResponseContentPartDone: Codable {
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case content_index
         case item_id
         case output_index
@@ -280,6 +330,7 @@ struct OpenAIModelStreamResponseContentPartDone: Codable {
 
 struct OpenAIModelStreamResponseOutputTextDelta: Codable {
     let type: OpenAIModelStreamResponseType = .response_output_text_delta
+    let sequence_number: Int
     let content_index: Int
     let item_id: String
     let output_index: Int
@@ -287,6 +338,7 @@ struct OpenAIModelStreamResponseOutputTextDelta: Codable {
 
     enum CodingKeys: String, CodingKey {
         case type
+        case sequence_number
         case content_index
         case item_id
         case output_index
@@ -294,12 +346,13 @@ struct OpenAIModelStreamResponseOutputTextDelta: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseOutputTextAnnotationAdded: Codable {
+struct OpenAIModelStreamResponseOutputTextAnnotationDelta: Codable {
     let type: OpenAIModelStreamResponseType = .response_output_text_annotation_added
     let annotation_index: Int
     let content_index: Int
     let item_id: String
     let output_index: Int
+    let sequence_number: Int
     let annotation: OpenAIModelReponseContextOutputContentTextOutputAnnotation
 
     enum CodingKeys: String, CodingKey {
@@ -308,15 +361,17 @@ struct OpenAIModelStreamResponseOutputTextAnnotationAdded: Codable {
         case content_index
         case item_id
         case output_index
+        case sequence_number
         case annotation
     }
-}   
+}
 
 struct OpenAIModelStreamResponseOutputTextDone: Codable {
     let type: OpenAIModelStreamResponseType = .response_output_text_done
     let content_index: Int
     let item_id: String
     let output_index: Int
+    let sequence_number: Int
     let text: String
 
     enum CodingKeys: String, CodingKey {
@@ -324,15 +379,17 @@ struct OpenAIModelStreamResponseOutputTextDone: Codable {
         case content_index
         case item_id
         case output_index
+        case sequence_number
         case text
     }
-}   
+}
 
 struct OpenAIModelStreamResponseRefusalDelta: Codable {
     let type: OpenAIModelStreamResponseType = .response_refusal_delta
     let content_index: Int
     let item_id: String
     let output_index: Int
+    let sequence_number: Int
     let delta: String
 
     enum CodingKeys: String, CodingKey {
@@ -340,6 +397,7 @@ struct OpenAIModelStreamResponseRefusalDelta: Codable {
         case content_index
         case item_id
         case output_index
+        case sequence_number
         case delta
     }
 }
@@ -349,6 +407,7 @@ struct OpenAIModelStreamResponseRefusalDone: Codable {
     let content_index: Int
     let item_id: String
     let output_index: Int
+    let sequence_number: Int
     let refusal: String
 
     enum CodingKeys: String, CodingKey {
@@ -356,15 +415,17 @@ struct OpenAIModelStreamResponseRefusalDone: Codable {
         case content_index
         case item_id
         case output_index
+        case sequence_number
         case refusal
     }
-}   
+}
 
 struct OpenAIModelStreamResponseFunctionCallArgumentsDelta: Codable {
     let type: OpenAIModelStreamResponseType = .response_function_call_arguments_delta
     let content_index: Int
     let item_id: String
     let output_index: Int
+    let sequence_number: Int
     let delta: String
 
     enum CodingKeys: String, CodingKey {
@@ -372,6 +433,7 @@ struct OpenAIModelStreamResponseFunctionCallArgumentsDelta: Codable {
         case content_index
         case item_id
         case output_index
+        case sequence_number
         case delta
     }
 }
@@ -380,93 +442,108 @@ struct OpenAIModelStreamResponseFunctionCallArgumentsDone: Codable {
     let type: OpenAIModelStreamResponseType = .response_function_call_arguments_done
     let item_id: String
     let output_index: Int
+    let sequence_number: Int
     let arguments: String
 
     enum CodingKeys: String, CodingKey {
         case type
         case item_id
         case output_index
+        case sequence_number
         case arguments
     }
-}   
+}
 
 struct OpenAIModelStreamResponseFileSearchCallInProgress: Codable {
     let type: OpenAIModelStreamResponseType = .response_file_search_call_in_progress
     let output_index: Int
     let item_id: String
+    let sequence_number: Int
 
     enum CodingKeys: String, CodingKey {
         case type
         case output_index
         case item_id
+        case sequence_number
     }
-}   
+}
 
 struct OpenAIModelStreamResponseFileSearchCallSearching: Codable {
     let type: OpenAIModelStreamResponseType = .response_file_search_call_searching
     let output_index: Int
     let item_id: String
+    let sequence_number: Int
 
     enum CodingKeys: String, CodingKey {
         case type
         case output_index
         case item_id
+        case sequence_number
     }
-}   
+}
 
 struct OpenAIModelStreamResponseFileSearchCallCompleted: Codable {
     let type: OpenAIModelStreamResponseType = .response_file_search_call_completed
     let output_index: Int
     let item_id: String
+    let sequence_number: Int
 
     enum CodingKeys: String, CodingKey {
         case type
         case output_index
         case item_id
+        case sequence_number
     }
-}   
+}
 
 struct OpenAIModelStreamResponseWebSearchCallInProgress: Codable {
     let type: OpenAIModelStreamResponseType = .response_web_search_call_in_progress
     let output_index: Int
     let item_id: String
+    let sequence_number: Int
 
     enum CodingKeys: String, CodingKey {
         case type
         case output_index
         case item_id
+        case sequence_number
     }
-}   
+}
 
 struct OpenAIModelStreamResponseWebSearchCallSearching: Codable {
     let type: OpenAIModelStreamResponseType = .response_web_search_call_searching
     let output_index: Int
     let item_id: String
+    let sequence_number: Int
 
     enum CodingKeys: String, CodingKey {
         case type
         case output_index
         case item_id
+        case sequence_number
     }
-}      
+}
 
 struct OpenAIModelStreamResponseWebSearchCallCompleted: Codable {
     let type: OpenAIModelStreamResponseType = .response_web_search_call_completed
     let output_index: Int
     let item_id: String
+    let sequence_number: Int
 
     enum CodingKeys: String, CodingKey {
         case type
         case output_index
         case item_id
+        case sequence_number
     }
-}          
+}
 
 struct OpenAIModelStreamResponseReasoningSummaryPartAdded: Codable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_summary_part_added
     let output_index: Int
     let item_id: String
     let summary_index: Int
+    let sequence_number: Int
     let part: OpenAIModelReponseContextReasoningSummaryTextContent
 
     enum CodingKeys: String, CodingKey {
@@ -474,15 +551,17 @@ struct OpenAIModelStreamResponseReasoningSummaryPartAdded: Codable {
         case output_index
         case item_id
         case summary_index
+        case sequence_number
         case part
     }
-}   
+}
 
 struct OpenAIModelStreamResponseReasoningSummaryPartDone: Codable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_summary_part_done
     let output_index: Int
     let item_id: String
     let summary_index: Int
+    let sequence_number: Int
     let part: OpenAIModelReponseContextReasoningSummaryTextContent
 
     enum CodingKeys: String, CodingKey {
@@ -490,22 +569,25 @@ struct OpenAIModelStreamResponseReasoningSummaryPartDone: Codable {
         case output_index
         case item_id
         case summary_index
+        case sequence_number
         case part
     }
-}      
+}
 
 struct OpenAIModelStreamResponseReasoningSummaryTextDelta: Codable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_summary_text_delta
     let output_index: Int
     let item_id: String
     let summary_index: Int
+    let sequence_number: Int
     let delta: String
-    
+
     enum CodingKeys: String, CodingKey {
         case type
         case output_index
         case item_id
         case summary_index
+        case sequence_number
         case delta
     }
 }
@@ -515,6 +597,7 @@ struct OpenAIModelStreamResponseReasoningSummaryTextDone: Codable {
     let output_index: Int
     let item_id: String
     let summary_index: Int
+    let sequence_number: Int
     let text: String
 
     enum CodingKeys: String, CodingKey {
@@ -522,9 +605,10 @@ struct OpenAIModelStreamResponseReasoningSummaryTextDone: Codable {
         case output_index
         case item_id
         case summary_index
+        case sequence_number
         case text
     }
-}   
+}
 
 struct OpenAIModelStreamResponseError: Codable {
     let type: OpenAIModelStreamResponseType = .error
@@ -540,6 +624,152 @@ struct OpenAIModelStreamResponseError: Codable {
     }
 }
 
+struct OpenAIModelStreamResponseImageGenerationCallCompleted: Codable {
+    let type: OpenAIModelStreamResponseType = .response_image_generation_call_completed
+    let item_id: String
+    let output_index: Int
+    let sequence_number: Int
+}
+
+struct OpenAIModelStreamResponseImageGenerationCallGenerating: Codable {
+    let type: OpenAIModelStreamResponseType = .response_image_generation_call_generating
+    let item_id: String
+    let output_index: Int
+    let sequence_number: Int
+}
+
+struct OpenAIModelStreamResponseImageGenerationCallInProgress: Codable {
+    let type: OpenAIModelStreamResponseType = .response_image_generation_call_in_progress
+    let item_id: String
+    let output_index: Int
+    let sequence_number: Int
+}
+
+struct OpenAIModelStreamResponseImageGenerationCallPartialImage: Codable {
+    let type: OpenAIModelStreamResponseType = .response_image_generation_call_partial_image
+    let item_id: String
+    let output_index: Int
+    let partial_image_b64: String
+    let partial_image_index: Int
+    let sequence_number: Int
+}
+
+struct OpenAIModelStreamResponseMCPCallArgumentDelta: Codable {
+    let type: OpenAIModelStreamResponseType = .response_mcp_call_argument_delta
+    let item_id: String
+    let output_index: Int
+    let sequence_number: Int
+    let delta: [String: String]
+}
+
+struct OpenAIModelStreamResponseMCPCallArgumentDone: Codable {
+    let type: OpenAIModelStreamResponseType = .response_mcp_call_argument_done
+    let item_id: String
+    let output_index: Int
+    let sequence_number: Int
+    let arguments: [String: String]
+}
+
+struct OpenAIModelStreamResponseMCPCallCompleted: Codable {
+    let type: OpenAIModelStreamResponseType = .response_mcp_call_completed
+    let sequence_number: Int
+}
+
+struct OpenAIModelStreamResponseMCPCallFailed: Codable {
+    let type: OpenAIModelStreamResponseType = .response_mcp_call_failed
+    let sequence_number: Int
+}
+
+struct OpenAIModelStreamResponseMCPCallInProgress: Codable {
+    let type: OpenAIModelStreamResponseType = .response_mcp_call_in_progress
+    let output_index: Int
+    let item_id: String
+    let sequence_number: Int
+
+}
+
+struct OpenAIModelStreamResponseMCPListToolsCompleted: Codable {
+    let type: OpenAIModelStreamResponseType = .response_mcp_list_tools_completed
+    let sequence_number: Int
+}
+
+struct OpenAIModelStreamResponseMCPListToolsFailed: Codable {
+    let type: OpenAIModelStreamResponseType = .response_mcp_list_tools_failed
+    let sequence_number: Int
+}
+
+struct OpenAIModelStreamResponseMCPListToolsInProgress: Codable {
+    let type: OpenAIModelStreamResponseType = .response_mcp_list_tools_in_progress
+    let sequence_number: Int
+}
+
+struct OpenAIModelStreamResponseOutputTextAnnotationAddedAnnotation: Codable  {
+    let type: String = "text_annotation"
+    let text: String
+    let start: Int
+    let end: Int
+}
+
+struct OpenAIModelStreamResponseOutputTextAnnotationAdded: Codable {
+    let type: OpenAIModelStreamResponseType = .response_output_text_annotation_added
+    let sequence_number: Int
+    let output_index: Int
+    let item_id: String
+    let content_index: Int
+    let annotation_index: Int
+    let annotation: OpenAIModelStreamResponseOutputTextAnnotationAddedAnnotation
+}
+
+struct OpenAIModelStreamResponseQueued: Codable {
+    let type: OpenAIModelStreamResponseType = .response_queued
+    let sequence_number: Int
+    let response: OpenAIModelReponse
+}
+
+struct OpenAIModelStreamResponseReasoningDeltaText: Codable  {
+    let text: String
+}
+
+struct OpenAIModelStreamResponseReasoningDelta: Codable {
+    let type: OpenAIModelStreamResponseType = .response_reasoning_delta
+    let content_index: Int
+    let item_id: String
+    let output_index: Int
+    let sequence_number: Int
+    let delta: OpenAIModelStreamResponseReasoningDeltaText
+}
+
+struct OpenAIModelStreamResponseReasoningDone: Codable {
+    let type: OpenAIModelStreamResponseType = .response_reasoning_done
+    let content_index: Int
+    let item_id: String
+    let output_index: Int
+    let sequence_number: Int
+    let text: String
+}
+
+struct OpenAIModelStreamResponseReasoningSummaryDeltaText: Codable {
+    let text: String
+}
+
+struct OpenAIModelStreamResponseReasoningSummaryDelta: Codable {
+    let type: OpenAIModelStreamResponseType = .response_reasoning_summary_delta
+    let output_index: Int
+    let item_id: String
+    let sequence_number: Int
+    let summary_index: Int
+    let delta: OpenAIModelStreamResponseReasoningSummaryDeltaText
+}
+
+struct OpenAIModelStreamResponseReasoningSummaryDone: Codable {
+    let type: OpenAIModelStreamResponseType = .response_reasoning_summary_done
+    let output_index: Int
+    let item_id: String
+    let sequence_number: Int
+    let summary_index: Int
+    let text: String
+}
+
 enum OpenAIModelStreamResponse: Codable {
     case error(OpenAIModelStreamResponseError)
     case response_created(OpenAIModelStreamResponseCreated)
@@ -552,7 +782,7 @@ enum OpenAIModelStreamResponse: Codable {
     case response_content_part_added(OpenAIModelStreamResponseContentPartAdded)
     case response_content_part_done(OpenAIModelStreamResponseContentPartDone)
     case response_output_text_delta(OpenAIModelStreamResponseOutputTextDelta)
-    case response_output_text_annotation_added(OpenAIModelStreamResponseOutputTextAnnotationAdded)
+    case response_output_text_annotation_delta(OpenAIModelStreamResponseOutputTextAnnotationDelta)
     case response_output_text_done(OpenAIModelStreamResponseOutputTextDone)
     case response_refusal_delta(OpenAIModelStreamResponseRefusalDelta)
     case response_refusal_done(OpenAIModelStreamResponseRefusalDone)
@@ -568,6 +798,24 @@ enum OpenAIModelStreamResponse: Codable {
     case response_reasoning_summary_part_done(OpenAIModelStreamResponseReasoningSummaryPartDone)
     case response_reasoning_summary_text_delta(OpenAIModelStreamResponseReasoningSummaryTextDelta)
     case response_reasoning_summary_text_done(OpenAIModelStreamResponseReasoningSummaryTextDone)
+    case response_image_generation_call_completed(OpenAIModelStreamResponseImageGenerationCallCompleted)
+    case response_image_generation_call_generating(OpenAIModelStreamResponseImageGenerationCallGenerating)
+    case response_image_generation_call_in_progress(OpenAIModelStreamResponseImageGenerationCallInProgress)
+    case response_image_generation_call_partial_image(OpenAIModelStreamResponseImageGenerationCallPartialImage)
+    case response_mcp_call_argument_delta(OpenAIModelStreamResponseMCPCallArgumentDelta)
+    case response_mcp_call_argument_done(OpenAIModelStreamResponseMCPCallArgumentDone)
+    case response_mcp_call_completed(OpenAIModelStreamResponseMCPCallCompleted)
+    case response_mcp_call_failed(OpenAIModelStreamResponseMCPCallFailed)
+    case response_mcp_call_in_progress(OpenAIModelStreamResponseMCPCallInProgress)
+    case response_mcp_list_tools_completed(OpenAIModelStreamResponseMCPListToolsCompleted)
+    case response_mcp_list_tools_failed(OpenAIModelStreamResponseMCPListToolsFailed)
+    case response_mcp_list_tools_in_progress(OpenAIModelStreamResponseMCPListToolsInProgress)
+    case response_output_text_annotation_added(OpenAIModelStreamResponseOutputTextAnnotationAdded)
+    case response_queued(OpenAIModelStreamResponseQueued)
+    case response_reasoning_delta(OpenAIModelStreamResponseReasoningDelta)
+    case response_reasoning_done(OpenAIModelStreamResponseReasoningDone)
+    case response_reasoning_summary_delta(OpenAIModelStreamResponseReasoningSummaryDelta)
+    case response_reasoning_summary_done(OpenAIModelStreamResponseReasoningSummaryDone)
 
     enum CodingKeys: String, CodingKey {
         case type
@@ -598,12 +846,12 @@ enum OpenAIModelStreamResponse: Codable {
             try container.encode(response)
         case .response_output_text_delta(let response):
             try container.encode(response)
-        case .response_output_text_annotation_added(let response):
+        case .response_output_text_annotation_delta(let response):
             try container.encode(response)
         case .response_output_text_done(let response):
             try container.encode(response)
         case .response_refusal_delta(let response):
-            try container.encode(response)  
+            try container.encode(response)
         case .response_refusal_done(let response):
             try container.encode(response)
         case .response_function_call_arguments_delta(let response):
@@ -629,6 +877,42 @@ enum OpenAIModelStreamResponse: Codable {
         case .response_reasoning_summary_text_delta(let response):
             try container.encode(response)
         case .response_reasoning_summary_text_done(let response):
+            try container.encode(response)
+        case .response_image_generation_call_completed(let response):
+            try container.encode(response)
+        case .response_image_generation_call_generating(let response):
+            try container.encode(response)
+        case .response_image_generation_call_in_progress(let response):
+            try container.encode(response)
+        case .response_image_generation_call_partial_image(let response):
+            try container.encode(response)
+        case .response_mcp_call_argument_delta(let response):
+            try container.encode(response)
+        case .response_mcp_call_argument_done(let response):
+            try container.encode(response)
+        case .response_mcp_call_completed(let response):
+            try container.encode(response)
+        case .response_mcp_call_failed(let response):
+            try container.encode(response)
+        case .response_mcp_call_in_progress(let response):
+            try container.encode(response)
+        case .response_mcp_list_tools_completed(let response):
+            try container.encode(response)
+        case .response_mcp_list_tools_failed(let response):
+            try container.encode(response)
+        case .response_mcp_list_tools_in_progress(let response):
+            try container.encode(response)
+        case .response_output_text_annotation_added(let response):
+            try container.encode(response)
+        case .response_queued(let response):
+            try container.encode(response)
+        case .response_reasoning_delta(let response):
+            try container.encode(response)
+        case .response_reasoning_done(let response):
+            try container.encode(response)
+        case .response_reasoning_summary_delta(let response):
+            try container.encode(response)
+        case .response_reasoning_summary_done(let response):
             try container.encode(response)
         }
     }
@@ -659,10 +943,10 @@ enum OpenAIModelStreamResponse: Codable {
             self = .response_content_part_done(try OpenAIModelStreamResponseContentPartDone(from: decoder))
         case .response_output_text_delta:
             self = .response_output_text_delta(try OpenAIModelStreamResponseOutputTextDelta(from: decoder))
-        case .response_output_text_annotation_added:
-            self = .response_output_text_annotation_added(try OpenAIModelStreamResponseOutputTextAnnotationAdded(from: decoder))
+        case .response_output_text_annotation_delta:
+            self = .response_output_text_annotation_delta(try OpenAIModelStreamResponseOutputTextAnnotationDelta(from: decoder))
         case .response_output_text_done:
-            self = .response_output_text_done(try OpenAIModelStreamResponseOutputTextDone(from: decoder))   
+            self = .response_output_text_done(try OpenAIModelStreamResponseOutputTextDone(from: decoder))
         case .response_refusal_delta:
             self = .response_refusal_delta(try OpenAIModelStreamResponseRefusalDelta(from: decoder))
         case .response_refusal_done:
@@ -691,6 +975,42 @@ enum OpenAIModelStreamResponse: Codable {
             self = .response_reasoning_summary_text_delta(try OpenAIModelStreamResponseReasoningSummaryTextDelta(from: decoder))
         case .response_reasoning_summary_text_done:
             self = .response_reasoning_summary_text_done(try OpenAIModelStreamResponseReasoningSummaryTextDone(from: decoder))
+        case .response_image_generation_call_completed:
+            self = .response_image_generation_call_completed(try OpenAIModelStreamResponseImageGenerationCallCompleted(from: decoder))
+        case .response_image_generation_call_generating:
+            self = .response_image_generation_call_generating(try OpenAIModelStreamResponseImageGenerationCallGenerating(from: decoder))
+        case .response_image_generation_call_in_progress:
+            self = .response_image_generation_call_in_progress(try OpenAIModelStreamResponseImageGenerationCallInProgress(from: decoder))
+        case .response_image_generation_call_partial_image:
+            self = .response_image_generation_call_partial_image(try OpenAIModelStreamResponseImageGenerationCallPartialImage(from: decoder))
+        case .response_mcp_call_argument_delta:
+            self = .response_mcp_call_argument_delta(try OpenAIModelStreamResponseMCPCallArgumentDelta(from: decoder))
+        case .response_mcp_call_argument_done:
+            self = .response_mcp_call_argument_done(try OpenAIModelStreamResponseMCPCallArgumentDone(from: decoder))
+        case .response_mcp_call_completed:
+            self = .response_mcp_call_completed(try OpenAIModelStreamResponseMCPCallCompleted(from: decoder))
+        case .response_mcp_call_failed:
+            self = .response_mcp_call_failed(try OpenAIModelStreamResponseMCPCallFailed(from: decoder))
+        case .response_mcp_call_in_progress:
+            self = .response_mcp_call_in_progress(try OpenAIModelStreamResponseMCPCallInProgress(from: decoder))
+        case .response_mcp_list_tools_completed:
+            self = .response_mcp_list_tools_completed(try OpenAIModelStreamResponseMCPListToolsCompleted(from: decoder))
+        case .response_mcp_list_tools_failed:
+            self = .response_mcp_list_tools_failed(try OpenAIModelStreamResponseMCPListToolsFailed(from: decoder))
+        case .response_mcp_list_tools_in_progress:
+            self = .response_mcp_list_tools_in_progress(try OpenAIModelStreamResponseMCPListToolsInProgress(from: decoder))
+        case .response_output_text_annotation_added:
+            self = .response_output_text_annotation_added(try OpenAIModelStreamResponseOutputTextAnnotationAdded(from: decoder))
+        case .response_queued:
+            self = .response_queued(try OpenAIModelStreamResponseQueued(from: decoder))
+        case .response_reasoning_delta:
+            self = .response_reasoning_delta(try OpenAIModelStreamResponseReasoningDelta(from: decoder))
+        case .response_reasoning_done:
+            self = .response_reasoning_done(try OpenAIModelStreamResponseReasoningDone(from: decoder))
+        case .response_reasoning_summary_delta:
+            self = .response_reasoning_summary_delta(try OpenAIModelStreamResponseReasoningSummaryDelta(from: decoder))
+        case .response_reasoning_summary_done:
+            self = .response_reasoning_summary_done(try OpenAIModelStreamResponseReasoningSummaryDone(from: decoder))
         }
     }
 }
@@ -707,7 +1027,9 @@ enum OpenAIModelStreamResponseType: String, Codable {
     case response_content_part_added = "response.content_part.added"
     case response_content_part_done = "response.content_part.done"
     case response_output_text_delta = "response.output_text.delta"
-    case response_output_text_annotation_added = "response.output_text.annotation.added"
+    // Blame OpenAI For the annoyed naming
+    // https://github.com/openai/openai-python/blob/71058dd6f0a8e2e837f1b9edc91bc61a07b7837d/src/openai/types/responses/response_text_annotation_delta_event.py#L62
+    case response_output_text_annotation_delta = "response.output_text.annotation.added"
     case response_output_text_done = "response.output_text.done"
     case response_refusal_delta = "response.refusal.delta"
     case response_refusal_done = "response.refusal.done"
@@ -723,4 +1045,22 @@ enum OpenAIModelStreamResponseType: String, Codable {
     case response_reasoning_summary_part_done = "response.reasoning_summary_part.done"
     case response_reasoning_summary_text_delta = "response.reasoning_summary_text.delta"
     case response_reasoning_summary_text_done = "response.reasoning_summary_text.done"
+    case response_image_generation_call_completed = "response.image_generation_call.completed"
+    case response_image_generation_call_generating = "response.image_generation_call.generating"
+    case response_image_generation_call_in_progress = "response.image_generation_call.in_progress"
+    case response_image_generation_call_partial_image = "response.image_generation_call.partial_image"
+    case response_mcp_call_argument_delta = "response.mcp_call.arguments.delta"
+    case response_mcp_call_argument_done = "response.mcp_call.arguments.done"
+    case response_mcp_call_completed = "response.mcp_call.completed"
+    case response_mcp_call_failed = "response.mcp_call.failed"
+    case response_mcp_call_in_progress = "response.mcp_call.in_progress"
+    case response_mcp_list_tools_completed = "response.mcp_list_tools.completed"
+    case response_mcp_list_tools_failed = "response.mcp_list_tools.failed"
+    case response_mcp_list_tools_in_progress = "response.mcp_list_tools.in_progress"
+    case response_output_text_annotation_added = "response.output_text_annotation.added"
+    case response_queued = "response.queued"
+    case response_reasoning_delta = "response.reasoning.delta"
+    case response_reasoning_done = "response.reasoning.done"
+    case response_reasoning_summary_delta = "response.reasoning_summary.delta"
+    case response_reasoning_summary_done = "response.reasoning_summary.done"
 }
