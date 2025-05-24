@@ -53,11 +53,11 @@ extension Condition: Hashable {}
 
 
 protocol Evaluatable {
-    func eval(_ context: Context) -> Bool
+    func eval(_ context: [String: Any]) -> Bool
 }
 
 extension Condition: Evaluatable {
-    func eval(_ context: Context) -> Bool {
+    func eval(_ context: [String: Any]) -> Bool {
         switch self {
         case .and(let andCondition):
             return andCondition.allSatisfy { $0.eval(context) }
@@ -74,57 +74,153 @@ extension Condition: Evaluatable {
 }
 
 extension Condition.IntEval: Evaluatable {
-    func eval(_ context: Context) -> Bool {
+    func eval(_ inputs: [String: Any]) -> Bool {
         switch self {
         case .equal(let variableKey, let value):
-            return context.store[variableKey]?.intValue == value
+            guard let variable = inputs[variableKey] else {
+                return false
+            }
+            
+            guard let intValue: Int = if let variable = variable as? Int {
+                variable
+            } else if let variable = (variable as? FlowData)?.intValue {
+                variable
+            } else {
+                nil
+            } else {
+                return false
+            }
+            
+            return intValue == value
         case .greater(let variableKey, let value):
-            guard let variable = context.store[variableKey]?.intValue else {
+            guard let variable = inputs[variableKey] else {
                 return false
             }
-            return variable > value
+            
+            guard let intValue: Int = if let variable = variable as? Int {
+                variable
+            } else if let variable = (variable as? FlowData)?.intValue {
+                variable
+            } else {
+                nil
+            } else {
+                return false
+            }
+            
+            return intValue > value
         case .greater_or_equal(let variableKey, let value):
-            guard let variable = context.store[variableKey]?.intValue else {
+            guard let variable = inputs[variableKey] else {
                 return false
             }
-            return variable >= value
+            
+            guard let intValue = if let variable = variable as? Int {
+                variable
+            } else if let variable = (variable as? FlowData)?.intValue {
+                variable
+            } else {
+                nil
+            } else {
+                return false
+            }
+            
+            
+            return intValue >= value
         case .smaller(let variableKey, let value):
-            guard let variable = context.store[variableKey]?.intValue else {
+            guard let variable = inputs[variableKey] else {
                 return false
             }
-            return variable < value
+            
+            guard let intValue = if let variable = variable as? Int {
+                variable
+            } else if let variable = (variable as? FlowData)?.intValue {
+                variable
+            } else {
+                nil
+            } else {
+                return false
+            }
+            
+            
+            return intValue < value
         case .smaller_or_equal(let variableKey, let value):
-            guard let variable = context.store[variableKey]?.intValue else {
+            guard let variable = inputs[variableKey] else {
                 return false
             }
-            return variable <= value
+            
+            guard let intValue = if let variable = variable as? Int {
+                variable
+            } else if let variable = (variable as? FlowData)?.intValue {
+                variable
+            } else {
+                nil
+            } else {
+                return false
+            }
+            
+            
+            return intValue <= value
         }
     }
 }
 
 
 extension Condition.StringEval: Evaluatable {
-    func eval(_ context: Context) -> Bool {
+    func eval(_ inputs: [String: Any]) -> Bool {
         switch self {
         case .equal(let variableKey, let value):
-            return context.store[variableKey]?.stringValue == value
-        case .empty(let variableKey):
-            guard let variable = context.store[variableKey]?.stringValue else {
+            guard let variable = inputs[variableKey] else {
                 return false
             }
-            return variable.isEmpty
+            
+            guard let stringValue = if let variable = variable as? String {
+                variable
+            } else if let variable = (variable as? FlowData)?.stringValue {
+                variable
+            } else {
+                nil
+            } else {
+                return false
+            }
+            
+            return stringValue == value
+        case .empty(let variableKey):
+            guard let variable = inputs[variableKey] else {
+                return false
+            }
+            
+            guard let stringValue = if let variable = variable as? String {
+                variable
+            } else if let variable = (variable as? FlowData)?.stringValue {
+                variable
+            } else {
+                nil
+            } else {
+                return false
+            }
+            
+            return stringValue.isEmpty
         case .contains(let variableKey, let value, let position):
-            guard let variable = context.store[variableKey]?.stringValue else {
+            guard let variable = inputs[variableKey] else {
+                return false
+            }
+            
+            guard let stringValue = if let variable = variable as? String {
+                variable
+            } else if let variable = (variable as? FlowData)?.stringValue {
+                variable
+            } else {
+                nil
+            } else {
                 return false
             }
             
             switch position {
             case .default:
-                return variable.contains(value)
+                return stringValue.contains(value)
             case .prefix:
-                return variable.hasPrefix(value)
+                return stringValue.hasPrefix(value)
             case .suffix:
-                return variable.hasSuffix(value)
+                return stringValue.hasSuffix(value)
             }
         }
     }

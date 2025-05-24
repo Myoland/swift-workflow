@@ -32,7 +32,7 @@ public struct Workflow {
 extension Workflow {
     public struct Config {
 
-        public let variables: [VariableKey: VariableValue]
+//        public let variables: [VariableKey: VariableValue]
         public let nodes: [any Node]
 
         public let edges: [Edge]
@@ -45,7 +45,7 @@ extension Workflow.Config: Hashable {
     }
 
     public func hash(into hasher: inout Hasher) {
-        hasher.combine(variables)
+        // hasher.combine(variables)
         hasher.combine(edges)
         for node in nodes {
             hasher.combine(node)
@@ -55,7 +55,7 @@ extension Workflow.Config: Hashable {
 
 extension Workflow.Config: Codable {
     enum CodingKeys: CodingKey {
-        case variables
+//        case variables
         case nodes
         case edges
     }
@@ -66,7 +66,7 @@ extension Workflow.Config: Codable {
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.variables = try container.decode([Workflow.VariableKey: Workflow.VariableValue].self, forKey: .variables)
+//        self.variables = try container.decode([Workflow.VariableKey: Workflow.VariableValue].self, forKey: .variables)
         self.edges = try container.decode([Workflow.Edge].self, forKey: .edges)
 
         var nested = try container.nestedUnkeyedContainer(forKey: .nodes)
@@ -98,7 +98,7 @@ extension Workflow.Config: Codable {
 
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(variables, forKey: .variables)
+//        try container.encode(variables, forKey: .variables)
         var nested = container.nestedUnkeyedContainer(forKey: .nodes)
         for node in nodes {
             try nested.encode(node)
@@ -192,7 +192,7 @@ extension Workflow {
 
 extension Workflow {
     
-    public func run(context: inout Context, input: Context.Store) async throws -> OutputPipe {
+    public func run(context: inout Context, input: [String: FlowData]) async throws -> OutputPipe {
         
         let startNode = try requireStartNode()
         // only start node know input, it should inital context and validate it.
@@ -228,7 +228,7 @@ extension Workflow {
     
     public func matchEdge(id: Node.ID, context: Context) throws -> Edge {
         let edges = flows[id]
-        guard let edge = edges?.first(where: { $0.condition.eval(context) }) else {
+        guard let edge = edges?.first(where: { $0.condition.eval(context.filter(keys: nil)) }) else {
             throw Err.CanNotMatchAnEdge
         }
         

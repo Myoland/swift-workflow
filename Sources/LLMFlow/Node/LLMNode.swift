@@ -13,18 +13,6 @@ import NIOFoundationCompat
 import NIOHTTP1
 import WantLazy
 
-public func todo(_ message: @autoclosure () -> String = String(), file: StaticString = #file, line: UInt = #line)
-    -> Never
-{
-    fatalError("[TODO]: \(message())", file: file, line: line)
-}
-
-public func unreachable(file: StaticString = #file, line: UInt = #line)
--> Never
-{
-    fatalError("UNREACHABLE", file: file, line: line)
-}
-
 
 enum LLMProvider: Hashable, Codable {
     case OpenAI(OpenAIConfiguration)
@@ -94,7 +82,7 @@ extension LLMNode {
             
             let decoder = LazyDecoder()
             let keyes = request.compactMapValuesAsString()
-            let values = context.store.asAny.mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let values = context.filter(keys: nil).mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
             let request: OpenAIModelReponseRequest = try decoder.decode(from: values)
             let response = try await client.send(request: request)
             
@@ -121,7 +109,7 @@ extension LLMNode {
             
             let decoder = LazyDecoder()
             let keyes = request.compactMapValuesAsString()
-            let values = context.store.asAny.mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let values = context.filter(keys: nil).mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
             let request: OpenAIChatCompletionRequest = try decoder.decode(from: values)
             let response = try await client.send(request: request)
             
@@ -148,7 +136,7 @@ extension LLMNode {
                     
                 print("[*]", result)
                 
-                return .block(key: self.response, value: .single(.string("")))
+                return .block(key: self.response, value: result)
             }
             
             let stream = response.body.map { buffer in
@@ -164,7 +152,7 @@ extension LLMNode {
             
             let decoder = LazyDecoder()
             let keyes = request.compactMapValuesAsString()
-            let values = context.store.asAny.mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let values = context.filter(keys: nil).mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
             let body: DifyBody = try decoder.decode(from: values)
             
 //             TODO: Support dispatch by `llmProvider`
@@ -192,7 +180,7 @@ extension LLMNode {
                 // BLOCKING
                 var buffer = try? await response.body.collect(upTo: .max)
                 let msg = buffer?.readString(length: contentLength) ?? ""
-                return .block(key: self.response, value: .single(.string(msg)))
+                return .block(key: self.response, value: msg)
             }
             
             // TODO: Convert to Custom Model Type, For now just Data.

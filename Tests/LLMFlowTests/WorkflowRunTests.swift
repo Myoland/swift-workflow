@@ -6,21 +6,21 @@ import Testing
 func testRunWorkflow() async throws {
     #expect(throws: Never.self) {
         try StartNode.verify(
-            store: [
+            data: [
                 "foo": 1
             ], decls: ["foo": .single(.int)])
     }
 
     #expect(throws: Never.self) {
         try StartNode.verify(
-            store: [
+            data: [
                 "foo": "a"
             ], decls: ["foo": .single(.string)])
     }
 
     #expect(throws: Never.self) {
         try StartNode.verify(
-            store: [
+            data: [
                 "foo": 1,
                 "bar": "a",
             ],
@@ -32,7 +32,7 @@ func testRunWorkflow() async throws {
 
     #expect(throws: Never.self) {
         try StartNode.verify(
-            store: [
+            data: [
                 "foo": 1,
                 "bar": "a",
                 "baz": [1],
@@ -51,10 +51,10 @@ func testRunWorkflow() async throws {
     }
 
     #expect(throws: StartNode.InitVerifyErr.inputDataNotFound(key: "foo")) {
-        try StartNode.verify(store: [:], decls: ["foo": .single(.int)])
+        try StartNode.verify(data: [:], decls: ["foo": .single(.int)])
     }
 
     #expect(throws: StartNode.InitVerifyErr.inputDataTypeMissMatch(key: "foo")) {
-        try StartNode.verify(store: ["foo": .single(.string("a"))], decls: ["foo": .single(.int)])
+        try StartNode.verify(data: ["foo": .single(.string("a"))], decls: ["foo": .single(.int)])
     }
 }

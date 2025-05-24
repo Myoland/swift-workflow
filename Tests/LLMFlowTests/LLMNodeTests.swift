@@ -82,8 +82,8 @@ func testLLMNodeRun() async throws {
     try await client.shutdown()
 }
 
-@Test("testLLMNodeOpenAiRun")
-func testLLMNodeOpenAiRun() async throws {
+@Test("testLLMNodeOpenAIRun")
+func testLLMNodeOpenAIRun() async throws {
 
     try Dotenv.make()
 

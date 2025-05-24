@@ -153,3 +153,48 @@ func testDecodeConditionOP(_ op: Condition) throws {
     let decoded = try decoder.decode(Condition.self, from: encoded)
     #expect(op == decoded)
 }
+
+@Test("testConditionTrue", arguments: [
+    (Condition.string(.empty(variable: "var 1")), true),
+    (Condition.string(.equal(variable: "var 2", value: "foo")), true),
+    (Condition.string(.contains(variable: "var 3", value: "bar", position: .default)), true),
+    (Condition.string(.contains(variable: "var 4", value: "baz", position: .suffix)), true),
+    (Condition.int(.equal(variable: "var 5", value: 1)), true),
+    (Condition.int(.greater(variable: "var 6", value: 2)), true),
+    (Condition.int(.greater_or_equal(variable: "var 7", value: 3)), true),
+    (Condition.int(.smaller(variable: "var 8", value: 4)), true),
+    (Condition.int(.smaller_or_equal(variable: "var 9", value: 5)), true),
+    (Condition.not(.string(.empty(variable: "var 10"))), true),
+    (Condition.and([
+        .string(.empty(variable: "var 11")),
+        .string(.equal(variable: "var 12", value: "12"))
+    ]), true),
+    (Condition.or([
+        .int(.equal(variable: "var 13", value: 13)),
+        .string(.equal(variable: "var 14", value: "14")),
+        .not(.string(.empty(variable: "var 15")))
+    ]), true),
+])
+func testConditionTrue(_ op: Condition, expect: Bool) {
+    let inputs: [String: FlowData] = [
+        "var 1": "",
+        "var 2": "foo",
+        "var 3": "xxbarxx",
+        "var 4": "xxbaz",
+        "var 5": 1,
+        "var 6": 3,
+        "var 7": 4,
+        "var 8": 3,
+        "var 9": 3,
+        "var 10": "10",
+        "var 11": "",
+        "var 12": "12",
+        "var 13": "13",
+        "var 14": "14",
+        "var 15": "15",
+    ]
+    
+    
+    let result = op.eval(inputs)
+    #expect(result == expect)
+}

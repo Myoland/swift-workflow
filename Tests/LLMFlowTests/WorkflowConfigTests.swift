@@ -6,7 +6,7 @@ import Yams
 @Test("Encode config")
 func testEncodeConfig() throws {
     let config = Workflow.Config.init(
-        variables: [:],
+//        variables: [:],
         nodes: [
             StartNode(id: "1", name: "11", input: [:]),
             EndNode(id: "2", name: "22"),
@@ -17,14 +17,12 @@ func testEncodeConfig() throws {
     
     let encoder = YAMLEncoder()
     let encoded = try encoder.encode(config)
-    
-    
 }
 
 @Test("Decode config")
 func testDecodeConfig() throws {
     let config = Workflow.Config.init(
-        variables: [:],
+//        variables: [:],
         nodes: [
             StartNode(id: "1", name: "11", input: [:]),
             EndNode(id: "2", name: "22"),

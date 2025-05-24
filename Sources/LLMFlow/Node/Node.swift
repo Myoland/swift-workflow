@@ -91,7 +91,7 @@ extension Node {
         // TODO: Maybe allow config the max size of the buffer
         let buffer = try await stream.collect(upTo: 1024 * 1024, using: .init())
         let string = String(buffer: buffer)
-        return (key: "TODO", value: .single(.string(string)))
+        return (key: "TODO", value: string)
     }
 }
 

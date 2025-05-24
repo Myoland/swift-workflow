@@ -33,8 +33,8 @@ struct Template: Codable, ExpressibleByStringLiteral, Hashable {
         try Jinja.Template(content)
     }
 
-    public func render(_ items: Context.Store) throws -> String {
-        try toJinja().render(items.asAny)
+    public func render(_ items: [String: Any]) throws -> String {
+        try toJinja().render(items)
     }
 }
 
@@ -57,11 +57,11 @@ struct TemplateNode: Node {
 
 extension TemplateNode {
     func run(context: inout Context) async throws -> OutputPipe {
-        let result = try template.render(context.store)
+        let result = try template.render(context.filter(keys: nil))
 
         return .block(
             key: output,
-            value: .single(.string(result))
+            value: result
         )
     }
 }
