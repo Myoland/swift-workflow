@@ -11,7 +11,7 @@ import Foundation
 import HTTPTypes
 import NIOFoundationCompat
 import NIOHTTP1
-import WantLazy
+import LazyKit
 
 
 enum LLMProvider: Hashable, Codable {
@@ -47,22 +47,19 @@ struct LLMNode: Node {
 
     let modelName: String
 
-    let request: [String: FlowData]
-    let response: NodeVariableKey
+    let request: [DataKeyPath: FlowData]
 
     init(
         id: ID,
         name: String?,
         modelName: String,
-        request: [String: FlowData],
-        response: NodeVariableKey
+        request: [DataKeyPath: FlowData]
     ) {
         self.id = id
         self.name = name
         self.type = .LLM
         self.modelName = modelName
         self.request = request
-        self.response = response
     }
 }
 
@@ -80,9 +77,9 @@ extension LLMNode {
         case .OpenAI(let configuration):
             let client = OpenAIClient(httpClient: client, configuration: configuration)
             
-            let decoder = LazyDecoder()
+            let decoder = AnyDecoder()
             let keyes = request.compactMapValuesAsString()
-            let values = context.filter(keys: nil).mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let values = context.filter(keys: nil).convertKeys { keyes[$0] } // mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
             let request: OpenAIModelReponseRequest = try decoder.decode(from: values)
             let response = try await client.send(request: request)
             
@@ -99,6 +96,18 @@ extension LLMNode {
                 todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
             }
             
+            guard let contentType = response.headers[HTTPField.Name.contentType.rawName].first,
+                  contentType.starts(with: ServerSentEvent.MIME_String)
+            else {
+                
+                let data = try await response.body.collect(upTo: .max)
+                let decoder = JSONDecoder()
+                let result = try decoder.decode(OpenAIModelReponse.self, from: data)
+                
+                return .block(result)
+            }
+            
+            
             let stream = response.body.map { buffer in
                 Foundation.Data.init(buffer: buffer)
             }
@@ -107,9 +116,9 @@ extension LLMNode {
         case .OpenAICompatible(let configuration):
             let client = OpenAICompatibleClient(httpClient: client, configuration: configuration)
             
-            let decoder = LazyDecoder()
+            let decoder = AnyDecoder()
             let keyes = request.compactMapValuesAsString()
-            let values = context.filter(keys: nil).mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let values = context.filter(keys: nil).convertKeys { keyes[$0] } // TODO: allow extract values by CodingKeys.
             let request: OpenAIChatCompletionRequest = try decoder.decode(from: values)
             let response = try await client.send(request: request)
             
@@ -136,7 +145,7 @@ extension LLMNode {
                     
                 print("[*]", result)
                 
-                return .block(key: self.response, value: result)
+                return .block(result)
             }
             
             let stream = response.body.map { buffer in
@@ -150,13 +159,10 @@ extension LLMNode {
             todo("Support Gemini")
         case .Dify(let difyConfiguration):
             
-            let decoder = LazyDecoder()
+            let decoder = AnyDecoder()
             let keyes = request.compactMapValuesAsString()
-            let values = context.filter(keys: nil).mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let values = context.filter(keys: nil).convertKeys { keyes[$0] }  // TODO: allow extract values by CodingKeys.
             let body: DifyBody = try decoder.decode(from: values)
-            
-//             TODO: Support dispatch by `llmProvider`
-//             let body: DifyBody = try .init(request: request, store: context.store)
             
             let difyClient = DifyClient(httpClient: client, cfg: difyConfiguration)
             let response = try await difyClient.send(body: body)
@@ -180,7 +186,7 @@ extension LLMNode {
                 // BLOCKING
                 var buffer = try? await response.body.collect(upTo: .max)
                 let msg = buffer?.readString(length: contentLength) ?? ""
-                return .block(key: self.response, value: msg)
+                return .block(msg)
             }
             
             // TODO: Convert to Custom Model Type, For now just Data.
@@ -191,7 +197,12 @@ extension LLMNode {
             return .stream(.init(stream))
         }
         
-
         unreachable()
+    }
+}
+
+extension LLMNode {
+    public func wait(_ pipe: OutputPipe) async throws -> Context.Value? {
+        nil
     }
 }

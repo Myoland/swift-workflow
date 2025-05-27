@@ -7,7 +7,7 @@
 import Foundation
 import RegexBuilder
 import AsyncAlgorithms
-import WantLazy
+import LazyKit
 
 public struct ServerSentEvent: Sendable, Codable {
     static let MIME_String: String = "text/event-stream"

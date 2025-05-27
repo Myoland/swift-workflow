@@ -9,7 +9,7 @@ import Foundation
 import DynamicJSON
 import HTTPTypes
 import NIOHTTP1
-import WantLazy
+import LazyKit
 
 /// https://platform.openai.com/docs/guides/pdf-files?api-mode=chat
 public struct OpenAIModelReponseRequestInputItemMessageContentItemFileInput: Codable {

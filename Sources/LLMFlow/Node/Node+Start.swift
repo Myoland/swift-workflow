@@ -30,7 +30,7 @@ public struct StartNode: Node {
 
 extension StartNode {
 
-    public static func initialContext(_ context: inout Context, with input: [String: FlowData]) throws {
+    public static func initialContext(_ context: inout Context, with input: [DataKeyPath: FlowData]) throws {
         for (key, value) in input {
             context.update(key: key, value: value)
         }
@@ -48,22 +48,22 @@ extension StartNode {
     }
 
     public func verify(
-        data: [String: FlowData]
+        data: [DataKeyPath: FlowData]
     ) throws {
         try Self.verify(data: data, decls: self.input)
     }
 
     public static func verify(
-        data: [String: FlowData],
+        data: [DataKeyPath: FlowData],
         decls: [Context.Key: FlowData.TypeDecl]
     ) throws {
         for (key, decl) in decls {
             guard let data = data[key] else {
-                throw InitVerifyErr.inputDataNotFound(key: key)
+                throw InitVerifyErr.inputDataNotFound(key: key.rawValue)
             }
 
             guard data.decl == decl else {
-                throw InitVerifyErr.inputDataTypeMissMatch(key: key)
+                throw InitVerifyErr.inputDataTypeMissMatch(key: key.rawValue)
             }
         }
     }

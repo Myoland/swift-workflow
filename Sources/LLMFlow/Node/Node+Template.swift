@@ -57,11 +57,8 @@ struct TemplateNode: Node {
 
 extension TemplateNode {
     func run(context: inout Context) async throws -> OutputPipe {
-        let result = try template.render(context.filter(keys: nil))
+        let result = try template.render(context.filter(keys: nil).mapKeysAsString())
 
-        return .block(
-            key: output,
-            value: result
-        )
+        return .block(result)
     }
 }

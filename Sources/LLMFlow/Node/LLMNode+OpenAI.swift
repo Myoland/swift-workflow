@@ -5,7 +5,7 @@
 //  Created by AFuture on 2025/4/9.
 //
 
-import WantLazy
+import LazyKit
 import HTTPTypes
 import Foundation
 import NIOHTTP1

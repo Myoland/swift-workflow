@@ -26,7 +26,7 @@ let package = Package(
         .target(
             name: "LLMFlow",
             dependencies: [
-                .product(name: "WantLazy", package: "swift-lazy"),
+                .product(name: "LazyKit", package: "swift-lazy"),
                 .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),
                 .product(name: "DynamicJSON", package: "swift-dynamicjson"),
                 .product(name: "Jinja", package: "Jinja"),
@@ -37,7 +37,7 @@ let package = Package(
             dependencies: [
                 "LLMFlow",
                 .product(name: "Yams", package: "Yams"),
-                .product(name: "TestHelper", package: "swift-lazy"),
+                .product(name: "TestKit", package: "swift-lazy"),
             ]
         ),
     ]

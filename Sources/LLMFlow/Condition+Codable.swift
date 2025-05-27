@@ -37,16 +37,16 @@ extension Condition.StringEval: Codable {
         switch key {
         case .empty:
             let nested = try container.nestedContainer(keyedBy: NestedCodingKeys.self, forKey: .empty)
-            let variable = try nested.decode(NodeVariableKey.self, forKey: .variable)
+            let variable = try nested.decode(String.self, forKey: .variable)
             self = .empty(variable: variable)
         case .equal:
             let nested = try container.nestedContainer(keyedBy: NestedCodingKeys.self, forKey: .equal)
-            let variable = try nested.decode(NodeVariableKey.self, forKey: .variable)
+            let variable = try nested.decode(String.self, forKey: .variable)
             let value = try nested.decode(String.self, forKey: .value)
             self = .equal(variable: variable, value: value)
         case .contains:
             let nested = try container.nestedContainer(keyedBy: NestedCodingKeys.self, forKey: .contains)
-            let variable = try nested.decode(NodeVariableKey.self, forKey: .variable)
+            let variable = try nested.decode(String.self, forKey: .variable)
             let value = try nested.decode(String.self, forKey: .value)
             if let positionRawValue = try nested.decodeIfPresent(String.self, forKey: .position) {
                 if let position = StringContainingPosition(rawValue: positionRawValue) {
@@ -112,27 +112,27 @@ extension Condition.IntEval: Codable {
         switch key {
         case .equal:
             let nested = try container.nestedContainer(keyedBy: NestedCodingKeys.self, forKey: .equal)
-            let variable = try nested.decode(NodeVariableKey.self, forKey: .variable)
+            let variable = try nested.decode(String.self, forKey: .variable)
             let value = try nested.decode(Int.self, forKey: .value)
             self = .equal(variable: variable, value: value)
         case .greater:
             let nested = try container.nestedContainer(keyedBy: NestedCodingKeys.self, forKey: .greater)
-            let variable = try nested.decode(NodeVariableKey.self, forKey: .variable)
+            let variable = try nested.decode(String.self, forKey: .variable)
             let value = try nested.decode(Int.self, forKey: .value)
             self = .greater(variable: variable, value: value)
         case .greater_or_equal:
             let nested = try container.nestedContainer(keyedBy: NestedCodingKeys.self, forKey: .greater_or_equal)
-            let variable = try nested.decode(NodeVariableKey.self, forKey: .variable)
+            let variable = try nested.decode(String.self, forKey: .variable)
             let value = try nested.decode(Int.self, forKey: .value)
             self = .greater_or_equal(variable: variable, value: value)
         case .smaller:
             let nested = try container.nestedContainer(keyedBy: NestedCodingKeys.self, forKey: .smaller)
-            let variable = try nested.decode(NodeVariableKey.self, forKey: .variable)
+            let variable = try nested.decode(String.self, forKey: .variable)
             let value = try nested.decode(Int.self, forKey: .value)
             self = .smaller(variable: variable, value: value)
         case .smaller_or_equal:
             let nested = try container.nestedContainer(keyedBy: NestedCodingKeys.self, forKey: .smaller_or_equal)
-            let variable = try nested.decode(NodeVariableKey.self, forKey: .variable)
+            let variable = try nested.decode(String.self, forKey: .variable)
             let value = try nested.decode(Int.self, forKey: .value)
             self = .smaller_or_equal(variable: variable, value: value)
         }

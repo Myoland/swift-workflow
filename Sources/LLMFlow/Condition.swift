@@ -19,17 +19,17 @@ public indirect enum Condition: Sendable {
 
 extension Condition {
     public enum StringEval: Sendable {
-        case equal(variable: NodeVariableKey, value: String)
-        case empty(variable: NodeVariableKey)
-        case contains(variable: NodeVariableKey, value: String, position: StringContainingPosition)
+        case equal(variable: String, value: String)
+        case empty(variable: String)
+        case contains(variable: String, value: String, position: StringContainingPosition)
     }
     
     public enum IntEval: Sendable {
-        case equal(variable: NodeVariableKey, value: Int)
-        case greater(variable: NodeVariableKey, value: Int)
-        case greater_or_equal(variable: NodeVariableKey, value: Int)
-        case smaller(variable: NodeVariableKey, value: Int)
-        case smaller_or_equal(variable: NodeVariableKey, value: Int)
+        case equal(variable: String, value: Int)
+        case greater(variable: String, value: Int)
+        case greater_or_equal(variable: String, value: Int)
+        case smaller(variable: String, value: Int)
+        case smaller_or_equal(variable: String, value: Int)
     }
 }
 

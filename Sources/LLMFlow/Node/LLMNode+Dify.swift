@@ -9,7 +9,7 @@ import HTTPTypes
 import AsyncHTTPClient
 import Foundation
 import NIOHTTP1
-import WantLazy
+import LazyKit
 
 struct DifyConfiguration: Hashable, Codable, Sendable {
     let apiKey: String

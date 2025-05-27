@@ -1,4 +1,4 @@
-import WantLazy
+import LazyKit
 
 struct Schema: Codable {}
 
@@ -17,40 +17,58 @@ public protocol StoreLocator: AnyStorageValue {
 }
 
 public struct Context: Sendable {
-    public typealias Key = String
+    public typealias Key = DataKeyPath
     public typealias Value = Any
-    public typealias Variable = (key: Key, value: Value)
-
-    public typealias Store = [Key: Any]
-
+    
+    public typealias Store = [Key: Value]
+    
     private let clientLastEventId: LazyLock<String?> = .init(nil)
-
+    
     var states: [State] = []
     var store: LazyLock<Store> = .init([:])
     var locator: StoreLocator?
-
+    
     public init(locater: StoreLocator? = nil) {
         self.locator = locater
     }
-
-    public mutating func update(_ variable: Variable) {
-        store.withLock { store in
-            store[variable.key] = variable.value
-        }
-    }
-
-    public mutating func update(key: Key, value: Value) {
-        store.withLock { store in
-            store[key] = value
-        }
-    }
     
-    public func get(key: Key) -> Value? {
+}
+
+extension Context {
+    public func get(key: DataKeyPath) -> Value? {
         store.withLock { store in
             store[key]
         }
     }
     
+    public func get(keyPath: DataKeyPaths) -> Value? {
+        store.withLock { store in
+            var value: Value?
+            for key in keyPath {
+                value = store[key]
+            }
+            return value
+        }
+    }
+    
+    public func get<T>(key: Key, as type: T.Type) -> T? {
+        store.withLock { store in
+            store[key] as? T
+        }
+    }
+    
+    public func get<T>(keyPath: DataKeyPaths, as type: T.Type) -> Value? {
+        store.withLock { store in
+            var value: Value?
+            for key in keyPath {
+                value = store[key]
+            }
+            return value as? T
+        }
+    }
+}
+
+extension Context {
     public func filter(keys: [Key]?) -> [Key: Value] {
         guard let keys else {
             return store.withLock { $0 }
@@ -60,13 +78,7 @@ public struct Context: Sendable {
             store.filter { keys.contains($0.key) }
         }
     }
-
-    public func get<T>(key: Key, as type: T.Type) -> T? {
-        store.withLock { store in
-            store[key] as? T
-        }
-    }
-
+    
     public func filter<T>(keys: [Key]?, as type: T.Type) ->  [Key: T]  {
         guard let keys else {
             return store.withLock { $0.compactMapValues { $0 as? T } }
@@ -74,6 +86,30 @@ public struct Context: Sendable {
         
         return store.withLock { store in
             store.filter { keys.contains($0.key) }.compactMapValues { $0 as? T }
+        }
+    }
+}
+
+extension Context {
+    public mutating func update(key: Key, value: Value) {
+        store.withLock { store in
+            store[key] = value
+        }
+    }
+    
+    public mutating func update(keyPath: DataKeyPaths, value: Value) {
+        var keyPath = keyPath
+        guard let lastKey = keyPath.popLast() else {
+            return
+        }
+        
+        store.withLock { store in
+            var value: Value?
+            for key in keyPath {
+                value = store[key]
+            }
+            
+            store[lastKey] = value
         }
     }
 }

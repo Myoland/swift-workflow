@@ -51,7 +51,7 @@ extension Collection where Element == FlowData {
     }
 }
 
-extension Dictionary where Key == String, Value == FlowData {
+extension Dictionary where Value == FlowData {
     subscript(key: Key?) -> Value? {
         get {
             guard let key else {
@@ -61,7 +61,7 @@ extension Dictionary where Key == String, Value == FlowData {
         }
     }
     
-    public var asAny: [String: Any] {
+    public var asAny: [Key: Any] {
         return self.compactMapValues { $0.asAny }
     }
     
@@ -84,11 +84,22 @@ extension Dictionary where Key: Equatable {
 }
 
 extension Dictionary {
-    func mapKeys(keys: [Key: Key]) -> Dictionary<Key, Value> {
-        var reuslt: [Key: Value] = [:]
-        for (to, from) in keys {
-            reuslt[to] = self[from]
+    func convertKeys<T>(tansfomer: (Key) -> T) -> Dictionary<T, Value> {
+//        var reuslt: [Key: Value] = [:]
+//        for (to, from) in keys {
+//            reuslt[to] = self[from]
+//        }
+//        return reuslt
+        self.reduce(into: .init()) { (partialResult, pair) -> () in
+            partialResult.updateValue(pair.value, forKey: tansfomer(pair.key))
         }
-        return reuslt
+    }
+}
+
+extension Dictionary where Key == DataKeyPath {
+    func mapKeysAsString() -> Dictionary<String, Value> {
+        self.reduce(into: .init()) { (partialResult, pair) -> () in
+            partialResult.updateValue(pair.value, forKey: pair.key.rawValue)
+        }
     }
 }

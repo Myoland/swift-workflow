@@ -2,7 +2,7 @@ import AsyncHTTPClient
 import Foundation
 import SwiftDotenv
 import Testing
-import TestHelper
+import TestKit
 
 @testable import LLMFlow
 
@@ -59,8 +59,7 @@ func testLLMNodeRun() async throws {
                        request: [
                             "user": "user_id",
                             "query": "query"
-                       ],
-                       response: "")
+                       ])
     do {
         let pipe = try await node.run(context: &context)
         guard case let .stream(stream) = pipe else {
@@ -130,8 +129,7 @@ func testLLMNodeOpenAIRun() async throws {
                            "input": "input",
                            "model": "model",
                            "stream": "stream"
-                       ],
-                       response: "")
+                       ])
     do {
         let pipe = try await node.run(context: &context)
         guard case let .stream(stream) = pipe else {
@@ -198,8 +196,7 @@ func testLLMNodeOpenAICompatibleRun() async throws {
                         "messages": "messages",
                         "model": "model",
                         "stream": "stream"
-                       ],
-                       response: "")
+                       ])
     do {
         let pipe = try await node.run(context: &context)
         

@@ -1,5 +1,6 @@
 import Foundation
 import os.log
+import LazyKit
 
 //protocol Predictable {
 //    associatedtype CompareType
@@ -192,7 +193,7 @@ extension Workflow {
 
 extension Workflow {
     
-    public func run(context: inout Context, input: [String: FlowData]) async throws -> OutputPipe {
+    public func run(context: inout Context, input: [DataKeyPath: FlowData]) async throws -> OutputPipe {
         
         let startNode = try requireStartNode()
         // only start node know input, it should inital context and validate it.
@@ -210,8 +211,11 @@ extension Workflow {
                 return pipe
             }
             
-            if let variable = try await node.convert(pipe) {
-                context.update(variable)
+            if let variable = try await node.wait(pipe) {
+                let encoder = AnyEncoder()
+                if let result = try encoder.encode(variable) {
+                    context.update(keyPath: [.init(node.id), DataKeyPath.NodeRunResultKey], value: result)
+                }
             }
             
             let edge = try matchEdge(id: node.id, context: context)
@@ -228,7 +232,7 @@ extension Workflow {
     
     public func matchEdge(id: Node.ID, context: Context) throws -> Edge {
         let edges = flows[id]
-        guard let edge = edges?.first(where: { $0.condition.eval(context.filter(keys: nil)) }) else {
+        guard let edge = edges?.first(where: { $0.condition.eval(context.filter(keys: nil).mapKeysAsString()) }) else {
             throw Err.CanNotMatchAnEdge
         }
         
@@ -249,28 +253,3 @@ extension Workflow {
     }
     
 }
-
-//extension Workflow {
-    public struct OutputChunk: Encodable, Sendable {
-        
-    }
-    
-    public struct OutputChunks: AsyncSequence, Sendable {
-        public struct Iterator: AsyncIteratorProtocol {
-            
-            public func next() async throws -> OutputChunk? {
-                nil
-            }
-        }
-        
-        public init() {
-            
-        }
-        
-        public func makeAsyncIterator() -> Iterator {
-            .init()
-        }
-    }
-//}
-
-
