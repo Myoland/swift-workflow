@@ -77,9 +77,10 @@ extension LLMNode {
         case .OpenAI(let configuration):
             let client = OpenAIClient(httpClient: client, configuration: configuration)
             
-            let decoder = AnyDecoder()
             let keyes = request.compactMapValuesAsString()
             let values = context.filter(keys: nil).convertKeys { keyes[$0] } // mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            
+            let decoder = AnyDecoder()
             let request: OpenAIModelReponseRequest = try decoder.decode(from: values)
             let response = try await client.send(request: request)
             

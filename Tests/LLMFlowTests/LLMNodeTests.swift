@@ -1,4 +1,5 @@
 import AsyncHTTPClient
+import LazyKit
 import Foundation
 import SwiftDotenv
 import Testing
@@ -139,17 +140,16 @@ func testLLMNodeOpenAIRun() async throws {
         }
 
         let decoder = JSONDecoder()
+        let encoder = AnyEncoder()
 
         let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
 
         for try await event in interpreter {
-            print("[*]", event)
             if let data = event.data.data(using: .utf8) {
-                let reponse = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
-                print(reponse)
+                let response = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
+                let encoded = try encoder.encode(response)
+                print(encoded)
             }
-
-
         }
     } catch {
         Issue.record("Unexpected \(error)")

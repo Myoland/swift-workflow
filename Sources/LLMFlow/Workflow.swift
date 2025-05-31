@@ -99,7 +99,6 @@ extension Workflow.Config: Codable {
 
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-//        try container.encode(variables, forKey: .variables)
         var nested = container.nestedUnkeyedContainer(forKey: .nodes)
         for node in nodes {
             try nested.encode(node)
@@ -165,13 +164,6 @@ extension Workflow.Config {
 
 }
 
-//extension Node {
-//    public func run(content: Context) async throws {
-//        fatalError("Not Implemented!")
-//    }
-//}
-
-
 extension Workflow {
     enum Err: Error {
         case StartNodeNotFound
@@ -193,22 +185,19 @@ extension Workflow {
 
 extension Workflow {
     
-    public func run(context: inout Context, input: [DataKeyPath: FlowData]) async throws -> OutputPipe {
+    public func run(context: inout Context) async throws -> OutputPipe {
         
+        var pipe: OutputPipe = .none
         let startNode = try requireStartNode()
-        // only start node know input, it should inital context and validate it.
-        try StartNode.initialContext(&context, with: input) // can the method move to node itself ?
         
-        // Start the workflow
-        var currentNode: (any Node)? = startNode
-        while let node = currentNode {
+        var node: any Node = startNode
+        while true {
             
-            let pipe = try await node.run(context: &context)
+            pipe = try await node.run(context: context, pipe: pipe)
             
-            let mustAtEnd = testIfReachTheEnd(id: node.id)
-            
-            if mustAtEnd {
-                return pipe
+            guard let edge = matchEdge(id: node.id, context: context),
+                  let nextNode = self.nodes[edge.to] else {
+                break
             }
             
             if let variable = try await node.wait(pipe) {
@@ -218,38 +207,16 @@ extension Workflow {
                 }
             }
             
-            let edge = try matchEdge(id: node.id, context: context)
-            
-            guard let nextNode = self.nodes[edge.to] else {
-                break
-            }
-            
-            currentNode = nextNode
+            node = nextNode
         }
         
-        throw Err.CanNotMatchAnEdge
+        return pipe
     }
     
-    public func matchEdge(id: Node.ID, context: Context) throws -> Edge {
+    public func matchEdge(id: Node.ID, context: Context) -> Edge? {
         let edges = flows[id]
-        guard let edge = edges?.first(where: { $0.condition.eval(context.filter(keys: nil).mapKeysAsString()) }) else {
-            throw Err.CanNotMatchAnEdge
+        return edges?.first {
+            $0.condition.eval(context.filter(keys: nil).mapKeysAsString())
         }
-        
-        return edge
     }
-    
-    public func testIfReachTheEnd(id: Node.ID) -> Bool {
-        let edges = flows[id]
-        
-        guard let edges, edges.count == 1,
-              let edge = edges.first,
-              let node = self.nodes[edge.to],
-              node is EndNode
-        else {
-            return false
-        }
-        return true
-    }
-    
 }

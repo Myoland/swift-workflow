@@ -85,11 +85,6 @@ extension Dictionary where Key: Equatable {
 
 extension Dictionary {
     func convertKeys<T>(tansfomer: (Key) -> T) -> Dictionary<T, Value> {
-//        var reuslt: [Key: Value] = [:]
-//        for (to, from) in keys {
-//            reuslt[to] = self[from]
-//        }
-//        return reuslt
         self.reduce(into: .init()) { (partialResult, pair) -> () in
             partialResult.updateValue(pair.value, forKey: tansfomer(pair.key))
         }

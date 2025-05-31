@@ -22,13 +22,13 @@ public protocol Node: Sendable, Hashable, Codable {
     var id: ID { get }
     var type: NodeType { get }
 
-    func run(context: inout Context) async throws -> OutputPipe
+    func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe
     
     func wait(_ pipe: OutputPipe) async throws -> Context.Value?
 }
 
 extension Node {
-    public func run(context: inout Context) async throws -> OutputPipe {
+    public func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
         .none
     }
 
