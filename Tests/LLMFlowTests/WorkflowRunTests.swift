@@ -1,60 +1,59 @@
+import AsyncHTTPClient
+import LazyKit
+import Foundation
+import SwiftDotenv
 import Testing
+import TestKit
 
 @testable import LLMFlow
 
-@Test("Run workflow")
-func testRunWorkflow() async throws {
-    #expect(throws: Never.self) {
-        try StartNode.verify(
-            data: [
-                "foo": 1
-            ], decls: ["foo": .single(.int)])
-    }
 
-    #expect(throws: Never.self) {
-        try StartNode.verify(
-            data: [
-                "foo": "a"
-            ], decls: ["foo": .single(.string)])
-    }
+@Test("testWorkflowRun")
+func testWorkflowRun() async throws {
 
-    #expect(throws: Never.self) {
-        try StartNode.verify(
-            data: [
-                "foo": 1,
-                "bar": "a",
-            ],
-            decls: [
-                "foo": .single(.int),
-                "bar": .single(.string),
-            ])
-    }
 
-    #expect(throws: Never.self) {
-        try StartNode.verify(
-            data: [
-                "foo": 1,
-                "bar": "a",
-                "baz": [1],
-                "bazz": [1, "a"],
-                "qux": ["foo": "a"],
-                "quxx": ["foo": 1, "bar": "a"],
-            ],
-            decls: [
-                "foo": .single(.int),
-                "bar": .single(.string),
-                "baz": .list(.single(.int)),
-                "bazz": .list(.single(.any)),
-                "qux": .map(.single(.string)),
-                "quxx": .map(.single(.any)),
-            ])
-    }
+    try Dotenv.make()
 
-    #expect(throws: StartNode.InitVerifyErr.inputDataNotFound(key: "foo")) {
-        try StartNode.verify(data: [:], decls: ["foo": .single(.int)])
-    }
+    let client = HTTPClient()
+    let solver = DummyLLMProviderSolver(
+        "test_openai",
+        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
+    )
 
-    #expect(throws: StartNode.InitVerifyErr.inputDataTypeMissMatch(key: "foo")) {
-        try StartNode.verify(data: ["foo": .single(.string("a"))], decls: ["foo": .single(.int)])
-    }
+    let startNode = StartNode(id: UUID().uuidString, name: nil, input: [
+        "message": .single(.string)
+    ])
+
+    let templateNode = TemplateNode(
+        id: UUID().uuidString,
+        name: nil,
+        template: Template(content: """
+
+        """),
+        output: ""
+    )
+
+    let llmNode  = LLMNode(id: UUID().uuidString, name: nil, modelName: "test_openai", request: .init(body: [:]))
+
+    let endNode = EndNode(id: UUID().uuidString, name: nil)
+
+    var context = Context(locater: DummySimpleLocater(client, solver))
+
+
+    let workflow = Workflow(nodes: [
+        startNode.id : startNode,
+        templateNode.id : templateNode,
+        llmNode.id : llmNode,
+        endNode.id : endNode
+    ], flows: [
+        startNode.id : [.init(from: startNode.id, to: templateNode.id, condition: nil)],
+        templateNode.id : [.init(from: templateNode.id, to: llmNode.id, condition: nil)],
+        llmNode.id : [.init(from: llmNode.id, to: endNode.id, condition: nil)],
+    ], startNodeID: startNode.id)
+
+
+    let output = try await workflow.run(context: &context)
+
+
+
 }

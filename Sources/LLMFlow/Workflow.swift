@@ -13,7 +13,7 @@ extension Workflow {
     public struct Edge {
         public let from: Node.ID
         public let to: Node.ID
-        public let condition: Condition
+        public let condition: Condition?
     }
 }
 
@@ -187,24 +187,23 @@ extension Workflow {
     
     public func run(context: inout Context) async throws -> OutputPipe {
         
-        var pipe: OutputPipe = .none
         let startNode = try requireStartNode()
         
+        var pipe: OutputPipe = .none
         var node: any Node = startNode
+        
         while true {
             
             pipe = try await node.run(context: context, pipe: pipe)
             
             guard let edge = matchEdge(id: node.id, context: context),
-                  let nextNode = self.nodes[edge.to] else {
+                  let nextNode = self.nodes[edge.to]
+            else {
                 break
             }
             
             if let variable = try await node.wait(pipe) {
-                let encoder = AnyEncoder()
-                if let result = try encoder.encode(variable) {
-                    context.update(keyPath: [.init(node.id), DataKeyPath.NodeRunResultKey], value: result)
-                }
+                try node.update(&context, value: variable)
             }
             
             node = nextNode
@@ -216,7 +215,7 @@ extension Workflow {
     public func matchEdge(id: Node.ID, context: Context) -> Edge? {
         let edges = flows[id]
         return edges?.first {
-            $0.condition.eval(context.filter(keys: nil).mapKeysAsString())
+            $0.condition?.eval(context.filter(keys: nil)) ?? true
         }
     }
 }

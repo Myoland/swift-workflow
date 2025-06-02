@@ -30,17 +30,11 @@ public struct StartNode: Node {
 
 extension StartNode {
 
-    public static func initialContext(_ context: inout Context, with input: [DataKeyPath: FlowData]) throws {
-        for (key, value) in input {
-            context.update(key: key, value: value)
-        }
-    }
-
-    public func run(context: inout Context) async throws -> OutputPipe {
+    public func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
         try verify(data: context.filter(keys: [], as: FlowData.self))
         return .none
     }
-
+    
     enum InitVerifyErr: Error, Hashable {
         case inputDataNotFound(key: String)
         case inputDataTypeMissMatch(key: String)
@@ -55,15 +49,15 @@ extension StartNode {
 
     public static func verify(
         data: [DataKeyPath: FlowData],
-        decls: [Context.Key: FlowData.TypeDecl]
+        decls: [DataKeyPath: FlowData.TypeDecl]
     ) throws {
         for (key, decl) in decls {
             guard let data = data[key] else {
-                throw InitVerifyErr.inputDataNotFound(key: key.rawValue)
+                throw InitVerifyErr.inputDataNotFound(key: key)
             }
 
             guard data.decl == decl else {
-                throw InitVerifyErr.inputDataTypeMissMatch(key: key.rawValue)
+                throw InitVerifyErr.inputDataTypeMissMatch(key: key)
             }
         }
     }

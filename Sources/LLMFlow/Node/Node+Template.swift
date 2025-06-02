@@ -7,29 +7,29 @@
 
 import Jinja
 
-struct Template: Codable, ExpressibleByStringLiteral, Hashable {
+public struct Template: Codable, ExpressibleByStringLiteral, Hashable, Sendable {
     let content: String
     // TODO: validate input
 
-    init(stringLiteral value: String) {
+    public init(stringLiteral value: String) {
         self.content = value
     }
 
-    init(content: String) {
+    public init(content: String) {
         self.content = content
     }
 
-    init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         self.content = try container.decode(String.self)
     }
 
-    func encode(to encoder: any Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(content)
     }
 
-    func toJinja() throws -> Jinja.Template {
+    public func toJinja() throws -> Jinja.Template {
         try Jinja.Template(content)
     }
 
@@ -57,7 +57,7 @@ struct TemplateNode: Node {
 
 extension TemplateNode {
     func run(context: inout Context) async throws -> OutputPipe {
-        let result = try template.render(context.filter(keys: nil).mapKeysAsString())
+        let result = try template.render(context.filter(keys: nil))
 
         return .block(result)
     }

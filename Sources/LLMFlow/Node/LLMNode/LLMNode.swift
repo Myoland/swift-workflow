@@ -17,7 +17,7 @@ import LazyKit
 enum LLMProvider: Hashable, Codable {
     case OpenAI(OpenAIConfiguration)
     case OpenAICompatible(OpenAICompatibleConfiguration)
-    case AwsBedrock
+    // case AwsBedrock
     case Gemini
     case Dify(DifyConfiguration)
 }
@@ -47,13 +47,13 @@ struct LLMNode: Node {
 
     let modelName: String
 
-    let request: [DataKeyPath: FlowData]
+    let request: ModelDecl
 
     init(
         id: ID,
         name: String?,
         modelName: String,
-        request: [DataKeyPath: FlowData]
+        request: ModelDecl
     ) {
         self.id = id
         self.name = name
@@ -77,8 +77,7 @@ extension LLMNode {
         case .OpenAI(let configuration):
             let client = OpenAIClient(httpClient: client, configuration: configuration)
             
-            let keyes = request.compactMapValuesAsString()
-            let values = context.filter(keys: nil).convertKeys { keyes[$0] } // mapKeys(keys: keyes)  // TODO: allow extract values by CodingKeys.
+            let values = try request.render(context.filter(keys: nil))
             
             let decoder = AnyDecoder()
             let request: OpenAIModelReponseRequest = try decoder.decode(from: values)
@@ -118,8 +117,7 @@ extension LLMNode {
             let client = OpenAICompatibleClient(httpClient: client, configuration: configuration)
             
             let decoder = AnyDecoder()
-            let keyes = request.compactMapValuesAsString()
-            let values = context.filter(keys: nil).convertKeys { keyes[$0] } // TODO: allow extract values by CodingKeys.
+            let values = try request.render(context.filter(keys: nil))
             let request: OpenAIChatCompletionRequest = try decoder.decode(from: values)
             let response = try await client.send(request: request)
             
@@ -154,15 +152,12 @@ extension LLMNode {
             }
             
             return .stream(.init(stream))
-        case .AwsBedrock:
-            todo("Support AwsBedrock")
         case .Gemini:
             todo("Support Gemini")
         case .Dify(let difyConfiguration):
             
             let decoder = AnyDecoder()
-            let keyes = request.compactMapValuesAsString()
-            let values = context.filter(keys: nil).convertKeys { keyes[$0] }  // TODO: allow extract values by CodingKeys.
+            let values = try request.render(context.filter(keys: nil))
             let body: DifyBody = try decoder.decode(from: values)
             
             let difyClient = DifyClient(httpClient: client, cfg: difyConfiguration)

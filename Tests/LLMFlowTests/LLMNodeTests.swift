@@ -51,16 +51,16 @@ func testLLMNodeRun() async throws {
         "dify",
         .Dify(.init(apiKey: Dotenv["DIFY_API_KEY"]!.stringValue, apiURL: "https://api.dify.ai/v1")))
     var context = Context(locater: DummySimpleLocater(client, solver))
-    context.update(key: "user_id", value: "Fake")
-    context.update(key: "query", value: "ping")
+    context["user_id"] = "Fake"
+    context["query"] = "ping"
 
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "dify",
-                       request: [
+                       request: .init(body: [
                             "user": "user_id",
                             "query": "query"
-                       ])
+                       ]))
     do {
         let pipe = try await node.run(context: &context)
         guard case let .stream(stream) = pipe else {
@@ -93,44 +93,34 @@ func testLLMNodeOpenAIRun() async throws {
         .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
     )
     var context = Context(locater: DummySimpleLocater(client, solver))
-    context.update(key: "model", value: "gpt-4o-mini")
-    context.update(key: "stream", value: true)
-    context.update(key: "input", value: [
-        [
-            "role": "system",
-            "content": [
-                [
-                    "type": "input_text",
-                    "text": """
-                        be an echo server.
-                        what I send to you, you send back.
-
-                        the exceptions:
-                        1. send "ping", back "pong"
-                        2. send "ding", back "dang"
-                    """
-                ]
-            ]
-        ],
-        [
-            "role": "user",
-            "content": [
-                [
-                    "type": "input_text",
-                    "text": "ping"
-                ]
-            ]
-        ]
-    ])
 
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "openai",
-                       request: [
-                           "input": "input",
-                           "model": "model",
-                           "stream": "stream"
-                       ])
+                       request: .init(body: [
+                           "model": "gpt-4o-mini",
+                           "stream": true,
+                           "input": [[
+                               "role": "system",
+                               "content": [[
+                                    "type": "input_text",
+                                    "text": """
+                                        be an echo server.
+                                        what I send to you, you send back.
+                                    
+                                        the exceptions:
+                                        1. send "ping", back "pong"
+                                        2. send "ding", back "dang"
+                                    """
+                               ]]
+                           ],[
+                               "role": "user",
+                               "content": [[
+                                    "type": "input_text",
+                                    "text": "ping"
+                               ]]
+                           ]],
+                       ]))
     do {
         let pipe = try await node.run(context: &context)
         guard case let .stream(stream) = pipe else {
@@ -169,9 +159,9 @@ func testLLMNodeOpenAICompatibleRun() async throws {
         .OpenAICompatible(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
     )
     var context = Context(locater: DummySimpleLocater(client, solver))
-    context.update(key: "model", value: "gpt-4o-mini")
-    context.update(key: "stream", value: true)
-    context.update(key: "messages", value: [
+    context["model"] = "gpt-4o-mini"
+    context["stream"] = true
+    context["messages"] = [
         [
             "role": "system",
             "content": """
@@ -187,16 +177,16 @@ func testLLMNodeOpenAICompatibleRun() async throws {
             "role": "user",
             "content": "ping"
         ]
-    ])
+    ]
     
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "openai",
-                       request: [
+                       request: .init(body: [
                         "messages": "messages",
                         "model": "model",
                         "stream": "stream"
-                       ])
+                       ]))
     do {
         let pipe = try await node.run(context: &context)
         

@@ -38,8 +38,6 @@ extension Node {
         if case .none = pipe {
             return nil
         }
-
-        
         
         if case let .block(value) = pipe {
             return value
@@ -55,7 +53,14 @@ extension Node {
         // TODO: Maybe allow config the max size of the buffer
         let buffer = try await stream.collect(upTo: 1024 * 1024, using: .init())
         let string = String(buffer: buffer)
-        return buffer
+        return string
+    }
+    
+    public func update(_ context: inout Context, value: Context.Value) throws {
+        let encoder = AnyEncoder()
+        if let result = try encoder.encode(value) {
+            context[path: id, DataKeyPath.NodeRunResultKey] = result
+        }
     }
 }
 

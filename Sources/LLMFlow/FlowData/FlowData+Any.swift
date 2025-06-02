@@ -90,11 +90,3 @@ extension Dictionary {
         }
     }
 }
-
-extension Dictionary where Key == DataKeyPath {
-    func mapKeysAsString() -> Dictionary<String, Value> {
-        self.reduce(into: .init()) { (partialResult, pair) -> () in
-            partialResult.updateValue(pair.value, forKey: pair.key.rawValue)
-        }
-    }
-}

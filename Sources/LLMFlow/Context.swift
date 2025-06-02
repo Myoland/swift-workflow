@@ -16,6 +16,9 @@ public protocol StoreLocator: AnyStorageValue {
     func resolve<K, T>(for key: K.Type, as type: T.Type) -> T?
 }
 
+public typealias DataKeyPaths = [DataKeyPath]
+public typealias DataKeyPath = String
+
 public struct Context: Sendable {
     public typealias Key = DataKeyPath
     public typealias Value = Any
@@ -35,35 +38,49 @@ public struct Context: Sendable {
 }
 
 extension Context {
-    public func get(key: DataKeyPath) -> Value? {
-        store.withLock { store in
-            store[key]
-        }
-    }
-    
-    public func get(keyPath: DataKeyPaths) -> Value? {
-        store.withLock { store in
-            var value: Value?
-            for key in keyPath {
-                value = store[key]
+    subscript(key: Key?) -> Value? {
+        get {
+            store.withLock { store in
+                store[safe: key] 
             }
-            return value
         }
-    }
-    
-    public func get<T>(key: Key, as type: T.Type) -> T? {
-        store.withLock { store in
-            store[key] as? T
-        }
-    }
-    
-    public func get<T>(keyPath: DataKeyPaths, as type: T.Type) -> Value? {
-        store.withLock { store in
-            var value: Value?
-            for key in keyPath {
-                value = store[key]
+        
+        set {
+            store.withLock { store in
+                store[safe: key] = newValue
             }
-            return value as? T
+        }
+    }
+    
+    subscript<T>(safe key: Key?, as type: T.Type = T.self) -> T? {
+        get {
+            store.withLock { store in
+                store[safe: key] as? T
+            }
+        }
+    }
+    
+    subscript(path keys: Key...) -> Value? {
+        get {
+            self[path: keys]
+        }
+        
+        set {
+            self[path: keys] = newValue
+        }
+    }
+    
+    subscript(path keys: [Key]?) -> Value? {
+        get {
+            store.withLock { store in
+                store[path: keys]
+            }
+        }
+        
+        set {
+            store.withLock { store in
+                store[path: keys] = newValue
+            }
         }
     }
 }
@@ -90,26 +107,78 @@ extension Context {
     }
 }
 
-extension Context {
-    public mutating func update(key: Key, value: Value) {
-        store.withLock { store in
-            store[key] = value
+
+
+
+
+extension Dictionary where Value == Any, Key == String {
+    subscript(safe key: Key?) -> Value? {
+        get {
+            guard let key else { return nil }
+            return self[key]
+        }
+        
+        set {
+            guard let key else { return }
+            self[key] = newValue
         }
     }
     
-    public mutating func update(keyPath: DataKeyPaths, value: Value) {
-        var keyPath = keyPath
-        guard let lastKey = keyPath.popLast() else {
-            return
+    subscript(path keys: Key...) -> Value? {
+        get {
+            self[path: keys]
         }
         
-        store.withLock { store in
-            var value: Value?
-            for key in keyPath {
-                value = store[key]
+        set {
+            self[path: keys] = newValue
+        }
+    }
+    
+    subscript(path keys: [Key]?) -> Value? {
+        get {
+            guard let keys else { return nil }
+            
+            let (key, rest) = keys.separateFirst()
+            
+            guard let value = self[safe: key] else {
+                return nil
             }
             
-            store[lastKey] = value
+            guard let rest, !rest.isEmpty else {
+                return value
+            }
+            
+            guard let value = value as? [Key: Any] else {
+                return nil
+            }
+            
+            return value[path: rest]
         }
+        
+        set {
+            guard let keys else { return }
+            // guard let newValue else { return }
+            
+            let (key, rest) = keys.separateFirst()
+            
+            guard let rest, !rest.isEmpty else {
+                self[safe: key] = newValue
+                return
+            }
+            
+            guard var value = self[safe: key] as? [Key: Any] else {
+                return
+            }
+            
+            value[path: rest] = newValue
+            
+            self[safe: key] = value
+        }
+    }
+}
+
+extension Collection {
+    func separateFirst() -> (Element?, [Element]?) {
+        (self.first, Array(self.dropFirst()))
     }
 }
