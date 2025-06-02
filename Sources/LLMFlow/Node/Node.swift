@@ -25,6 +25,8 @@ public protocol Node: Sendable, Hashable, Codable {
     func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe
     
     func wait(_ pipe: OutputPipe) async throws -> Context.Value?
+    
+    func update(_ context: inout Context, value: Context.Value) throws
 }
 
 extension Node {
@@ -44,13 +46,7 @@ extension Node {
             return nil
         }
 
-        // NOTICE: THE FOLLOWING CODE IS JUST FOR EXAMPLE.
-        // IMPLEMENT IT IN NODE ITSELF.
-
-        // TODO: Maybe allow config the max size of the buffer
-        let buffer = try await stream.collect(upTo: 1024 * 1024, using: .init())
-        let string = String(buffer: buffer)
-        return string
+        todo("Throw error. stream should wait on its self.")
     }
     
     public func update(_ context: inout Context, value: Context.Value) throws {

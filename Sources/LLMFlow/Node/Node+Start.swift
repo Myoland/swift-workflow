@@ -31,8 +31,23 @@ public struct StartNode: Node {
 extension StartNode {
 
     public func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
-        try verify(data: context.filter(keys: [], as: FlowData.self))
-        return .none
+        guard case .block(let value) = pipe,
+              let value = value as? [NodeVariableKey: FlowData]
+        else {
+            return .none
+        }
+        
+        try verify(data: value)
+        return .block(value)
+    }
+    
+    public func update(_ context: inout Context, value: Context.Value) throws {
+        guard let value = value as? [NodeVariableKey: FlowData] else {
+            return
+        }
+        
+        context[path: "inputs"] = value.asAny
+        
     }
     
     enum InitVerifyErr: Error, Hashable {

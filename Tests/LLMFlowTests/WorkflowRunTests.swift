@@ -10,8 +10,7 @@ import TestKit
 
 @Test("testWorkflowRun")
 func testWorkflowRun() async throws {
-
-
+    
     try Dotenv.make()
 
     let client = HTTPClient()
@@ -28,7 +27,7 @@ func testWorkflowRun() async throws {
         name: nil,
         modelName: "test_openai",
         request: .init(body: [
-            "$model": ["params", "model"],
+            "$model": ["inputs", "model"],
             "stream": true,
             "input": [[
                 "role": "system",
@@ -54,7 +53,7 @@ func testWorkflowRun() async throws {
                 "role": "user",
                 "content": [[
                     "type": "input_text",
-                    "$text": ["params", "message"]
+                    "$text": ["inputs", "message"]
                 ]]
             ]],
         ]))
@@ -62,11 +61,6 @@ func testWorkflowRun() async throws {
     let endNode = EndNode(id: UUID().uuidString, name: nil)
 
     var context = Context(locater: DummySimpleLocater(client, solver))
-    context["params"] = [
-        "name": "John",
-        "model": "gpt-4o-mini",
-        "message": "ping"
-    ]
 
     let workflow = Workflow(nodes: [
         startNode.id : startNode,
@@ -79,7 +73,13 @@ func testWorkflowRun() async throws {
     
     do {
         
-        let output = try await workflow.run(context: &context)
+        let inputs: [String: FlowData] = [
+            "name": "John",
+            "model": "gpt-4o-mini",
+            "message": "ping"
+        ]
+        
+        let output = try await workflow.run(context: &context, pipe: .block(inputs))
         
         guard case let .stream(stream) = output else {
             Issue.record("Shuld have a stream")
@@ -88,15 +88,12 @@ func testWorkflowRun() async throws {
         }
         
         let decoder = JSONDecoder()
-        let encoder = AnyEncoder()
-        
         let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
         
         for try await event in interpreter {
             if let data = event.data.data(using: .utf8) {
                 let response = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
-                let encoded = try encoder.encode(response)
-                print(encoded)
+                print(response)
             }
         }
     } catch {

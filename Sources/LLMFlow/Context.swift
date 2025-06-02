@@ -1,6 +1,5 @@
 import LazyKit
 
-struct Schema: Codable {}
 
 extension Context {
     struct State: Sendable {

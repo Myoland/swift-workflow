@@ -159,12 +159,18 @@ func testLLMNodeOpenAICompatibleRun() async throws {
         .OpenAICompatible(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
     )
     var context = Context(locater: DummySimpleLocater(client, solver))
-    context["model"] = "gpt-4o-mini"
-    context["stream"] = true
-    context["messages"] = [
-        [
-            "role": "system",
-            "content": """
+    
+    let node = LLMNode(
+        id: "ID",
+        name: nil,
+        modelName: "openai",
+        request: .init(body: [
+            "model": "gpt-4o-mini",
+            "stream": true,
+            "messages": [
+                [
+                    "role": "system",
+                    "content": """
                 be an echo server.
                 what I send to you, you send back.
             
@@ -172,21 +178,13 @@ func testLLMNodeOpenAICompatibleRun() async throws {
                 1. send "ping", back "pong"
                 2. send "ding", back "dang"
             """
-        ],
-        [
-            "role": "user",
-            "content": "ping"
-        ]
-    ]
-    
-    let node = LLMNode(id: "ID",
-                       name: nil,
-                       modelName: "openai",
-                       request: .init(body: [
-                        "messages": "messages",
-                        "model": "model",
-                        "stream": "stream"
-                       ]))
+                ],
+                [
+                    "role": "user",
+                    "content": "ping"
+                ]
+            ],
+        ]))
     do {
         let pipe = try await node.run(context: context, pipe: .none)
         
