@@ -64,7 +64,7 @@ struct LLMNode: Node {
 }
 
 extension LLMNode {
-    func run(context: inout Context) async throws -> OutputPipe {
+    func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
         guard let locator = context.locator,
             let client = locator.resolve(shared: HttpClientAbstract.self),
             let llmSolver = locator.resolve(shared: LLMProviderSolver.self),

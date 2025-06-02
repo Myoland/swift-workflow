@@ -28,9 +28,6 @@ public protocol Node: Sendable, Hashable, Codable {
 }
 
 extension Node {
-    public func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
-        .none
-    }
 
     // force convert the pipe to blocked value
     // please check if it should be blocked.

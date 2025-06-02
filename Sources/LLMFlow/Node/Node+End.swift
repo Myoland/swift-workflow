@@ -16,4 +16,8 @@ struct EndNode: Node {
         case name
         case type
     }
+    
+    func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
+        return pipe
+    }
 }

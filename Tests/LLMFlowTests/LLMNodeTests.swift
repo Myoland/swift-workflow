@@ -62,7 +62,7 @@ func testLLMNodeRun() async throws {
                             "query": "query"
                        ]))
     do {
-        let pipe = try await node.run(context: &context)
+        let pipe = try await node.run(context: context, pipe: .none)
         guard case let .stream(stream) = pipe else {
             Issue.record("Shuld have a stream")
             try await client.shutdown()
@@ -122,7 +122,7 @@ func testLLMNodeOpenAIRun() async throws {
                            ]],
                        ]))
     do {
-        let pipe = try await node.run(context: &context)
+        let pipe = try await node.run(context: context, pipe: .none)
         guard case let .stream(stream) = pipe else {
             Issue.record("Shuld have a stream")
             try await client.shutdown()
@@ -188,7 +188,7 @@ func testLLMNodeOpenAICompatibleRun() async throws {
                         "stream": "stream"
                        ]))
     do {
-        let pipe = try await node.run(context: &context)
+        let pipe = try await node.run(context: context, pipe: .none)
         
         guard case let .stream(stream) = pipe else {
             Issue.record("Shuld have a stream")

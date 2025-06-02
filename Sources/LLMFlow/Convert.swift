@@ -68,15 +68,23 @@ extension ModelDeclKey: Equatable {
 extension ModelDeclKey: Hashable {}
 
 public struct ModelDecl: Codable, Sendable, Hashable {
-    let body: [ModelDeclKey: FlowData]
+    let body: [String: FlowData]
 
     public func render(_ values: [String: Any]) throws -> [String: Any] {
+        return try body.render(values)
+    }
+}
+
+extension Dictionary where Key == String, Value == FlowData {
+    fileprivate func render(_ values: [String: Any]) throws -> [String: Any] {
         var result: [String: Any] = [:]
         
-        for (key, value) in body {
-            switch key {
+        for (key, value) in self {
+            let modelDeclKey = ModelDeclKey(key)
+            
+            switch modelDeclKey {
             case .constant(let contant):
-                result[contant] = value.asAny
+                result[contant] = try value.render(values)
             case .ref(let ref):
                 let value = value.asAny
                 
@@ -97,3 +105,29 @@ public struct ModelDecl: Codable, Sendable, Hashable {
         return result
     }
 }
+
+extension FlowData {
+    fileprivate func render(_ values: [String: Any]) throws -> Any {
+        switch self {
+        case .single(let single):
+            return single.asAny
+        case .list(let list):
+            return try list.render(values)
+        case .map(let map):
+            return try map.render(values)
+        }
+    }
+}
+
+extension FlowData.Map {
+    fileprivate func render(_ values: [String: Any]) throws -> [String: Any] {
+        return try elememts.render(values)
+    }
+}
+
+extension FlowData.List {
+    fileprivate func render(_ values: [String: Any]) throws -> [Any] {
+        return try self.elements.map { try $0.render(values) }
+    }
+}
+

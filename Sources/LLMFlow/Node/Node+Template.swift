@@ -56,9 +56,9 @@ struct TemplateNode: Node {
 }
 
 extension TemplateNode {
-    func run(context: inout Context) async throws -> OutputPipe {
+    func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
         let result = try template.render(context.filter(keys: nil))
-
+        
         return .block(result)
     }
 }
