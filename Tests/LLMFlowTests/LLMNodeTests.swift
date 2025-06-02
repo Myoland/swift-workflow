@@ -57,7 +57,7 @@ func testLLMNodeRun() async throws {
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "dify",
-                       request: .init(body: [
+                       request: .init([
                             "user": "user_id",
                             "query": "query"
                        ]))
@@ -97,7 +97,7 @@ func testLLMNodeOpenAIRun() async throws {
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "openai",
-                       request: .init(body: [
+                       request: .init([
                            "model": "gpt-4o-mini",
                            "stream": true,
                            "input": [[
@@ -164,7 +164,7 @@ func testLLMNodeOpenAICompatibleRun() async throws {
         id: "ID",
         name: nil,
         modelName: "openai",
-        request: .init(body: [
+        request: .init([
             "model": "gpt-4o-mini",
             "stream": true,
             "messages": [

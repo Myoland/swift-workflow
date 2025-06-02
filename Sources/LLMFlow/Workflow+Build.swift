@@ -12,7 +12,11 @@ extension Workflow {
         
         let startNode = try config.requireStartNode()
         
-        return .init(nodes: [:], flows: [:], startNodeID: startNode.id)
+        let nodes: [String: any Node] = config.nodes.keyed { $0.id }
+        let flows: [Node.ID: Edges] = config.edges.grouped { $0.from }
+        
+        
+        return .init(nodes: nodes, flows: flows, startNodeID: startNode.id)
     }
 }
 

@@ -73,6 +73,21 @@ public struct ModelDecl: Codable, Sendable, Hashable {
     public func render(_ values: [String: Any]) throws -> [String: Any] {
         return try body.render(values)
     }
+    
+    public init(_ body: [String: FlowData]) {
+        self.body = body
+    }
+    
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self.body = try container.decode([String : FlowData].self)
+    }
+    
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(self.body)
+    }
+    
 }
 
 extension Dictionary where Key == String, Value == FlowData {

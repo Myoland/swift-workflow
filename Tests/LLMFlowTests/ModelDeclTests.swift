@@ -14,7 +14,7 @@ import TestKit
 
 @Test("testModelDecl")
 func testModelDecl() async throws {
-    let decl = ModelDecl(body: [
+    let decl = ModelDecl([
         "$model": ["params", "model"],
         "stream": true,
         "input": [[
