@@ -18,10 +18,10 @@ func testWorkflowRun() async throws {
     
     let solver = DummyLLMProviderSolver(
         "test_openai",
-        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
+        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
     )
 
-    let startNode = StartNode(id: UUID().uuidString, name: nil, input: [:])
+    let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
 
     let llmNode  = LLMNode(
         id: UUID().uuidString,
@@ -48,7 +48,7 @@ func testWorkflowRun() async throws {
                 "role": "system",
                 "content": [[
                     "type": "input_text",
-                    "#  ": "you are talking to {{inputs.name}}"
+                    "#text": "you are talking to {{inputs.name}}"
                 ]]
             ], [
                 "role": "user",
@@ -88,14 +88,8 @@ func testWorkflowRun() async throws {
             return
         }
         
-        let decoder = JSONDecoder()
-        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-        
-        for try await event in interpreter {
-            if let data = event.data.data(using: .utf8) {
-                let response = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
-                print(response)
-            }
+        for try await event in stream {
+            print("[*] \(event)")
         }
     } catch {
         Issue.record("Unexpected \(error)")
@@ -110,7 +104,7 @@ func testWorkflowRunWithConfig() async throws {
     nodes: 
     - id: start_id
       type: START
-      input:
+      inputs:
         message: String
         name: String
         model: String
@@ -160,7 +154,7 @@ func testWorkflowRunWithConfig() async throws {
     
     let solver = DummyLLMProviderSolver(
         "test_openai",
-        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
+        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
     )
     
     var context = Context(locater: DummySimpleLocater(client, solver))
@@ -180,15 +174,9 @@ func testWorkflowRunWithConfig() async throws {
             try await client.shutdown()
             return
         }
-        
-        let decoder = JSONDecoder()
-        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-        
-        for try await event in interpreter {
-            if let data = event.data.data(using: .utf8) {
-                let response = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
-                print(response)
-            }
+
+        for try await event in stream {
+            print("[*] \(event)")
         }
     } catch {
         Issue.record("Unexpected \(error)")

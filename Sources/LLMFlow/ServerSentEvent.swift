@@ -122,7 +122,7 @@ extension ServerSentEventsInterpreter {
     }
 }
 
-public class AsyncServerSentEventsInterpreter: AsyncSequence {
+final public class AsyncServerSentEventsInterpreter: AsyncSequence, Sendable {
 
     let stream: AnyAsyncSequence<Data>
     public init(stream: AnyAsyncSequence<Data>) {

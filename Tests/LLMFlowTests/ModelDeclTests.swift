@@ -46,7 +46,7 @@ func testModelDecl() async throws {
         ]],
     ])
     
-    let store: [String: Any] = [
+    let store: [String: AnySendable] = [
         "sender": "swift",
         "params": [
             "name": "John",

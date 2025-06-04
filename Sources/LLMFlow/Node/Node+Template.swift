@@ -44,14 +44,12 @@ struct TemplateNode: Node {
     let type: NodeType
 
     let template: Template
-    let output: NodeVariableKey
 
-    init(id: ID, name: String?, template: Template, output: NodeVariableKey) {
+    init(id: ID, name: String?, template: Template) {
         self.id = id
         self.name = name
         self.type = .TEMPLATE
         self.template = template
-        self.output = output
     }
 }
 

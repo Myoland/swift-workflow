@@ -7,12 +7,12 @@
 
 import Foundation
 
-public struct OpenAIModelReponseIncompleteDetails: Codable {
+public struct OpenAIModelReponseIncompleteDetails: Codable, Sendable {
     /// The reason why the response is incomplete.
     public let reason: String
 }
 
-public struct OpenAIModelReponseError: Codable {
+public struct OpenAIModelReponseError: Codable, Sendable {
     /// The error code for the response.
     let code: String
 
@@ -20,25 +20,25 @@ public struct OpenAIModelReponseError: Codable {
     let message: String
 }
 
-public enum OpenAIModelReponseStatus: String, Codable {
+public enum OpenAIModelReponseStatus: String, Codable, Sendable {
     case completed
     case failed
     case in_progress
     case incomplete
 }
 
-public struct OpenAIModelReponseUsageInputTokenDetail: Codable {
+public struct OpenAIModelReponseUsageInputTokenDetail: Codable, Sendable {
     /// The number of tokens that were retrieved from the cache.
     /// More on (prompt caching)[https://platform.openai.com/docs/guides/prompt-caching].
     public let cached_tokens: Int
 }
 
-public struct OpenAIModelReponseUsageOutputTokenDetail: Codable {
+public struct OpenAIModelReponseUsageOutputTokenDetail: Codable, Sendable {
     /// The number of reasoning tokens.
     public let reasoning_tokens: Int
 }
 
-public struct OpenAIModelReponseUsage: Codable {
+public struct OpenAIModelReponseUsage: Codable, Sendable {
     /// The number of input tokens.
     public let input_tokens: Int
     /// A detailed breakdown of the input tokens.
@@ -51,7 +51,7 @@ public struct OpenAIModelReponseUsage: Codable {
     public let total_tokens: Int
 }
 
-public struct OpenAIModelReponse: Codable {
+public struct OpenAIModelReponse: Codable, Sendable {
 
     /// Whether to run the model response in the background.
     /// [Learn more](https://platform.openai.com/docs/guides/background).
@@ -203,7 +203,7 @@ public struct OpenAIModelReponse: Codable {
 
 
 
-struct OpenAIModelStreamResponseCreated: Codable {
+struct OpenAIModelStreamResponseCreated: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_created
     let sequence_number: Int
     let response: OpenAIModelReponse
@@ -215,7 +215,7 @@ struct OpenAIModelStreamResponseCreated: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseInProgess: Codable {
+struct OpenAIModelStreamResponseInProgess: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_in_progress
     let sequence_number: Int
     let response: OpenAIModelReponse
@@ -228,7 +228,7 @@ struct OpenAIModelStreamResponseInProgess: Codable {
 }
 
 
-struct OpenAIModelStreamResponseCompleted: Codable {
+struct OpenAIModelStreamResponseCompleted: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_completed
     let sequence_number: Int
     let response: OpenAIModelReponse
@@ -240,7 +240,7 @@ struct OpenAIModelStreamResponseCompleted: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseFailed: Codable {
+struct OpenAIModelStreamResponseFailed: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_failed
     let sequence_number: Int
     let response: OpenAIModelReponse
@@ -252,7 +252,7 @@ struct OpenAIModelStreamResponseFailed: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseInCompleted: Codable {
+struct OpenAIModelStreamResponseInCompleted: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_incomplete
     let sequence_number: Int
     let response: OpenAIModelReponse
@@ -264,7 +264,7 @@ struct OpenAIModelStreamResponseInCompleted: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseOutputItemAdd: Codable {
+struct OpenAIModelStreamResponseOutputItemAdd: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_output_item_added
     let sequence_number: Int
     let output_index: Int
@@ -278,7 +278,7 @@ struct OpenAIModelStreamResponseOutputItemAdd: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseOutputItemDone: Codable {
+struct OpenAIModelStreamResponseOutputItemDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_output_item_done
     let sequence_number: Int
     let output_index: Int
@@ -292,7 +292,7 @@ struct OpenAIModelStreamResponseOutputItemDone: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseContentPartAdded: Codable {
+struct OpenAIModelStreamResponseContentPartAdded: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_content_part_added
     let sequence_number: Int
     let content_index: Int
@@ -310,7 +310,7 @@ struct OpenAIModelStreamResponseContentPartAdded: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseContentPartDone: Codable {
+struct OpenAIModelStreamResponseContentPartDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_content_part_done
     let sequence_number: Int
     let content_index: Int
@@ -328,7 +328,7 @@ struct OpenAIModelStreamResponseContentPartDone: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseOutputTextDelta: Codable {
+struct OpenAIModelStreamResponseOutputTextDelta: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_output_text_delta
     let sequence_number: Int
     let content_index: Int
@@ -346,7 +346,7 @@ struct OpenAIModelStreamResponseOutputTextDelta: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseOutputTextAnnotationDelta: Codable {
+struct OpenAIModelStreamResponseOutputTextAnnotationDelta: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_output_text_annotation_added
     let annotation_index: Int
     let content_index: Int
@@ -366,7 +366,7 @@ struct OpenAIModelStreamResponseOutputTextAnnotationDelta: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseOutputTextDone: Codable {
+struct OpenAIModelStreamResponseOutputTextDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_output_text_done
     let content_index: Int
     let item_id: String
@@ -384,7 +384,7 @@ struct OpenAIModelStreamResponseOutputTextDone: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseRefusalDelta: Codable {
+struct OpenAIModelStreamResponseRefusalDelta: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_refusal_delta
     let content_index: Int
     let item_id: String
@@ -402,7 +402,7 @@ struct OpenAIModelStreamResponseRefusalDelta: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseRefusalDone: Codable {
+struct OpenAIModelStreamResponseRefusalDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_refusal_done
     let content_index: Int
     let item_id: String
@@ -420,7 +420,7 @@ struct OpenAIModelStreamResponseRefusalDone: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseFunctionCallArgumentsDelta: Codable {
+struct OpenAIModelStreamResponseFunctionCallArgumentsDelta: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_function_call_arguments_delta
     let content_index: Int
     let item_id: String
@@ -438,7 +438,7 @@ struct OpenAIModelStreamResponseFunctionCallArgumentsDelta: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseFunctionCallArgumentsDone: Codable {
+struct OpenAIModelStreamResponseFunctionCallArgumentsDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_function_call_arguments_done
     let item_id: String
     let output_index: Int
@@ -454,7 +454,7 @@ struct OpenAIModelStreamResponseFunctionCallArgumentsDone: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseFileSearchCallInProgress: Codable {
+struct OpenAIModelStreamResponseFileSearchCallInProgress: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_file_search_call_in_progress
     let output_index: Int
     let item_id: String
@@ -468,7 +468,7 @@ struct OpenAIModelStreamResponseFileSearchCallInProgress: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseFileSearchCallSearching: Codable {
+struct OpenAIModelStreamResponseFileSearchCallSearching: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_file_search_call_searching
     let output_index: Int
     let item_id: String
@@ -482,7 +482,7 @@ struct OpenAIModelStreamResponseFileSearchCallSearching: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseFileSearchCallCompleted: Codable {
+struct OpenAIModelStreamResponseFileSearchCallCompleted: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_file_search_call_completed
     let output_index: Int
     let item_id: String
@@ -496,7 +496,7 @@ struct OpenAIModelStreamResponseFileSearchCallCompleted: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseWebSearchCallInProgress: Codable {
+struct OpenAIModelStreamResponseWebSearchCallInProgress: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_web_search_call_in_progress
     let output_index: Int
     let item_id: String
@@ -510,7 +510,7 @@ struct OpenAIModelStreamResponseWebSearchCallInProgress: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseWebSearchCallSearching: Codable {
+struct OpenAIModelStreamResponseWebSearchCallSearching: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_web_search_call_searching
     let output_index: Int
     let item_id: String
@@ -524,7 +524,7 @@ struct OpenAIModelStreamResponseWebSearchCallSearching: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseWebSearchCallCompleted: Codable {
+struct OpenAIModelStreamResponseWebSearchCallCompleted: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_web_search_call_completed
     let output_index: Int
     let item_id: String
@@ -538,7 +538,7 @@ struct OpenAIModelStreamResponseWebSearchCallCompleted: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseReasoningSummaryPartAdded: Codable {
+struct OpenAIModelStreamResponseReasoningSummaryPartAdded: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_summary_part_added
     let output_index: Int
     let item_id: String
@@ -556,7 +556,7 @@ struct OpenAIModelStreamResponseReasoningSummaryPartAdded: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseReasoningSummaryPartDone: Codable {
+struct OpenAIModelStreamResponseReasoningSummaryPartDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_summary_part_done
     let output_index: Int
     let item_id: String
@@ -574,7 +574,7 @@ struct OpenAIModelStreamResponseReasoningSummaryPartDone: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseReasoningSummaryTextDelta: Codable {
+struct OpenAIModelStreamResponseReasoningSummaryTextDelta: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_summary_text_delta
     let output_index: Int
     let item_id: String
@@ -592,7 +592,7 @@ struct OpenAIModelStreamResponseReasoningSummaryTextDelta: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseReasoningSummaryTextDone: Codable {
+struct OpenAIModelStreamResponseReasoningSummaryTextDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_summary_text_done
     let output_index: Int
     let item_id: String
@@ -610,7 +610,7 @@ struct OpenAIModelStreamResponseReasoningSummaryTextDone: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseError: Codable {
+struct OpenAIModelStreamResponseError: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .error
     let code: String?
     let message: String
@@ -624,28 +624,28 @@ struct OpenAIModelStreamResponseError: Codable {
     }
 }
 
-struct OpenAIModelStreamResponseImageGenerationCallCompleted: Codable {
+struct OpenAIModelStreamResponseImageGenerationCallCompleted: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_image_generation_call_completed
     let item_id: String
     let output_index: Int
     let sequence_number: Int
 }
 
-struct OpenAIModelStreamResponseImageGenerationCallGenerating: Codable {
+struct OpenAIModelStreamResponseImageGenerationCallGenerating: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_image_generation_call_generating
     let item_id: String
     let output_index: Int
     let sequence_number: Int
 }
 
-struct OpenAIModelStreamResponseImageGenerationCallInProgress: Codable {
+struct OpenAIModelStreamResponseImageGenerationCallInProgress: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_image_generation_call_in_progress
     let item_id: String
     let output_index: Int
     let sequence_number: Int
 }
 
-struct OpenAIModelStreamResponseImageGenerationCallPartialImage: Codable {
+struct OpenAIModelStreamResponseImageGenerationCallPartialImage: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_image_generation_call_partial_image
     let item_id: String
     let output_index: Int
@@ -654,7 +654,7 @@ struct OpenAIModelStreamResponseImageGenerationCallPartialImage: Codable {
     let sequence_number: Int
 }
 
-struct OpenAIModelStreamResponseMCPCallArgumentDelta: Codable {
+struct OpenAIModelStreamResponseMCPCallArgumentDelta: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_mcp_call_argument_delta
     let item_id: String
     let output_index: Int
@@ -662,7 +662,7 @@ struct OpenAIModelStreamResponseMCPCallArgumentDelta: Codable {
     let delta: [String: String]
 }
 
-struct OpenAIModelStreamResponseMCPCallArgumentDone: Codable {
+struct OpenAIModelStreamResponseMCPCallArgumentDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_mcp_call_argument_done
     let item_id: String
     let output_index: Int
@@ -670,17 +670,17 @@ struct OpenAIModelStreamResponseMCPCallArgumentDone: Codable {
     let arguments: [String: String]
 }
 
-struct OpenAIModelStreamResponseMCPCallCompleted: Codable {
+struct OpenAIModelStreamResponseMCPCallCompleted: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_mcp_call_completed
     let sequence_number: Int
 }
 
-struct OpenAIModelStreamResponseMCPCallFailed: Codable {
+struct OpenAIModelStreamResponseMCPCallFailed: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_mcp_call_failed
     let sequence_number: Int
 }
 
-struct OpenAIModelStreamResponseMCPCallInProgress: Codable {
+struct OpenAIModelStreamResponseMCPCallInProgress: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_mcp_call_in_progress
     let output_index: Int
     let item_id: String
@@ -688,29 +688,29 @@ struct OpenAIModelStreamResponseMCPCallInProgress: Codable {
 
 }
 
-struct OpenAIModelStreamResponseMCPListToolsCompleted: Codable {
+struct OpenAIModelStreamResponseMCPListToolsCompleted: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_mcp_list_tools_completed
     let sequence_number: Int
 }
 
-struct OpenAIModelStreamResponseMCPListToolsFailed: Codable {
+struct OpenAIModelStreamResponseMCPListToolsFailed: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_mcp_list_tools_failed
     let sequence_number: Int
 }
 
-struct OpenAIModelStreamResponseMCPListToolsInProgress: Codable {
+struct OpenAIModelStreamResponseMCPListToolsInProgress: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_mcp_list_tools_in_progress
     let sequence_number: Int
 }
 
-struct OpenAIModelStreamResponseOutputTextAnnotationAddedAnnotation: Codable  {
+struct OpenAIModelStreamResponseOutputTextAnnotationAddedAnnotation: Codable, Sendable  {
     let type: String = "text_annotation"
     let text: String
     let start: Int
     let end: Int
 }
 
-struct OpenAIModelStreamResponseOutputTextAnnotationAdded: Codable {
+struct OpenAIModelStreamResponseOutputTextAnnotationAdded: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_output_text_annotation_added
     let sequence_number: Int
     let output_index: Int
@@ -720,17 +720,17 @@ struct OpenAIModelStreamResponseOutputTextAnnotationAdded: Codable {
     let annotation: OpenAIModelStreamResponseOutputTextAnnotationAddedAnnotation
 }
 
-struct OpenAIModelStreamResponseQueued: Codable {
+struct OpenAIModelStreamResponseQueued: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_queued
     let sequence_number: Int
     let response: OpenAIModelReponse
 }
 
-struct OpenAIModelStreamResponseReasoningDeltaText: Codable  {
+struct OpenAIModelStreamResponseReasoningDeltaText: Codable, Sendable  {
     let text: String
 }
 
-struct OpenAIModelStreamResponseReasoningDelta: Codable {
+struct OpenAIModelStreamResponseReasoningDelta: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_delta
     let content_index: Int
     let item_id: String
@@ -739,7 +739,7 @@ struct OpenAIModelStreamResponseReasoningDelta: Codable {
     let delta: OpenAIModelStreamResponseReasoningDeltaText
 }
 
-struct OpenAIModelStreamResponseReasoningDone: Codable {
+struct OpenAIModelStreamResponseReasoningDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_done
     let content_index: Int
     let item_id: String
@@ -748,11 +748,11 @@ struct OpenAIModelStreamResponseReasoningDone: Codable {
     let text: String
 }
 
-struct OpenAIModelStreamResponseReasoningSummaryDeltaText: Codable {
+struct OpenAIModelStreamResponseReasoningSummaryDeltaText: Codable, Sendable {
     let text: String
 }
 
-struct OpenAIModelStreamResponseReasoningSummaryDelta: Codable {
+struct OpenAIModelStreamResponseReasoningSummaryDelta: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_summary_delta
     let output_index: Int
     let item_id: String
@@ -761,7 +761,7 @@ struct OpenAIModelStreamResponseReasoningSummaryDelta: Codable {
     let delta: OpenAIModelStreamResponseReasoningSummaryDeltaText
 }
 
-struct OpenAIModelStreamResponseReasoningSummaryDone: Codable {
+struct OpenAIModelStreamResponseReasoningSummaryDone: Codable, Sendable {
     let type: OpenAIModelStreamResponseType = .response_reasoning_summary_done
     let output_index: Int
     let item_id: String
@@ -770,7 +770,7 @@ struct OpenAIModelStreamResponseReasoningSummaryDone: Codable {
     let text: String
 }
 
-enum OpenAIModelStreamResponse: Codable {
+enum OpenAIModelStreamResponse: Codable, Sendable {
     case error(OpenAIModelStreamResponseError)
     case response_created(OpenAIModelStreamResponseCreated)
     case response_in_progress(OpenAIModelStreamResponseInProgess)

@@ -15,17 +15,17 @@ import TestKit
 @Test("testStoreRead")
 func testStoreRead() async throws {
     do {
-        let store: [String: Any] = ["foo": "bar"]
+        let store: [String: AnySendable] = ["foo": "bar"]
         #expect(store["foo"] as? String == "bar")
     }
     
     do {
-        let store: [String: Any] = ["foo": ["bar": "baz"]]
+        let store: [String: AnySendable] = ["foo": ["bar": "baz"]]
         #expect(store[path: ["foo", "bar"]] as? String == "baz")
     }
     
     do {
-        var store: [String: Any] = ["foo": "bar"]
+        var store: [String: AnySendable] = ["foo": "bar"]
         store["foo"] = "baz"
         
         #expect(store["foo"] as? String != "bar")
@@ -33,14 +33,14 @@ func testStoreRead() async throws {
     }
     
     do {
-        var store: [String: Any] = ["foo": ["bar": "baz"]]
+        var store: [String: AnySendable] = ["foo": ["bar": "baz"]]
         store["foo"] = "value 1"
         
         #expect(store["foo"] as? String == "value 1")
     }
     
     do {
-        var store: [String: Any] = ["foo": ["bar": "baz"]]
+        var store: [String: AnySendable] = ["foo": ["bar": "baz"]]
         store[path: ["foo", "bar"]] = "value 1"
         print(store)
         

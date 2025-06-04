@@ -13,7 +13,7 @@ import Foundation
 public enum OutputPipe {
     case none
     case block(Context.Value)
-    case stream(AnyAsyncSequence<Data>)
+    case stream(AnyAsyncSequence<Context.Value>)
 }
 
 public protocol Node: Sendable, Hashable, Codable {
@@ -52,7 +52,7 @@ extension Node {
     public func update(_ context: inout Context, value: Context.Value) throws {
         let encoder = AnyEncoder()
         if let result = try encoder.encode(value) {
-            context[path: id, DataKeyPath.NodeRunResultKey] = result
+            // context[path: id, DataKeyPath.NodeRunResultKey] = result
         }
     }
 }

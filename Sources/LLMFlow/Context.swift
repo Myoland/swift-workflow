@@ -1,5 +1,7 @@
 import LazyKit
 
+public typealias AnySendable = Any & Sendable
+
 
 extension Context {
     struct State: Sendable {
@@ -20,7 +22,7 @@ public typealias DataKeyPath = String
 
 public struct Context: Sendable {
     public typealias Key = DataKeyPath
-    public typealias Value = Any
+    public typealias Value = AnySendable
     
     public typealias Store = [Key: Value]
     
@@ -39,9 +41,10 @@ public struct Context: Sendable {
 extension Context {
     subscript(key: Key?) -> Value? {
         get {
-            store.withLock { store in
-                store[safe: key] 
+            let a = store.withLock { store in
+                store[safe: key]
             }
+            return a
         }
         
         set {
@@ -108,7 +111,7 @@ extension Context {
 
 
 // [2025/06/02 <Huanan>] TODO: Support Collection
-extension Dictionary where Value == Any, Key == String {
+extension Dictionary where Value == AnySendable, Key == String {
     subscript(safe key: Key?) -> Value? {
         get {
             guard let key else { return nil }
@@ -145,7 +148,7 @@ extension Dictionary where Value == Any, Key == String {
                 return value
             }
             
-            guard let value = value as? [Key: Any] else {
+            guard let value = value as? [Key: Value] else {
                 return nil
             }
             
@@ -163,7 +166,7 @@ extension Dictionary where Value == Any, Key == String {
                 return
             }
             
-            guard var value = self[safe: key] as? [Key: Any] else {
+            guard var value = self[safe: key] as? [Key: Value] else {
                 return
             }
             

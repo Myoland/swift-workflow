@@ -8,7 +8,7 @@
 import Foundation
 
 extension FlowData {
-    public var asAny: Any {
+    public var asAny: Context.Value {
         switch self {
         case .single(let single):
             return single.asAny
@@ -21,7 +21,7 @@ extension FlowData {
 }
 
 extension FlowData.Single {
-    public var asAny: Any {
+    public var asAny: Context.Value {
         switch self {
         case .bool(let value):
             return value
@@ -34,13 +34,13 @@ extension FlowData.Single {
 }
 
 extension FlowData.List {
-    public var asAny: [Any] {
+    public var asAny: [Context.Value] {
         self.elements.map { $0.asAny }
     }
 }
 
 extension FlowData.Map {
-    public var asAny: [String: Any] {
+    public var asAny: [String: Context.Value] {
         self.elememts.mapValues { $0.asAny }
     }
 }
@@ -61,7 +61,7 @@ extension Dictionary where Value == FlowData {
         }
     }
     
-    public var asAny: [Key: Any] {
+    public var asAny: [Key: Context.Value] {
         return self.compactMapValues { $0.asAny }
     }
     

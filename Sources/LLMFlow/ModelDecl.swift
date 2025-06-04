@@ -70,7 +70,7 @@ extension ModelDeclKey: Hashable {}
 public struct ModelDecl: Codable, Sendable, Hashable {
     let body: [String: FlowData]
 
-    public func render(_ values: [String: Any]) throws -> [String: Any] {
+    public func render(_ values: [String: AnySendable]) throws -> [String: Any] {
         return try body.render(values)
     }
     
@@ -91,7 +91,7 @@ public struct ModelDecl: Codable, Sendable, Hashable {
 }
 
 extension Dictionary where Key == String, Value == FlowData {
-    fileprivate func render(_ values: [String: Any]) throws -> [String: Any] {
+    fileprivate func render(_ values: [String: AnySendable]) throws -> [String: Any] {
         var result: [String: Any] = [:]
         
         for (key, value) in self {
@@ -122,7 +122,7 @@ extension Dictionary where Key == String, Value == FlowData {
 }
 
 extension FlowData {
-    fileprivate func render(_ values: [String: Any]) throws -> Any {
+    fileprivate func render(_ values: [String: AnySendable]) throws -> Any {
         switch self {
         case .single(let single):
             return single.asAny
@@ -135,13 +135,13 @@ extension FlowData {
 }
 
 extension FlowData.Map {
-    fileprivate func render(_ values: [String: Any]) throws -> [String: Any] {
+    fileprivate func render(_ values: [String: AnySendable]) throws -> [String: Any] {
         return try elememts.render(values)
     }
 }
 
 extension FlowData.List {
-    fileprivate func render(_ values: [String: Any]) throws -> [Any] {
+    fileprivate func render(_ values: [String: AnySendable]) throws -> [Any] {
         return try self.elements.map { try $0.render(values) }
     }
 }

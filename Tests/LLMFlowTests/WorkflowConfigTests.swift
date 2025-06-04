@@ -8,9 +8,9 @@ func testEncodeConfig() throws {
     let config = Workflow.Config.init(
 //        variables: [:],
         nodes: [
-            StartNode(id: "1", name: "11", input: [:]),
+            StartNode(id: "1", name: "11", inputs: [:]),
             EndNode(id: "2", name: "22"),
-            TemplateNode(id: "3", name: "33", template: "fake template", output: "var 3")
+            TemplateNode(id: "3", name: "33", template: "fake template")
         ],
         edges: []
     )
@@ -24,9 +24,9 @@ func testDecodeConfig() throws {
     let config = Workflow.Config.init(
 //        variables: [:],
         nodes: [
-            StartNode(id: "1", name: "11", input: [:]),
+            StartNode(id: "1", name: "11", inputs: [:]),
             EndNode(id: "2", name: "22"),
-            TemplateNode(id: "3", name: "33", template: "fake template", output: "var 3")
+            TemplateNode(id: "3", name: "33", template: "fake template")
         ],
         edges: []
     )

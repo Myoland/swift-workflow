@@ -5,7 +5,7 @@ import Yams
 
 @Test("testEncodeNode", arguments: [
     (
-        StartNode(id: "1", name: "11", input: [:]) as any LLMFlow.Node,
+        StartNode(id: "1", name: "11", inputs: [:]) as any LLMFlow.Node,
         """
         id: '1'
         name: '11'
@@ -20,13 +20,12 @@ import Yams
         type: END
         """
     ), (
-        TemplateNode(id: "3", name: "33", template: "fake template", output: "var 3"),
+        TemplateNode(id: "3", name: "33", template: "fake template"),
         """
         id: '3'
         name: '33'
         type: TEMPLATE
         template: fake template
-        output: var 3
         """
     ), 
     // (
@@ -48,9 +47,9 @@ func testEncodeNode(_ node: any LLMFlow.Node, expect: String) throws {
 
 
 @Test("testDecodeNode", arguments: [
-    StartNode(id: "1", name: "11", input: [:]) as any LLMFlow.Node,
+    StartNode(id: "1", name: "11", inputs: [:]) as any LLMFlow.Node,
     EndNode(id: "2", name: "22"),
-    TemplateNode(id: "3", name: "33", template: "fake template", output: "var 3"),
+    TemplateNode(id: "3", name: "33", template: "fake template"),
     // LLMNode(id: "5", name: "55", request: "fake template", response: "var 5"),
 ])
 func testDecodeNode(_ node: any LLMFlow.Node) throws {

@@ -10,21 +10,21 @@ public struct StartNode: Node {
     public let name: String?
     public let type: NodeType
 
-    public let input: [NodeVariableKey: FlowData.TypeDecl]
+    public let inputs: [NodeVariableKey: FlowData.TypeDecl]
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(StartNode.ID.self, forKey: .id)
         self.name = try container.decodeIfPresent(String.self, forKey: .name)
         self.type = try container.decode(NodeType.self, forKey: .type)
-        self.input = try container.decode([NodeVariableKey: FlowData.TypeDecl].self, forKey: .input)
+        self.inputs = try container.decode([NodeVariableKey: FlowData.TypeDecl].self, forKey: .inputs)
     }
 
-    public init(id: StartNode.ID, name: String? = nil, input: [NodeVariableKey: FlowData.TypeDecl]) {
+    public init(id: StartNode.ID, name: String? = nil, inputs: [NodeVariableKey: FlowData.TypeDecl]) {
         self.id = id
         self.name = name
         self.type = .START
-        self.input = input
+        self.inputs = inputs
     }
 }
 
@@ -59,7 +59,7 @@ extension StartNode {
     public func verify(
         data: [DataKeyPath: FlowData]
     ) throws {
-        try Self.verify(data: data, decls: self.input)
+        try Self.verify(data: data, decls: self.inputs)
     }
 
     public static func verify(

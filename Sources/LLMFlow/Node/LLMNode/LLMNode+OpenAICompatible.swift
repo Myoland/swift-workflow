@@ -32,7 +32,7 @@ struct OpenAICompatibleClient {
         ]
         
         let request = try {
-            var req = HttpClientAbstract.Request(url: "\(configuration.apiURL)/v1/chat/completions")
+            var req = HttpClientAbstract.Request(url: "\(configuration.apiURL)/chat/completions")
             req.method = .POST
             req.headers = headers
             req.body = .bytes(try JSONEncoder().encodeAsByteBuffer(request, allocator: .init()))

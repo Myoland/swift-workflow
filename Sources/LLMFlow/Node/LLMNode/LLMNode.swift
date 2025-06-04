@@ -79,8 +79,7 @@ extension LLMNode {
             
             let values = try request.render(context.filter(keys: nil))
             
-            let decoder = AnyDecoder()
-            let request: OpenAIModelReponseRequest = try decoder.decode(from: values)
+            let request: OpenAIModelReponseRequest = try AnyDecoder().decode(from: values)
             let response = try await client.send(request: request)
             
             let contentLength: Int = if let header = response.headers[HTTPField.Name.contentLength.rawName].first,
@@ -108,17 +107,26 @@ extension LLMNode {
             }
             
             
+            let decoder = JSONDecoder()
+            
             let stream = response.body.map { buffer in
                 Foundation.Data.init(buffer: buffer)
             }
             
-            return .stream(.init(stream))
+            let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
+            
+            return .stream(.init(interpreter.map {
+                guard let data = $0.data.data(using: .utf8) else {
+                    todo("Throw Error")
+                }
+                
+                return try decoder.decode(OpenAIModelStreamResponse.self, from: data) as AnySendable
+            }))
         case .OpenAICompatible(let configuration):
             let client = OpenAICompatibleClient(httpClient: client, configuration: configuration)
             
-            let decoder = AnyDecoder()
             let values = try request.render(context.filter(keys: nil))
-            let request: OpenAIChatCompletionRequest = try decoder.decode(from: values)
+            let request: OpenAIChatCompletionRequest = try AnyDecoder().decode(from: values)
             let response = try await client.send(request: request)
             
             let contentLength: Int = if let header = response.headers[HTTPField.Name.contentLength.rawName].first,
@@ -141,17 +149,26 @@ extension LLMNode {
                 let data = try await response.body.collect(upTo: .max)
                 let decoder = JSONDecoder()
                 let result = try decoder.decode(OpenAIChatCompletionResponse.self, from: data)
-                    
-                print("[*]", result)
-                
                 return .block(result)
             }
+            
+            let decoder = JSONDecoder()
             
             let stream = response.body.map { buffer in
                 Foundation.Data.init(buffer: buffer)
             }
             
-            return .stream(.init(stream))
+            let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
+            
+            return try .stream(.init(interpreter.prefix {
+                $0.data != "[DONE]"
+            }.map {
+                guard let data = $0.data.data(using: .utf8) else {
+                    todo("Throw Error")
+                }
+                
+                return try decoder.decode(OpenAIChatCompletionStreamResponse.self, from: data) as AnySendable
+            }))
         case .Gemini:
             todo("Support Gemini")
         case .Dify(let difyConfiguration):
@@ -190,15 +207,38 @@ extension LLMNode {
                 Foundation.Data.init(buffer: buffer)
             }
             
-            return .stream(.init(stream))
+            let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
+            
+            return .stream(.init(interpreter.map({
+                $0.data as AnySendable
+            })))
         }
         
         unreachable()
     }
 }
-
-extension LLMNode {
-    public func wait(_ pipe: OutputPipe) async throws -> Context.Value? {
-        nil
-    }
-}
+//
+//extension LLMNode {
+//    public func wait(_ pipe: OutputPipe) async throws -> Context.Value? {
+//        
+//        guard case let .stream(stream) = output else {
+//            Issue.record("Shuld have a stream")
+//            try await client.shutdown()
+//            return
+//        }
+//        
+//        let decoder = JSONDecoder()
+//        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
+//        
+//        for try await event in interpreter {
+//            if let data = event.data.data(using: .utf8) {
+//                print("[*] \(String(data: data, encoding: .utf8))")
+//                // let response = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
+//                let response = try decoder.decode(OpenAIChatCompletionStreamResponse.self, from: data)
+//                print(response)
+//            }
+//        }
+//        
+//        
+//    }
+//}

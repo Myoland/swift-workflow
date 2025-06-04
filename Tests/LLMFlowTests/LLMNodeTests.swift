@@ -8,7 +8,7 @@ import TestKit
 @testable import LLMFlow
 
 final class DummySimpleLocater: StoreLocator {
-    typealias Store = Any & Sendable
+    typealias Store = AnySendable
 
     let stores: [Store]
 
@@ -69,10 +69,8 @@ func testLLMNodeRun() async throws {
             return
         }
 
-        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-
-        for try await event in interpreter {
-            print(event)
+        for try await event in stream {
+            print("[*] \(event)")
         }
 
     } catch {
@@ -90,7 +88,7 @@ func testLLMNodeOpenAIRun() async throws {
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
         "openai",
-        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
+        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
     )
     var context = Context(locater: DummySimpleLocater(client, solver))
 
@@ -129,17 +127,8 @@ func testLLMNodeOpenAIRun() async throws {
             return
         }
 
-        let decoder = JSONDecoder()
-        let encoder = AnyEncoder()
-
-        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-
-        for try await event in interpreter {
-            if let data = event.data.data(using: .utf8) {
-                let response = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
-                let encoded = try encoder.encode(response)
-                print(encoded)
-            }
+        for try await event in stream {
+            print("[*] \(event)")
         }
     } catch {
         Issue.record("Unexpected \(error)")
@@ -156,7 +145,7 @@ func testLLMNodeOpenAICompatibleRun() async throws {
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
         "openai",
-        .OpenAICompatible(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com"))
+        .OpenAICompatible(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
     )
     var context = Context(locater: DummySimpleLocater(client, solver))
     
@@ -194,19 +183,8 @@ func testLLMNodeOpenAICompatibleRun() async throws {
             return
         }
         
-        let decoder = JSONDecoder()
-        
-        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-        
-        for try await event in interpreter {
-            // print("[*]", event)
-            if event.data == "[DONE]" {
-                break
-            }
-            if let data = event.data.data(using: .utf8) {
-                let reponse = try decoder.decode(OpenAIChatCompletionStreamResponse.self, from: data)
-                print(reponse)
-            }
+        for try await event in stream {
+            print("[*] \(event)")
         }
     } catch {
         Issue.record("Unexpected \(error)")
