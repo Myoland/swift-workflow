@@ -56,14 +56,18 @@ extension Workflow {
             
             pipe = try await node.run(context: context, pipe: pipe)
             
-            guard let edge = matchEdge(id: node.id, context: context),
-                  let nextNode = self.nodes[edge.to]
-            else {
+            if reachEnd(id: node.id) {
                 break
             }
             
             if let variable = try await node.wait(pipe) {
                 try node.update(&context, value: variable)
+            }
+            
+            guard let edge = matchEdge(id: node.id, context: context),
+                  let nextNode = self.nodes[edge.to]
+            else {
+                break
             }
             
             node = nextNode
@@ -77,5 +81,17 @@ extension Workflow {
         return edges?.first {
             $0.condition?.eval(context.filter(keys: nil)) ?? true
         }
+    }
+    
+    func reachEnd(id: Node.ID) -> Bool {
+        guard let edges = flows[id], edges.count == 1, let toID = edges.first?.to else {
+            return false
+        }
+        
+        guard let to = nodes[toID], to.type == .END else {
+            return false
+        }
+        
+        return true
     }
 }

@@ -12,6 +12,7 @@ import HTTPTypes
 import NIOFoundationCompat
 import NIOHTTP1
 import LazyKit
+import AsyncAlgorithms
 
 
 enum LLMProvider: Hashable, Codable {
@@ -217,28 +218,21 @@ extension LLMNode {
         unreachable()
     }
 }
-//
-//extension LLMNode {
-//    public func wait(_ pipe: OutputPipe) async throws -> Context.Value? {
-//        
-//        guard case let .stream(stream) = output else {
-//            Issue.record("Shuld have a stream")
-//            try await client.shutdown()
-//            return
-//        }
-//        
-//        let decoder = JSONDecoder()
-//        let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-//        
-//        for try await event in interpreter {
-//            if let data = event.data.data(using: .utf8) {
-//                print("[*] \(String(data: data, encoding: .utf8))")
-//                // let response = try decoder.decode(OpenAIModelStreamResponse.self, from: data)
-//                let response = try decoder.decode(OpenAIChatCompletionStreamResponse.self, from: data)
-//                print(response)
-//            }
-//        }
-//        
-//        
-//    }
-//}
+
+extension LLMNode {
+    public func wait(_ pipe: OutputPipe) async throws -> Context.Value? {
+        if case .none = pipe {
+            return nil
+        }
+        
+        if case let .block(value) = pipe {
+            return value
+        }
+        
+        guard case .stream(let stream) = pipe else {
+            return nil
+        }
+        
+        return try await Array(stream)
+    }
+}

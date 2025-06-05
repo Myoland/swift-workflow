@@ -160,13 +160,13 @@ func testLLMNodeOpenAICompatibleRun() async throws {
                 [
                     "role": "system",
                     "content": """
-                be an echo server.
-                what I send to you, you send back.
-            
-                the exceptions:
-                1. send "ping", back "pong"
-                2. send "ding", back "dang"
-            """
+                        be an echo server.
+                        what I send to you, you send back.
+                    
+                        the exceptions:
+                        1. send "ping", back "pong"
+                        2. send "ding", back "dang"
+                    """
                 ],
                 [
                     "role": "user",
