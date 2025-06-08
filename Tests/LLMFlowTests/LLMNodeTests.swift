@@ -26,77 +26,44 @@ final class DummySimpleLocater: StoreLocator {
 }
 
 struct DummyLLMProviderSolver: LLMProviderSolver {
-    let store: [String: LLMProvider]
+    let store: [String: LLMModel]
 
-    init(_ store: [String: LLMProvider]) {
+    init(_ store: [String: LLMModel]) {
         self.store = store
     }
 
-    init(_ name: String, _ provider: LLMProvider) {
+    init(_ name: String, _ provider: LLMModel) {
         store = [name: provider]
     }
 
-    func resolve(modelName: String) -> LLMProvider? {
+    func resolve(modelName: String) -> LLMModel? {
         store[modelName]
     }
 }
 
-@Test("testLLMNodeRun")
-func testLLMNodeRun() async throws {
-
-    try Dotenv.make()
-
-    let client = HTTPClient()
-    let solver = DummyLLMProviderSolver(
-        "dify",
-        .Dify(.init(apiKey: Dotenv["DIFY_API_KEY"]!.stringValue, apiURL: "https://api.dify.ai/v1")))
-    var context = Context(locater: DummySimpleLocater(client, solver))
-    context["user_id"] = "Fake"
-    context["query"] = "ping"
-
-    let node = LLMNode(id: "ID",
-                       name: nil,
-                       modelName: "dify",
-                       request: .init([
-                            "user": "user_id",
-                            "query": "query"
-                       ]))
-    do {
-        let pipe = try await node.run(context: context, pipe: .none)
-        guard case let .stream(stream) = pipe else {
-            Issue.record("Shuld have a stream")
-            try await client.shutdown()
-            return
-        }
-
-        for try await event in stream {
-            print("[*] \(event)")
-        }
-
-    } catch {
-
-    }
-
-    try await client.shutdown()
-}
 
 @Test("testLLMNodeOpenAIRun")
 func testLLMNodeOpenAIRun() async throws {
 
     try Dotenv.make()
 
+    let openai = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
+    
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
-        "openai",
-        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
+        "model_foo",
+        .init(name: "model_foo", models: [.init(name: "gpt-4o-mini", provider: openai)])
     )
     var context = Context(locater: DummySimpleLocater(client, solver))
 
     let node = LLMNode(id: "ID",
                        name: nil,
-                       modelName: "openai",
+                       modelName: "model_foo",
                        request: .init([
-                           "model": "gpt-4o-mini",
+                           "$model": [
+                               "inputs",
+                               "model"
+                           ],
                            "stream": true,
                            "input": [[
                                "role": "system",
@@ -142,19 +109,24 @@ func testLLMNodeOpenAICompatibleRun() async throws {
     
     try Dotenv.make()
     
+    let openaiCompatiable = LLMProvider(type: .OpenAICompatible, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
+    
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
-        "openai",
-        .OpenAICompatible(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
+        "model_foo",
+        .init(name: "model_foo", models: [.init(name: "gpt-4o-mini", provider: openaiCompatiable)])
     )
-    var context = Context(locater: DummySimpleLocater(client, solver))
+    let context = Context(locater: DummySimpleLocater(client, solver))
     
     let node = LLMNode(
         id: "ID",
         name: nil,
-        modelName: "openai",
+        modelName: "model_foo",
         request: .init([
-            "model": "gpt-4o-mini",
+            "$model": [
+                "inputs",
+                "model"
+            ],
             "stream": true,
             "messages": [
                 [

@@ -14,19 +14,19 @@ func testWorkflowRun() async throws {
     
     try Dotenv.make()
 
-    let client = HTTPClient()
+    let openai = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
     
+    let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
-        "test_openai",
-        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
+        "gpt-4o-mini",
+        .init(name: "gpt-4o-mini", models: [.init(name: "gpt-4o-mini", provider: openai)])
     )
-
     let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
 
     let llmNode  = LLMNode(
         id: UUID().uuidString,
         name: nil,
-        modelName: "test_openai",
+        modelName: "gpt-4o-mini",
         request: .init([
             "$model": ["inputs", "model"],
             "stream": true,
@@ -76,7 +76,6 @@ func testWorkflowRun() async throws {
         
         let inputs: [String: FlowData] = [
             "name": "John",
-            "model": "gpt-4o-mini",
             "message": "ping"
         ]
         
@@ -152,9 +151,11 @@ func testWorkflowRunWithConfig() async throws {
     
     let client = HTTPClient()
     
+    let openai = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
+    
     let solver = DummyLLMProviderSolver(
-        "test_openai",
-        .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1"))
+        "gpt-4o-mini",
+        .init(name: "gpt-4o-mini", models: [.init(name: "gpt-4o-mini", provider: openai)])
     )
     
     var context = Context(locater: DummySimpleLocater(client, solver))
@@ -163,7 +164,6 @@ func testWorkflowRunWithConfig() async throws {
         
         let inputs: [String: FlowData] = [
             "name": "John",
-            "model": "gpt-4o-mini",
             "message": "ping"
         ]
         

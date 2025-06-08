@@ -29,10 +29,14 @@ func testDifyExampleFork() async throws {
     
     let client = HTTPClient()
     
-    let solver = DummyLLMProviderSolver([
-        "openai": .OpenAI(.init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")),
-        "google": .OpenAICompatible(.init(apiKey: Dotenv["OPENROUTER_API_KEY"]!.stringValue, apiURL: "https://openrouter.ai/api/v1"))
-    ])
+    let openai = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
+    let google = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENROUTER_API_KEY"]!.stringValue, apiURL: "https://openrouter.ai/api/v1")
+    
+
+    let solver = DummyLLMProviderSolver(
+        "gpt-4o-mini",
+        .init(name: "gpt-4o-mini", models: [.init(name: "gpt-4o-mini", provider: openai)])
+    )
     
     
     var context = Context(locater: DummySimpleLocater(client, solver))
