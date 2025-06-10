@@ -38,7 +38,8 @@ let package = Package(
                 "LLMFlow",
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "TestKit", package: "swift-lazy"),
-            ]
+            ],
+            resources: [.process("Resources")],
         ),
     ]
 )

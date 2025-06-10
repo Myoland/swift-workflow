@@ -17,8 +17,7 @@ import Yams
 
 @Test("testDifyExampleFork")
 func testDifyExampleFork() async throws {
-    let yaml = """
-    """
+    let yaml = try String(contentsOf: Bundle.module.url(forResource: "dify_fork", withExtension: "yaml")!)
     
     let decoder = YAMLDecoder()
     let config = try decoder.decode(Workflow.Config.self, from: yaml.data(using: .utf8)!)
