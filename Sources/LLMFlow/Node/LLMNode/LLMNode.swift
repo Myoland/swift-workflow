@@ -81,7 +81,10 @@ extension LLMNode {
         let inputs = context.filter(keys: nil)
         
         for qualifiedModel in llm.models {
-            let temp = inputs.merging(["inputs": ["model": qualifiedModel.name]]) { lhs, rhs in lhs }
+            var temp = inputs
+            // TODO: using other prefix
+            temp[path: "inputs", "model"] = qualifiedModel.name
+            // let temp = inputs.merging(["inputs": ["model": qualifiedModel.name]]) { lhs, rhs in lhs }
             
             switch qualifiedModel.provider.type {
             case .OpenAI:

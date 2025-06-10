@@ -29,20 +29,22 @@ func testDifyExampleFork() async throws {
     let client = HTTPClient()
     
     let openai = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
-    let google = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENROUTER_API_KEY"]!.stringValue, apiURL: "https://openrouter.ai/api/v1")
+    let openrouter = LLMProvider(type: .OpenAICompatible, name: "openrouter", apiKey: Dotenv["OPENROUTER_API_KEY"]!.stringValue, apiURL: "https://openrouter.ai/api/v1")
     
 
-    let solver = DummyLLMProviderSolver(
-        "gpt-4o-mini",
-        .init(name: "gpt-4o-mini", models: [.init(name: "gpt-4o-mini", provider: openai)])
-    )
+    let solver = DummyLLMProviderSolver([
+        "gpt-4o-mini": .init(name: "gpt-4o-mini", models: [.init(name: "gpt-4o-mini", provider: openai)]),
+        "gemini-2.5-flash": .init(name: "gemini-2.5-flash", models: [.init(name: "google/gemini-2.5-flash-preview-05-20", provider: openrouter)])
+    ])
     
     
     var context = Context(locater: DummySimpleLocater(client, solver))
     
     do {
         
-        let inputs: [String: FlowData] = [:]
+        let inputs: [String: FlowData] = [
+            :
+        ]
         
         let output = try await workflow.run(context: &context, pipe: .block(inputs))
         
