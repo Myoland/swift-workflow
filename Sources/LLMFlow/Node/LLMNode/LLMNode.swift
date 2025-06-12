@@ -15,32 +15,49 @@ import LazyKit
 import AsyncAlgorithms
 
 
-enum LLMProviderType: Hashable, Codable {
+public enum LLMProviderType: Hashable, Codable, Sendable {
     case OpenAI
     case OpenAICompatible
     case Gemini
 }
 
-struct LLMProvider: Hashable, Codable {
-    let type: LLMProviderType
+public struct LLMProvider: Hashable, Codable, Sendable {
+    public let type: LLMProviderType
     
-    let name: String
-    let apiKey: String
-    let apiURL: String
+    public let name: String
+    public let apiKey: String
+    public let apiURL: String
+    
+    public init(type: LLMProviderType, name: String, apiKey: String, apiURL: String) {
+        self.type = type
+        self.name = name
+        self.apiKey = apiKey
+        self.apiURL = apiURL
+    }
 }
 
 
-struct LLMQualifiedModel: Hashable, Codable {
-    let name: String
-    let provider: LLMProvider
+public struct LLMQualifiedModel: Hashable, Codable, Sendable {
+    public let name: String
+    public let provider: LLMProvider
+    
+    public init(name: String, provider: LLMProvider) {
+        self.name = name
+        self.provider = provider
+    }
 }
 
-struct LLMModel {
-    let name: String
-    let models: [LLMQualifiedModel]
+public struct LLMModel: Sendable {
+    public let name: String
+    public let models: [LLMQualifiedModel]
+    
+    public init(name: String, models: [LLMQualifiedModel]) {
+        self.name = name
+        self.models = models
+    }
 }
 
-protocol LLMProviderSolver {
+public protocol LLMProviderSolver {
     func resolve(modelName: String) -> LLMModel?
 }
 

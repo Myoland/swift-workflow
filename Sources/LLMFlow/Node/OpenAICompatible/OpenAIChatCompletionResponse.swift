@@ -76,24 +76,24 @@ struct OpenAIChatCompletionResponseChoiceMessageAudio: Codable, Sendable {
 }
 
 
-struct OpenAIChatCompletionStreamResponse: Codable, Sendable {
-    let choices: [OpenAIChatCompletionStreamResponseChoice]
+public struct OpenAIChatCompletionStreamResponse: Codable, Sendable {
+    public let choices: [OpenAIChatCompletionStreamResponseChoice]
     
-    let created: Int
+    public let created: Int
     
-    let id: String
+    public let id: String
     
-    let model: String
+    public let model: String
     
-    let object: String = "chat.completion.chunk"
+    public let object: String = "chat.completion.chunk"
     
-    let service_tier: OpenAIChatCompletionServiceTier?
+    public let service_tier: OpenAIChatCompletionServiceTier?
     
-    let system_fingerprint: String?
+    public let system_fingerprint: String?
     
-    let usage: OpenAIChatCompletionResponseUsage?
+    public let usage: OpenAIChatCompletionResponseUsage?
     
-    enum CodingKeys: CodingKey {
+    public enum CodingKeys: CodingKey {
         case choices
         case created
         case id
@@ -105,60 +105,60 @@ struct OpenAIChatCompletionStreamResponse: Codable, Sendable {
     }
 }
 
-struct OpenAIChatCompletionResponseUsage: Codable, Sendable {
-    let completion_tokens: Int
-    let prompt_tokens: Int
-    let total_tokens: Int
-    let completion_tokens_details: OpenAIChatCompletionResponseUsageCompletionDetails?
-    let prompt_tokens_details: OpenAIChatCompletionResponseUsagePromptDetails?
+public struct OpenAIChatCompletionResponseUsage: Codable, Sendable {
+    public  let completion_tokens: Int
+    public let prompt_tokens: Int
+    public let total_tokens: Int
+    public let completion_tokens_details: OpenAIChatCompletionResponseUsageCompletionDetails?
+    public let prompt_tokens_details: OpenAIChatCompletionResponseUsagePromptDetails?
 }
 
-struct OpenAIChatCompletionResponseUsageCompletionDetails: Codable, Sendable {
-    let accepted_prediction_tokens: Int
-    let audio_tokens: Int
-    let reasoning_tokens: Int
-    let rejected_prediction_tokens: Int
+public struct OpenAIChatCompletionResponseUsageCompletionDetails: Codable, Sendable {
+    public let accepted_prediction_tokens: Int
+    public let audio_tokens: Int
+    public let reasoning_tokens: Int
+    public let rejected_prediction_tokens: Int
 }
 
-struct OpenAIChatCompletionResponseUsagePromptDetails: Codable, Sendable {
+public struct OpenAIChatCompletionResponseUsagePromptDetails: Codable, Sendable {
     let audio_tokens: Int
     let cached_tokens: Int
     
 }
 
-struct OpenAIChatCompletionStreamResponseChoice: Codable, Sendable {
-    let index: Int
-    let finish_reason: String?
-    let logprobs: OpenAIChatCompletionResponseChoiceLogprobs?
-    let delta: OpenAIChatCompletionStreamResponseChoiceDelta
+public struct OpenAIChatCompletionStreamResponseChoice: Codable, Sendable {
+    public let index: Int
+    public let finish_reason: String?
+    public let logprobs: OpenAIChatCompletionResponseChoiceLogprobs?
+    public let delta: OpenAIChatCompletionStreamResponseChoiceDelta
 }
 
-struct OpenAIChatCompletionResponseChoiceLogprobs: Codable, Sendable {
+public struct OpenAIChatCompletionResponseChoiceLogprobs: Codable, Sendable {
     let content: [OpenAIChatCompletionResponseChoiceLogprobsInfo]?
     let refusal: [OpenAIChatCompletionResponseChoiceLogprobsInfo]?
 }
 
-struct OpenAIChatCompletionResponseChoiceLogprobsInfo: Codable, Sendable {
+public struct OpenAIChatCompletionResponseChoiceLogprobsInfo: Codable, Sendable {
     let bytes: [String]
     let logprob: Double
     let token: String
     let top_logprobs: [OpenAIChatCompletionResponseChoiceLogprobsInfo]
 }
 
-struct OpenAIChatCompletionStreamResponseChoiceDelta: Codable, Sendable {
-    let content: String?
-    let refusal: String?
-    let role: String?
-    let tool_calls: [OpenAIChatCompletionResponseChoiceDeltaToolCall]?
+public struct OpenAIChatCompletionStreamResponseChoiceDelta: Codable, Sendable {
+    public let content: String?
+    public let refusal: String?
+    public let role: String?
+    public let tool_calls: [OpenAIChatCompletionResponseChoiceDeltaToolCall]?
 }
 
-struct OpenAIChatCompletionResponseChoiceDeltaToolCall: Codable, Sendable {
-    let index: Int
-    let function: OpenAIChatCompletionResponseChoiceDeltaToolCallFunction
-    let id: String
-    let type: String = "function"
+public struct OpenAIChatCompletionResponseChoiceDeltaToolCall: Codable, Sendable {
+    public let index: Int
+    public let function: OpenAIChatCompletionResponseChoiceDeltaToolCallFunction
+    public let id: String
+    public let type: String = "function"
     
-    enum CodingKeys: CodingKey {
+    public enum CodingKeys: CodingKey {
         case index
         case function
         case id
@@ -166,7 +166,7 @@ struct OpenAIChatCompletionResponseChoiceDeltaToolCall: Codable, Sendable {
     }
 }
 
-struct OpenAIChatCompletionResponseChoiceDeltaToolCallFunction: Codable, Sendable {
-    let arguments: String
-    let name: String
+public struct OpenAIChatCompletionResponseChoiceDeltaToolCallFunction: Codable, Sendable {
+    public let arguments: String
+    public let name: String
 }
