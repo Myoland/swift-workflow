@@ -39,7 +39,7 @@ let package = Package(
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "TestKit", package: "swift-lazy"),
             ],
-            resources: [.process("Resources")],
+            resources: [.process("Resources")]
         ),
     ]
 )

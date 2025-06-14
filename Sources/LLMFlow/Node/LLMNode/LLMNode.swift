@@ -23,11 +23,11 @@ public enum LLMProviderType: Hashable, Codable, Sendable {
 
 public struct LLMProvider: Hashable, Codable, Sendable {
     public let type: LLMProviderType
-    
+
     public let name: String
     public let apiKey: String
     public let apiURL: String
-    
+
     public init(type: LLMProviderType, name: String, apiKey: String, apiURL: String) {
         self.type = type
         self.name = name
@@ -40,7 +40,7 @@ public struct LLMProvider: Hashable, Codable, Sendable {
 public struct LLMQualifiedModel: Hashable, Codable, Sendable {
     public let name: String
     public let provider: LLMProvider
-    
+
     public init(name: String, provider: LLMProvider) {
         self.name = name
         self.provider = provider
@@ -50,7 +50,7 @@ public struct LLMQualifiedModel: Hashable, Codable, Sendable {
 public struct LLMModel: Sendable {
     public let name: String
     public let models: [LLMQualifiedModel]
-    
+
     public init(name: String, models: [LLMQualifiedModel]) {
         self.name = name
         self.models = models
@@ -94,15 +94,16 @@ extension LLMNode {
         else {
             return .none
         }
-        
+
         let inputs = context.filter(keys: nil)
-        
+
         for qualifiedModel in llm.models {
             var temp = inputs
             // TODO: using other prefix
             temp[path: "inputs", "model"] = qualifiedModel.name
             // let temp = inputs.merging(["inputs": ["model": qualifiedModel.name]]) { lhs, rhs in lhs }
-            
+
+            // [2025/06/08 <Huanan>] TODO: Catch Error and retry.
             switch qualifiedModel.provider.type {
             case .OpenAI:
                 return try await preformOpenAIRequest(client: client, qualifiedModel: qualifiedModel, inputs: temp)
@@ -118,101 +119,84 @@ extension LLMNode {
 
     func preformOpenAIRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, inputs: [String: AnySendable]) async throws -> OutputPipe {
         let client = OpenAIClient(httpClient: client, configuration: .init(apiKey: qualifiedModel.provider.apiKey, apiURL: qualifiedModel.provider.apiURL))
-        
-        // let inputs = inputs.merging(["model": qualifiedModel.name]) { lhs, rhs in lhs }
-        
+
         let values = try request.render(inputs)
         let request: OpenAIModelReponseRequest = try AnyDecoder().decode(from: values)
         let response = try await client.send(request: request)
-        
-        let contentLength: Int = if let header = response.headers[HTTPField.Name.contentLength.rawName].first,
-                                    let length = Int(header) {
-            length
-        } else {
-            .max
-        }
-        
+
+        let contentLength = response.contentLength ?? .max
+
         guard response.status == .ok else {
             var buffer = try? await response.body.collect(upTo: .max)
             let msg = buffer?.readString(length: contentLength, encoding: .utf8)
             todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
         }
-        
-        guard let contentType = response.headers[HTTPField.Name.contentType.rawName].first,
-                contentType.starts(with: ServerSentEvent.MIME_String)
-        else {
-            
+
+        guard response.contentType == ServerSentEvent.MIME_String else {
+
             let data = try await response.body.collect(upTo: .max)
             let decoder = JSONDecoder()
             let result = try decoder.decode(OpenAIModelReponse.self, from: data)
-            
+
             return .block(result)
         }
-        
-        
+
+
         let decoder = JSONDecoder()
-        
+
         let stream = response.body.map { buffer in
             Foundation.Data.init(buffer: buffer)
         }
-        
+
         let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-        
+
         return .stream(.init(interpreter.map {
             guard let data = $0.data.data(using: .utf8) else {
                 todo("Throw Error")
             }
-            
+
             return try decoder.decode(OpenAIModelStreamResponse.self, from: data) as AnySendable
         }))
     }
 
     func preformOpenAICompatibleRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, inputs: [String: AnySendable]) async throws -> OutputPipe {
         let client = OpenAICompatibleClient(httpClient: client, configuration: .init(apiKey: qualifiedModel.provider.apiKey, apiURL: qualifiedModel.provider.apiURL))
-            
-        // let inputs = inputs.merging(["model": qualifiedModel.name]) { lhs, rhs in lhs }
+
         let values = try request.render(inputs)
         let request: OpenAIChatCompletionRequest = try AnyDecoder().decode(from: values)
         let response = try await client.send(request: request)
-            
-        let contentLength: Int = if let header = response.headers[HTTPField.Name.contentLength.rawName].first,
-                                    let length = Int(header) {
-            length
-        } else {
-            .max
-        }
-        
+
+        let contentLength = response.contentLength ?? .max
+
         guard response.status == .ok else {
             var buffer = try? await response.body.collect(upTo: .max)
             let msg = buffer?.readString(length: contentLength, encoding: .utf8)
             todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
         }
-        
-        guard let contentType = response.headers[HTTPField.Name.contentType.rawName].first,
-              contentType.starts(with: ServerSentEvent.MIME_String)
-        else {
-            
+
+        guard response.contentType == ServerSentEvent.MIME_String else {
+
             let data = try await response.body.collect(upTo: .max)
             let decoder = JSONDecoder()
             let result = try decoder.decode(OpenAIChatCompletionResponse.self, from: data)
             return .block(result)
         }
-        
+
         let decoder = JSONDecoder()
-        
+
         let stream = response.body.map { buffer in
             Foundation.Data.init(buffer: buffer)
         }
-        
+
         let interpreter = AsyncServerSentEventsInterpreter(stream: .init(stream))
-        
+
         return try .stream(.init(interpreter.prefix {
             $0.data != "[DONE]"
         }.map {
             guard let data = $0.data.data(using: .utf8) else {
                 todo("Throw Error")
             }
-            
+
             return try decoder.decode(OpenAIChatCompletionStreamResponse.self, from: data) as AnySendable
         }))
     }
@@ -223,15 +207,15 @@ extension LLMNode {
         if case .none = pipe {
             return nil
         }
-        
+
         if case let .block(value) = pipe {
             return value
         }
-        
+
         guard case .stream(let stream) = pipe else {
             return nil
         }
-        
+
         return try await Array(stream)
     }
 }

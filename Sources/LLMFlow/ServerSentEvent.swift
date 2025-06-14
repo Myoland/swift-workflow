@@ -11,6 +11,7 @@ import LazyKit
 
 public struct ServerSentEvent: Sendable, Codable {
     static let MIME_String: String = "text/event-stream"
+
     static let encoding: String.Encoding = .utf8
 
     public let id: String?
@@ -30,7 +31,7 @@ final class ServerSentEventsInterpreter: Sendable {
         // Streams must be decoded using the UTF-8 decode algorithm.
         let raw = String(data: buffer, encoding: ServerSentEvent.encoding)
         // print("[*] \(raw)")
-        
+
         guard let raw, !raw.isEmpty else {
             return []
         }
@@ -105,7 +106,7 @@ final class ServerSentEventsInterpreter: Sendable {
         clientLastEventId.withLock { theID in
             theID = fields["id"] ?? theID
         }
-        
+
         return event
     }
 }

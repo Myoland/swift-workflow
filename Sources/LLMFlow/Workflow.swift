@@ -8,7 +8,7 @@ import LazyKit
 extension Workflow {
     typealias Edges = [Edge]
     
-    public struct Edge {
+    public struct Edge : Sendable {
         public let from: Node.ID
         public let to: Node.ID
         public let condition: Condition?
@@ -20,7 +20,7 @@ extension Workflow.Edge: Hashable {}
 
 // MARK: Workflow
 
-public struct Workflow {
+public struct Workflow : Sendable{
     public typealias VariableKey = NodeVariableKey
     public typealias VariableValue = Context.Value
 
@@ -62,6 +62,7 @@ extension Workflow {
             
             if let variable = try await node.wait(pipe) {
                 try node.update(&context, value: variable)
+                pipe = .none
             }
             
             guard let edge = matchEdge(id: node.id, context: context),
