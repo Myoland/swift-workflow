@@ -28,6 +28,7 @@ public struct Context: Sendable {
     
     private let clientLastEventId: LazyLock<String?> = .init(nil)
     
+    var pipe: OutputPipe = .none
     var states: [State] = []
     var store: LazyLock<Store> = .init([:])
     var locator: StoreLocator?

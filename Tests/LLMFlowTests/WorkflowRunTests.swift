@@ -184,3 +184,16 @@ func testWorkflowRunWithConfig() async throws {
     
     try await client.shutdown()
 }
+
+
+@Test("testWorkflowRuinMinimum")
+func testWorkflowRuinMinimum() async throws {
+    
+    
+    let workflow = Workflow(nodes: [:], flows: [:], startNodeID: "")
+    let updates = try workflow.run0(inputs: [:])
+    
+    for try await update in updates {
+        print(update)
+    }
+}
