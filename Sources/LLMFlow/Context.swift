@@ -1,4 +1,5 @@
 import LazyKit
+import OSLog
 
 public typealias AnySendable = Any & Sendable
 
@@ -12,7 +13,7 @@ extension Context {
 
 public protocol AnyStorageValue: Sendable {}
 
-public protocol StoreLocator: AnyStorageValue {
+public protocol ServiceLocator: AnyStorageValue {
     func resolve<T>(shared type: T.Type) -> T?
     func resolve<K, T>(for key: K.Type, as type: T.Type) -> T?
 }
@@ -25,11 +26,11 @@ public final class Context: Sendable {
     public typealias Value = AnySendable
 
     public typealias Store = [Key: Value]
-    
-    let pipe: LazyLock<OutputPipe>
+
+    let pipe: LazyLock<NodeOutput>
     let store: LazyLock<Store>
 
-    public init(pipe: OutputPipe = .none, store: Store = [:]) {
+    public init(pipe: NodeOutput = .none, store: Store = [:]) {
         self.pipe = .init(pipe)
         self.store = .init(store)
     }
@@ -160,7 +161,7 @@ extension Dictionary where Value == AnySendable, Key == String {
                 self[safe: key] = newValue
                 return
             }
-            
+
             var value =  self[safe: key] as? Dictionary<Key, Value> ?? [:]
 
             value[path: rest] = newValue
@@ -177,12 +178,14 @@ extension Collection {
 }
 
 public final class Executor: Sendable {
-    public let locator: StoreLocator?
+    public let locator: ServiceLocator?
     private let lockedContext: LazyLock<Context>
+    public let logger: Logger
 
-    public init(locator: StoreLocator? = nil, context: Context = Context()) {
+    public init(locator: ServiceLocator? = nil, context: Context = Context(), logger: Logger = .init()) {
         self.locator = locator
         self.lockedContext = .init(context)
+        self.logger = logger
     }
 }
 

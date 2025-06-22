@@ -10,7 +10,7 @@ import AsyncAlgorithms
 import Foundation
 
 
-public enum OutputPipe: Sendable {
+public enum NodeOutput: Sendable {
     case none
     case block(Context.Value)
     case stream(AnyAsyncSequence<Context.Value>)

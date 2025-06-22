@@ -40,20 +40,18 @@ extension StartNode {
             return
         }
 
+        executor.logger.debug("[*] Start Node. Values: \(value)")
+
         try verify(data: value)
         context.pipe.withLock { $0 = .block(value.asAny) }
-    }
-    
-    static public let resultKey: String = "inputs"
-    
-    public func update(_ context: Context, value: Context.Value) throws {
-        context[path: Self.resultKey] = value
+
+        executor.logger.info("[*] Start Node. Verify Success.")
     }
 
-    enum InitVerifyErr: Error, Hashable {
-        case inputDataNotFound(key: String)
-        case inputDataTypeMissMatch(key: String)
-        case other(String)
+    static public let resultKey: String = "inputs"
+
+    public func update(_ context: Context, value: Context.Value) throws {
+        context[path: Self.resultKey] = value
     }
 
     public func verify(
@@ -68,12 +66,34 @@ extension StartNode {
     ) throws {
         for (key, decl) in decls {
             guard let data = data[key] else {
-                throw InitVerifyErr.inputDataNotFound(key: key)
+                throw VerifyErr.inputDataNotFound(key: key)
             }
 
             guard data.decl == decl else {
-                throw InitVerifyErr.inputDataTypeMissMatch(key: key)
+                throw VerifyErr.inputDataTypeMissMatch(key: key, expect: decl, actual: data)
             }
+        }
+    }
+}
+
+extension StartNode {
+    enum VerifyErr: Error, Hashable {
+        case inputDataNotFound(key: String)
+        case inputDataTypeMissMatch(key: String, expect: FlowData.TypeDecl, actual: FlowData?)
+        case other(String)
+    }
+}
+
+
+extension StartNode.VerifyErr: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .inputDataNotFound(let key):
+            return "Key Not Found For Key: '\(key)'."
+        case .inputDataTypeMissMatch(let key, let expect, let actual):
+            return "Data Type Miss Match For Key: '\(key)'. Expected: \(expect), Actual: \(actual ?? "nil")"
+        case .other(let message):
+            return "Unknown Error: \(message)."
         }
     }
 }

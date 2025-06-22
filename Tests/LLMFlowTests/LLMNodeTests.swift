@@ -7,7 +7,7 @@ import TestKit
 
 @testable import LLMFlow
 
-final class DummySimpleLocater: StoreLocator {
+final class DummySimpleLocater: ServiceLocator {
     typealias Store = AnySendable
 
     let stores: [Store]
@@ -56,7 +56,7 @@ func testLLMNodeOpenAIRun() async throws {
     )
 
     let locator = DummySimpleLocater(client, solver)
-    
+
     let context = Context()
     let executor = Executor(locator: locator, context: context)
 
@@ -93,7 +93,7 @@ func testLLMNodeOpenAIRun() async throws {
     do {
         try await node.run(executor: executor)
         let output = executor.context.pipe.withLock { $0 }
-        
+
          guard case let .stream(stream) = output else {
              Issue.record("Shuld have a stream")
              try await client.shutdown()
@@ -157,13 +157,13 @@ func testLLMNodeOpenAICompatibleRun() async throws {
     do {
         try await node.run(executor: executor)
         let output = executor.context.pipe.withLock { $0 }
-        
+
         guard case let .stream(stream) = output else {
             Issue.record("Shuld have a stream")
             try await client.shutdown()
             return
         }
-        
+
         for try await event in stream {
             print("[*] \(event)")
         }

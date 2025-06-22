@@ -16,30 +16,10 @@ extension Workflow {
     public func run0(inputs: [String: FlowData]) throws -> RunningState {
         try RunningState(workflow: self, startNode: self.requireStartNode(), inputs: inputs)
     }
-
-    public func matchEdge(id: Node.ID, context: Context) -> Edge? {
-        let edges = flows[id]
-        return edges?.first {
-            $0.condition?.eval(context.filter(keys: nil)) ?? true
-        }
-    }
-
-    func reachEnd(id: Node.ID) -> Bool {
-        guard let edges = flows[id], edges.count == 1, let toID = edges.first?.to else {
-            return false
-        }
-
-        guard let to = nodes[toID], to.type == .END else {
-            return false
-        }
-
-        return true
-    }
 }
 
 
 extension Workflow {
-    public typealias PipeUpdates = AnyAsyncSequence<PipeState>
 
     public enum PipeErr: Error {
         case nodeNotFound
@@ -66,18 +46,17 @@ extension Workflow {
     }
 }
 
-protocol WorkflowControl: Sendable {
-    func reachEnd(id: Node.ID) -> Bool
+public protocol WorkflowControl: Sendable {
     func edges(from id: Node.ID) -> [Workflow.Edge]
     func node(id: Node.ID) -> (any Node)?
 }
 
 extension Workflow: WorkflowControl {
-    func edges(from id: Node.ID) -> [Workflow.Edge] {
+    public func edges(from id: Node.ID) -> [Workflow.Edge] {
         flows[id] ?? []
     }
 
-    func node(id: String) -> (any Node)? {
+    public func node(id: String) -> (any Node)? {
         self.nodes[id]
     }
 }
@@ -86,13 +65,13 @@ extension Workflow.RunningState {
     public struct Iterator: AsyncIteratorProtocol, Sendable {
         typealias Err = Workflow.PipeErr
 
-        let delegate: any WorkflowControl
-        var node: any Node
-        let executor: Executor
+        private let delegate: any WorkflowControl
+        public var node: any Node
+        public let executor: Executor
 
         private var reachEnd: Bool
 
-        init(delegate: any WorkflowControl, locator: StoreLocator, node: any Node, inputs: [String: FlowData]) {
+        public init(delegate: any WorkflowControl, locator: ServiceLocator, node: any Node, inputs: [String: FlowData]) {
             self.delegate = delegate
             self.node = node
             self.executor = .init(locator: locator, context: .init(pipe: .block(inputs)))
@@ -100,14 +79,15 @@ extension Workflow.RunningState {
         }
 
         public mutating func next() async throws -> Workflow.PipeState? {
+            let node = self.node
 
             guard !reachEnd else { return nil }
 
             try await node.run(executor: executor)
 
             let edges = delegate.edges(from: node.id)
-            if let to = edges.first?.to, let nextNode = delegate.node(id: to), nextNode is EndNode {
-                node = nextNode
+            if let to = edges.first?.to, let next = delegate.node(id: to), next is EndNode {
+                self.node = next
                 if case let .stream(stream) = executor.context.pipe.withLock({ $0 }){
                     return .stream(stream)
                 } else {
@@ -120,12 +100,13 @@ extension Workflow.RunningState {
                 return .end
             }
 
-            let context = executor.context 
+            let context = executor.context
             let variable = try await node.wait(context)
             context.pipe.withLock { $0 = .none }
 
             if let variable {
                 try node.update(context, value: variable)
+                executor.logger.info("[*] Node(\(node.id)). Update Success. Value: \(String(describing: variable))")
             }
 
             let edge = edges.first {
@@ -136,19 +117,18 @@ extension Workflow.RunningState {
                 throw Err.notMatchEdge
             }
 
-            guard let nextNode = delegate.node(id: edge.to) else {
+            guard let next = delegate.node(id: edge.to) else {
                 // match a edge but the next not found.
                 throw Err.nodeNotFound
             }
-            
-            if node is StartNode {
-                node = nextNode
-                return .start
-            }
-            
-            node = nextNode
 
-            return .running
+            self.node = next
+
+            if node is StartNode {
+                return .start
+            } else {
+                return .running
+            }
         }
 
     }

@@ -92,7 +92,8 @@ extension LLMNode {
             let llmSolver = locator.resolve(shared: LLMProviderSolver.self),
             let llm = llmSolver.resolve(modelName: modelName)
         else {
-            return
+            executor.logger.error("[*] LLMModel Not Matched For '\(modelName)'")
+            todo("Throw error for miss LLMModel")
         }
 
         let context = executor.context
@@ -102,28 +103,31 @@ extension LLMNode {
             var temp = inputs
             // TODO: using other prefix
             temp[path: "inputs", "model"] = qualifiedModel.name
-
+            
+            let values = try request.render(temp)
+            executor.logger.debug("[*] LLM Node. requests rendered.\n\(values)")
+            
             // [2025/06/08 <Huanan>] TODO: Catch Error and retry.
             switch qualifiedModel.provider.type {
             case .OpenAI:
-                let output = try await preformOpenAIRequest(client: client, qualifiedModel: qualifiedModel, inputs: temp)
+                let request: OpenAIModelReponseRequest = try AnyDecoder().decode(from: values)
+                let output = try await preformOpenAIRequest(client: client, qualifiedModel: qualifiedModel, request: request)
                 context.pipe.withLock { $0 = output }
             case .OpenAICompatible:
-                let output = try await preformOpenAICompatibleRequest(client: client, qualifiedModel: qualifiedModel, inputs: temp)
+                let request: OpenAIChatCompletionRequest = try AnyDecoder().decode(from: values)
+                let output = try await preformOpenAICompatibleRequest(client: client, qualifiedModel: qualifiedModel, request: request)
                 context.pipe.withLock { $0 = output }
             case .Gemini:
                 todo("Support Gemini. For now, Please use OpenAI Compatible.")
             }
+            
+            executor.logger.info("[*] LLM Node. Request Sent.")
         }
-        
-        print()
     }
 
-    func preformOpenAIRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, inputs: [String: AnySendable]) async throws -> OutputPipe {
+    func preformOpenAIRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, request: OpenAIModelReponseRequest) async throws -> NodeOutput {
         let client = OpenAIClient(httpClient: client, configuration: .init(apiKey: qualifiedModel.provider.apiKey, apiURL: qualifiedModel.provider.apiURL))
-
-        let values = try request.render(inputs)
-        let request: OpenAIModelReponseRequest = try AnyDecoder().decode(from: values)
+        
         let response = try await client.send(request: request)
 
         let contentLength = response.contentLength ?? .max
@@ -156,17 +160,13 @@ extension LLMNode {
             guard let data = $0.data.data(using: .utf8) else {
                 todo("Throw Error")
             }
-            
-            print(String(data: data, encoding: .utf8))
             return try decoder.decode(OpenAIModelStreamResponse.self, from: data)
         }))
     }
 
-    func preformOpenAICompatibleRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, inputs: [String: AnySendable]) async throws -> OutputPipe {
+    func preformOpenAICompatibleRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, request: OpenAIChatCompletionRequest) async throws -> NodeOutput {
         let client = OpenAICompatibleClient(httpClient: client, configuration: .init(apiKey: qualifiedModel.provider.apiKey, apiURL: qualifiedModel.provider.apiURL))
-
-        let values = try request.render(inputs)
-        let request: OpenAIChatCompletionRequest = try AnyDecoder().decode(from: values)
+        
         let response = try await client.send(request: request)
 
         let contentLength = response.contentLength ?? .max
@@ -206,7 +206,7 @@ extension LLMNode {
 }
 
 extension LLMNode {
-    public func wait(_ pipe: OutputPipe) async throws -> Context.Value? {
+    public func wait(_ pipe: NodeOutput) async throws -> Context.Value? {
         if case .none = pipe {
             return nil
         }
@@ -221,7 +221,7 @@ extension LLMNode {
 
         return try await Array(stream)
     }
-    
+
     func update(_ context: Context, value: any Context.Value) throws {
         try updateIntoResult(context, value: value)
     }

@@ -17,14 +17,14 @@ func testStartNodeVerify() async throws {
                 "foo": 1
             ], decls: ["foo": .single(.int)])
     }
-    
+
     #expect(throws: Never.self) {
         try StartNode.verify(
             data: [
                 "foo": "a"
             ], decls: ["foo": .single(.string)])
     }
-    
+
     #expect(throws: Never.self) {
         try StartNode.verify(
             data: [
@@ -36,7 +36,7 @@ func testStartNodeVerify() async throws {
                 "bar": .single(.string),
             ])
     }
-    
+
     #expect(throws: Never.self) {
         try StartNode.verify(
             data: [
@@ -56,12 +56,12 @@ func testStartNodeVerify() async throws {
                 "quxx": .map(.single(.any)),
             ])
     }
-    
-    #expect(throws: StartNode.InitVerifyErr.inputDataNotFound(key: "foo")) {
+
+    #expect(throws: StartNode.VerifyErr.inputDataNotFound(key: "foo")) {
         try StartNode.verify(data: [:], decls: ["foo": .single(.int)])
     }
-    
-    #expect(throws: StartNode.InitVerifyErr.inputDataTypeMissMatch(key: "foo")) {
+
+    #expect(throws: StartNode.VerifyErr.inputDataTypeMissMatch(key: "foo", expect: .single(.int), actual: nil)) {
         try StartNode.verify(data: ["foo": .single(.string("a"))], decls: ["foo": .single(.int)])
     }
 }

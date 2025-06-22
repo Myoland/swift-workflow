@@ -8,7 +8,7 @@
 
 extension Workflow {
 
-    public init?(config: Workflow.Config, locator: StoreLocator) throws {
+    public init?(config: Workflow.Config, locator: ServiceLocator) throws {
         try config.validate()
 
         let startNode = try config.requireStartNode()

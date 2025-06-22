@@ -29,7 +29,7 @@ public struct Workflow : Sendable{
 
     let startNodeID: Node.ID
 
-    let locator: StoreLocator
+    let locator: ServiceLocator
 }
 
 extension Workflow {

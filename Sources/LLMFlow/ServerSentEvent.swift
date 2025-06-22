@@ -8,6 +8,7 @@ import Foundation
 import RegexBuilder
 import AsyncAlgorithms
 import LazyKit
+import OSLog
 
 public struct ServerSentEvent: Sendable, Codable {
     static let MIME_String: String = "text/event-stream"
@@ -26,11 +27,12 @@ public struct ServerSentEvent: Sendable, Codable {
 final class ServerSentEventsInterpreter: Sendable {
 
     private let clientLastEventId: LazyLock<String?> = .init(nil)
+    public let logger: Logger = .init()
 
     func process(buffer: Data) -> [ServerSentEvent] {
         // Streams must be decoded using the UTF-8 decode algorithm.
         let raw = String(data: buffer, encoding: ServerSentEvent.encoding)
-        // print("[*] \(raw)")
+        logger.debug("[*] \(raw ?? "nil")")
 
         guard let raw, !raw.isEmpty else {
             return []
@@ -83,6 +85,7 @@ final class ServerSentEventsInterpreter: Sendable {
             }
         }
 
+        logger.debug("[*] \(events)")
         // NOTICE: If the file ends in the middle of an event, before the final empty line,
         //         the incomplete event is not dispatched.
         return events
