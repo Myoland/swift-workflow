@@ -49,11 +49,14 @@ public struct LLMQualifiedModel: Hashable, Codable, Sendable {
 
 public struct LLMModel: Sendable {
     public let name: String
+    
+    public let type: LLMProviderType
     public let models: [LLMQualifiedModel]
 
-    public init(name: String, models: [LLMQualifiedModel]) {
+    public init(name: String, type: LLMProviderType, models: [LLMQualifiedModel]) {
         self.name = name
         self.models = models
+        self.type = type
     }
 }
 
@@ -99,7 +102,7 @@ extension LLMNode {
         let context = executor.context
         let inputs = context.filter(keys: nil)
 
-        for qualifiedModel in llm.models {
+        for qualifiedModel in llm.models.filter({ $0.provider.type == llm.type }) {
             var temp = inputs
             // TODO: using other prefix
             temp[path: "inputs", "model"] = qualifiedModel.name

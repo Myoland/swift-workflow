@@ -1,6 +1,6 @@
 [
   {
-    "label": "Swift build",
+    "label": "Swift Build",
     "command": "swift build --build-tests -q",
     "env": { "foo": "bar" },
     "use_new_terminal": false,

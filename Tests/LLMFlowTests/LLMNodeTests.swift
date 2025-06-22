@@ -52,7 +52,7 @@ func testLLMNodeOpenAIRun() async throws {
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
         "model_foo",
-        .init(name: "model_foo", models: [.init(name: "gpt-4o-mini", provider: openai)])
+        .init(name: "model_foo", type: .OpenAI, models: [.init(name: "gpt-4o-mini", provider: openai)])
     )
 
     let locator = DummySimpleLocater(client, solver)
@@ -120,7 +120,7 @@ func testLLMNodeOpenAICompatibleRun() async throws {
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
         "model_foo",
-        .init(name: "model_foo", models: [.init(name: "gpt-4o-mini", provider: openaiCompatiable)])
+        .init(name: "model_foo", type: .OpenAICompatible, models: [.init(name: "gpt-4o-mini", provider: openaiCompatiable)])
     )
     let locater = DummySimpleLocater(client, solver)
 

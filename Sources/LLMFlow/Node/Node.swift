@@ -27,13 +27,13 @@ public protocol Node: Sendable, Hashable, Codable {
     func wait(_ context: Context) async throws -> Context.Value?
 
     func update(_ context: Context, value: Context.Value) throws
-    
+
     static var resultKey: String { get }
 }
 
 extension Node {
     public static var resultKey: String { DataKeyPath.NodeRunResultKey }
-    
+
     // force convert the pipe to blocked value
     // please check if it should be blocked.
     public func wait(_ context: Context) async throws -> Context.Value? {
@@ -56,11 +56,21 @@ extension Node {
 
 public typealias NodeVariableKey = Context.Key
 
-public enum NodeType: String, Sendable {
-    case START
-    case END
-    case TEMPLATE
-    case LLM
+
+public struct NodeType: RawRepresentable, Sendable {
+    public let rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+}
+
+extension NodeType {
+    static let START = NodeType(rawValue: "START")
+    static let END = NodeType(rawValue: "END")
+    static let TEMPLATE = NodeType(rawValue: "TEMPLATE")
+    static let LLM = NodeType(rawValue: "LLM")
 }
 
 extension NodeType: Codable {}
+extension NodeType: Hashable {}

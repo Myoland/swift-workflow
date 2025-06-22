@@ -31,8 +31,10 @@ func testDifyExampleFork() async throws {
 
 
     let solver = DummyLLMProviderSolver([
-        "gpt-4o-mini": .init(name: "gpt-4o-mini", models: [.init(name: "gpt-4o-mini", provider: openai)]),
-        "gemini-2.5-flash": .init(name: "gemini-2.5-flash", models: [.init(name: "google/gemini-2.5-flash-preview-05-20", provider: openrouter)])
+        "gpt-4o-mini": .init(
+            name: "gpt-4o-mini", type: .OpenAI, models: [.init(name: "gpt-4o-mini", provider: openai)]),
+        "gemini-2.5-flash": .init(
+            name: "gemini-2.5-flash", type: .OpenAICompatible, models: [.init(name: "google/gemini-2.5-flash-preview-05-20", provider: openrouter)])
     ])
 
     let locator = DummySimpleLocater(client, solver)

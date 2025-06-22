@@ -19,7 +19,7 @@ func testWorkflowRun() async throws {
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
         "gpt-4o-mini",
-        .init(name: "gpt-4o-mini", models: [.init(name: "gpt-4o-mini", provider: openai)])
+        .init(name: "gpt-4o-mini", type: .OpenAI, models: [.init(name: "gpt-4o-mini", provider: openai)])
     )
     let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
 
@@ -151,7 +151,7 @@ func testWorkflowRunWithConfig() async throws {
 
     let solver = DummyLLMProviderSolver(
         "gpt-4o-mini",
-        .init(name: "gpt-4o-mini", models: [.init(name: "gpt-4o-mini", provider: openai)])
+        .init(name: "gpt-4o-mini", type: .OpenAI, models: [.init(name: "gpt-4o-mini", provider: openai)])
     )
 
     let locator = DummySimpleLocater(client, solver)
