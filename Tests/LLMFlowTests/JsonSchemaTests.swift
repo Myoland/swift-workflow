@@ -10,7 +10,7 @@ import Testing
 import Foundation
 
 
-@Test("sasa")
+@Test("testDynamicJsonEncode")
 func testDynamicJsonEncode() throws {
     let schema = try JSONSchema(string: """
     {

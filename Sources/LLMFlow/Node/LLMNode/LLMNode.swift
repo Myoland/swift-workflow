@@ -68,7 +68,6 @@ struct LLMNode: Node {
     let type: NodeType
 
     let modelName: String
-
     let request: ModelDecl
 
     init(
@@ -86,35 +85,38 @@ struct LLMNode: Node {
 }
 
 extension LLMNode {
-    func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
-        guard let locator = context.locator,
+
+    public func run(executor: Executor) async throws {
+        guard let locator = executor.locator,
             let client = locator.resolve(shared: HttpClientAbstract.self),
             let llmSolver = locator.resolve(shared: LLMProviderSolver.self),
             let llm = llmSolver.resolve(modelName: modelName)
         else {
-            return .none
+            return
         }
 
+        let context = executor.context
         let inputs = context.filter(keys: nil)
 
         for qualifiedModel in llm.models {
             var temp = inputs
             // TODO: using other prefix
             temp[path: "inputs", "model"] = qualifiedModel.name
-            // let temp = inputs.merging(["inputs": ["model": qualifiedModel.name]]) { lhs, rhs in lhs }
 
             // [2025/06/08 <Huanan>] TODO: Catch Error and retry.
             switch qualifiedModel.provider.type {
             case .OpenAI:
-                return try await preformOpenAIRequest(client: client, qualifiedModel: qualifiedModel, inputs: temp)
+                let output = try await preformOpenAIRequest(client: client, qualifiedModel: qualifiedModel, inputs: temp)
+                context.pipe.withLock { $0 = output }
             case .OpenAICompatible:
-                return try await preformOpenAICompatibleRequest(client: client, qualifiedModel: qualifiedModel, inputs: temp)
+                let output = try await preformOpenAICompatibleRequest(client: client, qualifiedModel: qualifiedModel, inputs: temp)
+                context.pipe.withLock { $0 = output }
             case .Gemini:
                 todo("Support Gemini. For now, Please use OpenAI Compatible.")
             }
         }
-
-        unreachable()
+        
+        print()
     }
 
     func preformOpenAIRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, inputs: [String: AnySendable]) async throws -> OutputPipe {
@@ -132,7 +134,7 @@ extension LLMNode {
             todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
         }
 
-        guard response.contentType == ServerSentEvent.MIME_String else {
+        guard let contentType = response.contentType, contentType.starts(with: ServerSentEvent.MIME_String) else {
 
             let data = try await response.body.collect(upTo: .max)
             let decoder = JSONDecoder()
@@ -154,8 +156,9 @@ extension LLMNode {
             guard let data = $0.data.data(using: .utf8) else {
                 todo("Throw Error")
             }
-
-            return try decoder.decode(OpenAIModelStreamResponse.self, from: data) as AnySendable
+            
+            print(String(data: data, encoding: .utf8))
+            return try decoder.decode(OpenAIModelStreamResponse.self, from: data)
         }))
     }
 
@@ -174,7 +177,7 @@ extension LLMNode {
             todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
         }
 
-        guard response.contentType == ServerSentEvent.MIME_String else {
+        guard let contentType = response.contentType, contentType.starts(with: ServerSentEvent.MIME_String) else {
 
             let data = try await response.body.collect(upTo: .max)
             let decoder = JSONDecoder()
@@ -197,7 +200,7 @@ extension LLMNode {
                 todo("Throw Error")
             }
 
-            return try decoder.decode(OpenAIChatCompletionStreamResponse.self, from: data) as AnySendable
+            return try decoder.decode(OpenAIChatCompletionStreamResponse.self, from: data)
         }))
     }
 }
@@ -217,5 +220,9 @@ extension LLMNode {
         }
 
         return try await Array(stream)
+    }
+    
+    func update(_ context: Context, value: any Context.Value) throws {
+        try updateIntoResult(context, value: value)
     }
 }

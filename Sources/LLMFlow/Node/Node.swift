@@ -22,38 +22,35 @@ public protocol Node: Sendable, Hashable, Codable {
     var id: ID { get }
     var type: NodeType { get }
 
-    func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe
+    func run(executor: Executor) async throws
+
+    func wait(_ context: Context) async throws -> Context.Value?
+
+    func update(_ context: Context, value: Context.Value) throws
     
-    func wait(_ pipe: OutputPipe) async throws -> Context.Value?
-    
-    func update(_ context: inout Context, value: Context.Value) throws
+    static var resultKey: String { get }
 }
 
 extension Node {
-
+    public static var resultKey: String { DataKeyPath.NodeRunResultKey }
+    
     // force convert the pipe to blocked value
     // please check if it should be blocked.
-    public func wait(_ pipe: OutputPipe) async throws -> Context.Value? {
-        if case .none = pipe {
-            return nil
-        }
-        
-        if case let .block(value) = pipe {
-            return value
-        }
+    public func wait(_ context: Context) async throws -> Context.Value? {
+        let pipe = context.pipe.withLock { $0 }
 
-        guard case .stream(let stream) = pipe else {
-            return nil
+        return switch pipe {
+        case .none:
+            nil
+        case let .block(value):
+            value
+        case .stream:
+            nil
         }
-
-        todo("Throw error. stream should wait on its self.")
     }
-    
-    public func update(_ context: inout Context, value: Context.Value) throws {
-        let encoder = AnyEncoder()
-        if let result = try encoder.encode(value) {
-            // context[path: id, DataKeyPath.NodeRunResultKey] = result
-        }
+
+    public func updateIntoResult(_ context: Context, value: Context.Value) throws {
+        context[path: id, DataKeyPath.NodeRunResultKey] = value
     }
 }
 

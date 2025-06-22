@@ -6,18 +6,19 @@
 //
 
 struct EndNode: Node {
-    
+
     let id: ID
     let name: String?
     let type: NodeType = .END
-    
+
     enum CodingKeys: CodingKey {
         case id
         case name
         case type
     }
+
+    public func run(executor: Executor) async throws {}
     
-    func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
-        return pipe
+    func update(_ context: Context, value: any Context.Value) throws {
     }
 }

@@ -20,41 +20,36 @@ public protocol StoreLocator: AnyStorageValue {
 public typealias DataKeyPaths = [DataKeyPath]
 public typealias DataKeyPath = String
 
-public struct Context: Sendable {
+public final class Context: Sendable {
     public typealias Key = DataKeyPath
     public typealias Value = AnySendable
-    
+
     public typealias Store = [Key: Value]
     
-    private let clientLastEventId: LazyLock<String?> = .init(nil)
-    
-    var pipe: OutputPipe = .none
-    var states: [State] = []
-    var store: LazyLock<Store> = .init([:])
-    var locator: StoreLocator?
-    
-    public init(locater: StoreLocator? = nil) {
-        self.locator = locater
+    let pipe: LazyLock<OutputPipe>
+    let store: LazyLock<Store>
+
+    public init(pipe: OutputPipe = .none, store: Store = [:]) {
+        self.pipe = .init(pipe)
+        self.store = .init(store)
     }
-    
 }
 
 extension Context {
     subscript(key: Key?) -> Value? {
         get {
-            let a = store.withLock { store in
+            store.withLock { store in
                 store[safe: key]
             }
-            return a
         }
-        
+
         set {
             store.withLock { store in
                 store[safe: key] = newValue
             }
         }
     }
-    
+
     subscript<T>(safe key: Key?, as type: T.Type = T.self) -> T? {
         get {
             store.withLock { store in
@@ -62,24 +57,24 @@ extension Context {
             }
         }
     }
-    
+
     subscript(path keys: Key...) -> Value? {
         get {
             self[path: keys]
         }
-        
+
         set {
             self[path: keys] = newValue
         }
     }
-    
+
     subscript(path keys: [Key]?) -> Value? {
         get {
             store.withLock { store in
                 store[path: keys]
             }
         }
-        
+
         set {
             store.withLock { store in
                 store[path: keys] = newValue
@@ -93,17 +88,17 @@ extension Context {
         guard let keys else {
             return store.withLock { $0 }
         }
-        
+
         return store.withLock { store in
             store.filter { keys.contains($0.key) }
         }
     }
-    
+
     public func filter<T>(keys: [Key]?, as type: T.Type) ->  [Key: T]  {
         guard let keys else {
             return store.withLock { $0.compactMapValues { $0 as? T } }
         }
-        
+
         return store.withLock { store in
             store.filter { keys.contains($0.key) }.compactMapValues { $0 as? T }
         }
@@ -118,61 +113,58 @@ extension Dictionary where Value == AnySendable, Key == String {
             guard let key else { return nil }
             return self[key]
         }
-        
+
         set {
             guard let key else { return }
             self[key] = newValue
         }
     }
-    
+
     subscript(path keys: Key...) -> Value? {
         get {
             self[path: keys]
         }
-        
+
         set {
             self[path: keys] = newValue
         }
     }
-    
+
     subscript(path keys: [Key]?) -> Value? {
         get {
             guard let keys else { return nil }
-            
+
             let (key, rest) = keys.separateFirst()
-            
+
             guard let value = self[safe: key] else {
                 return nil
             }
-            
+
             guard let rest, !rest.isEmpty else {
                 return value
             }
-            
+
             guard let value = value as? [Key: Value] else {
                 return nil
             }
-            
+
             return value[path: rest]
         }
-        
+
         set {
             guard let keys else { return }
-            // guard let newValue else { return }
-            
+
             let (key, rest) = keys.separateFirst()
-            
+
             guard let rest, !rest.isEmpty else {
                 self[safe: key] = newValue
                 return
             }
             
-            guard var value = self[safe: key] as? [Key: Value] else {
-                return
-            }
-            
+            var value =  self[safe: key] as? Dictionary<Key, Value> ?? [:]
+
             value[path: rest] = newValue
-            
+
             self[safe: key] = value
         }
     }
@@ -181,5 +173,23 @@ extension Dictionary where Value == AnySendable, Key == String {
 extension Collection {
     func separateFirst() -> (Element?, [Element]?) {
         (self.first, Array(self.dropFirst()))
+    }
+}
+
+public final class Executor: Sendable {
+    public let locator: StoreLocator?
+    private let lockedContext: LazyLock<Context>
+
+    public init(locator: StoreLocator? = nil, context: Context = Context()) {
+        self.locator = locator
+        self.lockedContext = .init(context)
+    }
+}
+
+extension Executor {
+    var context: Context {
+        get {
+            self.lockedContext.withLock { $0 }
+        }
     }
 }

@@ -54,9 +54,17 @@ struct TemplateNode: Node {
 }
 
 extension TemplateNode {
-    func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
+
+    public func run(executor: Executor) async throws {
+        let context = executor.context
+
         let result = try template.render(context.filter(keys: nil))
-        
-        return .block(result)
+        context.pipe.withLock({
+            $0 = .block(result)
+        })
+    }
+    
+    func update(_ context: Context, value: any Context.Value) throws {
+        try self.updateIntoResult(context, value: value)
     }
 }

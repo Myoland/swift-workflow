@@ -90,9 +90,11 @@ public struct ModelDecl: Codable, Sendable, Hashable {
     
 }
 
+// MARK: Context Render
+
 extension Dictionary where Key == String, Value == FlowData {
-    fileprivate func render(_ values: [String: AnySendable]) throws -> [String: Any] {
-        var result: [String: Any] = [:]
+    fileprivate func render(_ values: Context.Store) throws -> Context.Store {
+        var result: Context.Store = [:]
         
         for (key, value) in self {
             let modelDeclKey = ModelDeclKey(key)
@@ -122,7 +124,7 @@ extension Dictionary where Key == String, Value == FlowData {
 }
 
 extension FlowData {
-    fileprivate func render(_ values: [String: AnySendable]) throws -> Any {
+    fileprivate func render(_ values: Context.Store) throws -> AnySendable {
         switch self {
         case .single(let single):
             return single.asAny
@@ -135,13 +137,13 @@ extension FlowData {
 }
 
 extension FlowData.Map {
-    fileprivate func render(_ values: [String: AnySendable]) throws -> [String: Any] {
+    fileprivate func render(_ values: Context.Store) throws -> [String: AnySendable] {
         return try elememts.render(values)
     }
 }
 
 extension FlowData.List {
-    fileprivate func render(_ values: [String: AnySendable]) throws -> [Any] {
+    fileprivate func render(_ values: Context.Store) throws -> [AnySendable] {
         return try self.elements.map { try $0.render(values) }
     }
 }

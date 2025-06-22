@@ -48,13 +48,17 @@ func testLLMNodeOpenAIRun() async throws {
     try Dotenv.make()
 
     let openai = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
-    
+
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
         "model_foo",
         .init(name: "model_foo", models: [.init(name: "gpt-4o-mini", provider: openai)])
     )
-    var context = Context(locater: DummySimpleLocater(client, solver))
+
+    let locator = DummySimpleLocater(client, solver)
+    
+    let context = Context()
+    let executor = Executor(locator: locator, context: context)
 
     let node = LLMNode(id: "ID",
                        name: nil,
@@ -72,7 +76,7 @@ func testLLMNodeOpenAIRun() async throws {
                                     "text": """
                                         be an echo server.
                                         what I send to you, you send back.
-                                    
+
                                         the exceptions:
                                         1. send "ping", back "pong"
                                         2. send "ding", back "dang"
@@ -87,16 +91,18 @@ func testLLMNodeOpenAIRun() async throws {
                            ]],
                        ]))
     do {
-        let pipe = try await node.run(context: context, pipe: .none)
-        guard case let .stream(stream) = pipe else {
-            Issue.record("Shuld have a stream")
-            try await client.shutdown()
-            return
-        }
+        try await node.run(executor: executor)
+        let output = executor.context.pipe.withLock { $0 }
+        
+         guard case let .stream(stream) = output else {
+             Issue.record("Shuld have a stream")
+             try await client.shutdown()
+             return
+         }
 
-        for try await event in stream {
-            print("[*] \(event)")
-        }
+         for try await event in stream {
+             print("[*] \(event)")
+         }
     } catch {
         Issue.record("Unexpected \(error)")
     }
@@ -106,18 +112,20 @@ func testLLMNodeOpenAIRun() async throws {
 
 @Test("testLLMNodeOpenAICompatibleRun")
 func testLLMNodeOpenAICompatibleRun() async throws {
-    
+
     try Dotenv.make()
-    
+
     let openaiCompatiable = LLMProvider(type: .OpenAICompatible, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
-    
+
     let client = HTTPClient()
     let solver = DummyLLMProviderSolver(
         "model_foo",
         .init(name: "model_foo", models: [.init(name: "gpt-4o-mini", provider: openaiCompatiable)])
     )
-    let context = Context(locater: DummySimpleLocater(client, solver))
-    
+    let locater = DummySimpleLocater(client, solver)
+
+    let executor = Executor(locator: locater)
+
     let node = LLMNode(
         id: "ID",
         name: nil,
@@ -134,7 +142,7 @@ func testLLMNodeOpenAICompatibleRun() async throws {
                     "content": """
                         be an echo server.
                         what I send to you, you send back.
-                    
+
                         the exceptions:
                         1. send "ping", back "pong"
                         2. send "ding", back "dang"
@@ -147,9 +155,10 @@ func testLLMNodeOpenAICompatibleRun() async throws {
             ],
         ]))
     do {
-        let pipe = try await node.run(context: context, pipe: .none)
+        try await node.run(executor: executor)
+        let output = executor.context.pipe.withLock { $0 }
         
-        guard case let .stream(stream) = pipe else {
+        guard case let .stream(stream) = output else {
             Issue.record("Shuld have a stream")
             try await client.shutdown()
             return
@@ -161,6 +170,6 @@ func testLLMNodeOpenAICompatibleRun() async throws {
     } catch {
         Issue.record("Unexpected \(error)")
     }
-    
+
     try await client.shutdown()
 }

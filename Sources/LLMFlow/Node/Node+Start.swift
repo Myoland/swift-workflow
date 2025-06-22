@@ -30,26 +30,26 @@ public struct StartNode: Node {
 
 extension StartNode {
 
-    public func run(context: Context, pipe: OutputPipe) async throws -> OutputPipe {
-        guard case .block(let value) = pipe,
+
+    public func run(executor: Executor) async throws {
+        let context = executor.context
+
+        guard case .block(let value) = context.pipe.withLock({ $0 }),
               let value = value as? [NodeVariableKey: FlowData]
         else {
-            return .none
-        }
-        
-        try verify(data: value)
-        return .block(value)
-    }
-    
-    public func update(_ context: inout Context, value: Context.Value) throws {
-        guard let value = value as? [NodeVariableKey: FlowData] else {
             return
         }
-        
-        context[path: "inputs"] = value.asAny
-        
+
+        try verify(data: value)
+        context.pipe.withLock { $0 = .block(value.asAny) }
     }
     
+    static public let resultKey: String = "inputs"
+    
+    public func update(_ context: Context, value: Context.Value) throws {
+        context[path: Self.resultKey] = value
+    }
+
     enum InitVerifyErr: Error, Hashable {
         case inputDataNotFound(key: String)
         case inputDataTypeMissMatch(key: String)
