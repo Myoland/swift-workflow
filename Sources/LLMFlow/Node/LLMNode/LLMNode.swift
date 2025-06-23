@@ -13,6 +13,7 @@ import NIOFoundationCompat
 import NIOHTTP1
 import LazyKit
 import AsyncAlgorithms
+import OSLog
 
 
 public enum LLMProviderType: Hashable, Codable, Sendable {
@@ -49,7 +50,7 @@ public struct LLMQualifiedModel: Hashable, Codable, Sendable {
 
 public struct LLMModel: Sendable {
     public let name: String
-    
+
     public let type: LLMProviderType
     public let models: [LLMQualifiedModel]
 
@@ -102,35 +103,86 @@ extension LLMNode {
         let context = executor.context
         let inputs = context.filter(keys: nil)
 
-        for qualifiedModel in llm.models.filter({ $0.provider.type == llm.type }) {
+        let models = llm.models.filter({ $0.provider.type == llm.type })
+        let output = switch llm.type {
+            case .OpenAI:
+                try await performOpenAIRequet(client: client, models: models, inputs: inputs, logger: executor.logger)
+            case .OpenAICompatible:
+                try await performOpenAICompatibleRequet(client: client, models: models, inputs: inputs, logger: executor.logger)
+            default:
+                todo("Throw error that llm model is not supported")
+        }
+        context.pipe.withLock { $0 = output }
+    }
+}
+
+extension LLMNode {
+    func performOpenAIRequet(
+        client: HttpClientAbstract,
+        models: [LLMQualifiedModel],
+        inputs:  Context.Store,
+        logger: Logger
+    ) async throws -> NodeOutput {
+        assert(Set(models.map(\.provider.type)).count == 1, "Multiple providers type are not supported")
+
+        for model in models {
             var temp = inputs
             // TODO: using other prefix
-            temp[path: "inputs", "model"] = qualifiedModel.name
-            
+            temp[path: "inputs", "model"] = model.name
+
             let values = try request.render(temp)
-            executor.logger.debug("[*] LLM Node. requests rendered.\n\(values)")
-            
-            // [2025/06/08 <Huanan>] TODO: Catch Error and retry.
-            switch qualifiedModel.provider.type {
-            case .OpenAI:
-                let request: OpenAIModelReponseRequest = try AnyDecoder().decode(from: values)
-                let output = try await preformOpenAIRequest(client: client, qualifiedModel: qualifiedModel, request: request)
-                context.pipe.withLock { $0 = output }
-            case .OpenAICompatible:
-                let request: OpenAIChatCompletionRequest = try AnyDecoder().decode(from: values)
-                let output = try await preformOpenAICompatibleRequest(client: client, qualifiedModel: qualifiedModel, request: request)
-                context.pipe.withLock { $0 = output }
-            case .Gemini:
-                todo("Support Gemini. For now, Please use OpenAI Compatible.")
+            logger.debug("[*] LLM Node. rcequests rendered.\n\(values)")
+
+            let request: OpenAIModelReponseRequest = try AnyDecoder().decode(from: values)
+
+            do {
+                return try await preformOpenAIRequest(client: client, qualifiedModel: model, request: request)
+            } catch {
+                logger.error("[*] LLM Node. request failed.\n\(error)")
+                throw error
             }
-            
-            executor.logger.info("[*] LLM Node. Request Sent.")
         }
+
+        logger.error("[*] LLM Node. all requests failed.")
+        todo("Throw error for all provider failed")
     }
+
+    func performOpenAICompatibleRequet(
+        client: HttpClientAbstract,
+        models: [LLMQualifiedModel],
+        inputs:  Context.Store,
+        logger: Logger
+    ) async throws -> NodeOutput {
+        assert(Set(models.map(\.provider.type)).count == 1, "Multiple providers type are not supported")
+
+        for model in models {
+            var temp = inputs
+            // TODO: using other prefix
+            temp[path: "inputs", "model"] = model.name
+
+            let values = try request.render(temp)
+            logger.debug("[*] LLM Node. rcequests rendered.\n\(values)")
+
+            let request: OpenAIChatCompletionRequest = try AnyDecoder().decode(from: values)
+
+            do {
+                return try await preformOpenAICompatibleRequest(client: client, qualifiedModel: model, request: request)
+            } catch {
+                logger.error("[*] LLM Node. all requests failed.")
+                throw error
+            }
+        }
+
+        logger.error("[*] LLM Node. all requests failed.")
+        todo("Throw error for all provider failed")
+    }
+}
+
+extension LLMNode {
 
     func preformOpenAIRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, request: OpenAIModelReponseRequest) async throws -> NodeOutput {
         let client = OpenAIClient(httpClient: client, configuration: .init(apiKey: qualifiedModel.provider.apiKey, apiURL: qualifiedModel.provider.apiURL))
-        
+
         let response = try await client.send(request: request)
 
         let contentLength = response.contentLength ?? .max
@@ -169,7 +221,7 @@ extension LLMNode {
 
     func preformOpenAICompatibleRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, request: OpenAIChatCompletionRequest) async throws -> NodeOutput {
         let client = OpenAICompatibleClient(httpClient: client, configuration: .init(apiKey: qualifiedModel.provider.apiKey, apiURL: qualifiedModel.provider.apiURL))
-        
+
         let response = try await client.send(request: request)
 
         let contentLength = response.contentLength ?? .max
