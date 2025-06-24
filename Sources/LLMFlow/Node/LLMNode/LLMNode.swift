@@ -185,25 +185,22 @@ extension LLMNode {
 
         let response = try await client.send(request: request)
 
-        let contentLength = response.contentLength ?? .max
-
         guard response.status == .ok else {
             var buffer = try? await response.body.collect(upTo: .max)
+            let contentLength = response.contentLength ?? .max
             let msg = buffer?.readString(length: contentLength, encoding: .utf8)
             todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
         }
 
+        let jsonDecoder = JSONDecoder()
+        
         guard let contentType = response.contentType, contentType.starts(with: ServerSentEvent.MIME_String) else {
 
             let data = try await response.body.collect(upTo: .max)
-            let decoder = JSONDecoder()
-            let result = try decoder.decode(OpenAIModelReponse.self, from: data)
+            let result = try jsonDecoder.decode(OpenAIModelReponse.self, from: data)
 
             return .block(result)
         }
-
-
-        let decoder = JSONDecoder()
 
         let stream = response.body.map { buffer in
             Foundation.Data.init(buffer: buffer)
@@ -215,7 +212,8 @@ extension LLMNode {
             guard let data = $0.data.data(using: .utf8) else {
                 todo("Throw Error")
             }
-            return try decoder.decode(OpenAIModelStreamResponse.self, from: data)
+            let obj = try jsonDecoder.decode(OpenAIModelStreamResponse.self, from: data)
+            return try AnyEncoder().encode(obj)
         }))
     }
 
@@ -224,23 +222,21 @@ extension LLMNode {
 
         let response = try await client.send(request: request)
 
-        let contentLength = response.contentLength ?? .max
-
         guard response.status == .ok else {
             var buffer = try? await response.body.collect(upTo: .max)
+            let contentLength = response.contentLength ?? .max
             let msg = buffer?.readString(length: contentLength, encoding: .utf8)
             todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
         }
+        
+        let jsonDecoder = JSONDecoder()
 
         guard let contentType = response.contentType, contentType.starts(with: ServerSentEvent.MIME_String) else {
 
             let data = try await response.body.collect(upTo: .max)
-            let decoder = JSONDecoder()
-            let result = try decoder.decode(OpenAIChatCompletionResponse.self, from: data)
+            let result = try jsonDecoder.decode(OpenAIChatCompletionResponse.self, from: data)
             return .block(result)
         }
-
-        let decoder = JSONDecoder()
 
         let stream = response.body.map { buffer in
             Foundation.Data.init(buffer: buffer)
@@ -255,7 +251,8 @@ extension LLMNode {
                 todo("Throw Error")
             }
 
-            return try decoder.decode(OpenAIChatCompletionStreamResponse.self, from: data)
+            let obj = try jsonDecoder.decode(OpenAIChatCompletionStreamResponse.self, from: data)
+            return try AnyEncoder().encode(obj)
         }))
     }
 }

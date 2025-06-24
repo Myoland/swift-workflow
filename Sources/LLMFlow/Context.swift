@@ -5,7 +5,7 @@ public typealias AnySendable = Any & Sendable
 
 
 extension Context {
-    struct State: Sendable {
+    public struct Changes: Sendable {
 
     }
 }
@@ -181,7 +181,10 @@ public final class Executor: Sendable {
     public let locator: ServiceLocator?
     private let lockedContext: LazyLock<Context>
     public let logger: Logger
-
+    
+    public let anyDecoder = AnyDecoder()
+    public let anyEncoder = AnyEncoder()
+        
     public init(locator: ServiceLocator? = nil, context: Context = Context(), logger: Logger = .init()) {
         self.locator = locator
         self.lockedContext = .init(context)

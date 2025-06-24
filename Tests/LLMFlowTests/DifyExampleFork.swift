@@ -49,7 +49,7 @@ func testDifyExampleFork() async throws {
         let states = try workflow.run0(inputs: inputs)
         for try await state in states {
             print("[*] \(state)")
-            if case let .stream(stream) = state {
+            if case let .stream(_, stream) = state {
                 for try await value in stream {
                     print("[*] \(value)")
                 }

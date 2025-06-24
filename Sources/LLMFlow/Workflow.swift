@@ -6,7 +6,7 @@ import LazyKit
 // MARK: Workflow + Edge
 
 extension Workflow {
-    typealias Edges = [Edge]
+    public typealias Edges = [Edge]
 
     public struct Edge : Sendable {
         public let from: Node.ID
@@ -24,12 +24,14 @@ public struct Workflow : Sendable{
     public typealias VariableKey = NodeVariableKey
     public typealias VariableValue = Context.Value
 
-    let nodes: [Node.ID: any Node]
-    let flows: [Node.ID: Edges]
+    public let nodes: [Node.ID: any Node]
+    public let flows: [Node.ID: Edges]
 
-    let startNodeID: Node.ID
+    public let startNodeID: Node.ID
 
-    let locator: ServiceLocator
+    public let locator: ServiceLocator
+    
+    public let logger: Logger = .init()
 }
 
 extension Workflow {

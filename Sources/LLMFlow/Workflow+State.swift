@@ -28,9 +28,24 @@ extension Workflow {
 
     public enum PipeState: Sendable {
         case start
-        case stream(AnyAsyncSequence<Context.Value>)
-        case running
+        case stream(Context, AnyAsyncSequence<Context.Value>)
+        case running(Context)
         case end
+    }
+}
+
+extension Workflow.PipeState: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .start:
+            "start"
+        case .stream(_, _):
+            "stream"
+        case .running(_):
+            "running"
+        case .end:
+            "end"
+        }
     }
 }
 
@@ -41,7 +56,10 @@ extension Workflow {
         let inputs: [String: FlowData]
 
         public func makeAsyncIterator() -> Iterator {
-            Iterator(delegate: workflow, locator: workflow.locator, node: startNode, inputs: inputs)
+            Iterator(delegate: workflow,
+                     executor: Executor(locator: workflow.locator, context: .init(pipe: .block(inputs)), logger: workflow.logger),
+                     node: startNode,
+                     inputs: inputs)
         }
     }
 }
@@ -70,37 +88,45 @@ extension Workflow.RunningState {
         public let executor: Executor
 
         private var reachEnd: Bool
+        private var postNode: (any Node)?
+        private var preNode: (any Node)?
 
-        public init(delegate: any WorkflowControl, locator: ServiceLocator, node: any Node, inputs: [String: FlowData]) {
+        public init(delegate: any WorkflowControl, executor: Executor, node: any Node, inputs: [String: FlowData]) {
             self.delegate = delegate
+            self.postNode = node
             self.node = node
-            self.executor = .init(locator: locator, context: .init(pipe: .block(inputs)))
+            self.executor = executor
             self.reachEnd = false
         }
 
         public mutating func next() async throws -> Workflow.PipeState? {
-            let node = self.node
-
-            guard !reachEnd else { return nil }
+            guard !reachEnd, let node = self.postNode else { return nil }
+            
+            self.preNode = self.node
+            self.node = node
+            self.postNode = nil
 
             try await node.run(executor: executor)
-
+            
+            let context = executor.context
+            
             let edges = delegate.edges(from: node.id)
             if let to = edges.first?.to, let next = delegate.node(id: to), next is EndNode {
-                self.node = next
+                self.postNode = next
                 if case let .stream(stream) = executor.context.pipe.withLock({ $0 }){
-                    return .stream(stream)
+                    return .stream(context, stream)
                 } else {
-                    return .running
+                    return .running(context)
                 }
             }
 
             if node is EndNode {
                 reachEnd = true
+                postNode = nil
                 return .end
             }
 
-            let context = executor.context
+            // let context = executor.context
             let variable = try await node.wait(context)
             context.pipe.withLock { $0 = .none }
 
@@ -122,12 +148,12 @@ extension Workflow.RunningState {
                 throw Err.nodeNotFound
             }
 
-            self.node = next
+            self.postNode = next
 
             if node is StartNode {
                 return .start
             } else {
-                return .running
+                return .running(context)
             }
         }
 
