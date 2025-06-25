@@ -92,7 +92,7 @@ func testLLMNodeOpenAIRun() async throws {
                        ]))
     do {
         try await node.run(executor: executor)
-        let output = executor.context.pipe.withLock { $0 }
+        let output = executor.context.output.withLock { $0 }
 
          guard case let .stream(stream) = output else {
              Issue.record("Shuld have a stream")
@@ -156,7 +156,7 @@ func testLLMNodeOpenAICompatibleRun() async throws {
         ]))
     do {
         try await node.run(executor: executor)
-        let output = executor.context.pipe.withLock { $0 }
+        let output = executor.context.output.withLock { $0 }
 
         guard case let .stream(stream) = output else {
             Issue.record("Shuld have a stream")

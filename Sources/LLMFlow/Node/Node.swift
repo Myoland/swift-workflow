@@ -16,6 +16,14 @@ public enum NodeOutput: Sendable {
     case stream(AnyAsyncSequence<Context.Value>)
 }
 
+extension NodeOutput {
+    var stream: AnyAsyncSequence<Context.Value>? {
+        guard case let .stream(stream) = self else { return nil }
+        return stream
+    }
+}
+
+
 public protocol Node: Sendable, Hashable, Codable {
     typealias ID = String
 
@@ -37,7 +45,7 @@ extension Node {
     // force convert the pipe to blocked value
     // please check if it should be blocked.
     public func wait(_ context: Context) async throws -> Context.Value? {
-        let pipe = context.pipe.withLock { $0 }
+        let pipe = context.output.withLock { $0 }
 
         return switch pipe {
         case .none:

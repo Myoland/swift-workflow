@@ -5,8 +5,18 @@ public typealias AnySendable = Any & Sendable
 
 
 extension Context {
-    public struct Changes: Sendable {
+    public struct Snapshot: Sendable {
+        enum Change: Sendable {
+            case insert(DataKeyPaths, Context.Value)
+            // TODO: [2025/06/25 <Huanan>] Add update, delete
+        }
 
+        let createdAt: Date
+
+        let modifiedBy: Node.ID
+        let result: Context.Store
+
+        let changes: [Change]
     }
 }
 
@@ -27,12 +37,15 @@ public final class Context: Sendable {
 
     public typealias Store = [Key: Value]
 
-    let pipe: LazyLock<NodeOutput>
+    let output: LazyLock<NodeOutput>
     let store: LazyLock<Store>
 
-    public init(pipe: NodeOutput = .none, store: Store = [:]) {
-        self.pipe = .init(pipe)
+    let snapshots: LazyLock<[Snapshot]>
+
+    public init(output: NodeOutput = .none, store: Store = [:]) {
+        self.output = .init(output)
         self.store = .init(store)
+        self.snapshots = .init([])
     }
 }
 
@@ -107,7 +120,7 @@ extension Context {
 }
 
 
-// [2025/06/02 <Huanan>] TODO: Support Collection
+// [2025/06/02 <Huanan>] TODO: Support Collection. Such as `inputs.users.0.name`
 extension Dictionary where Value == AnySendable, Key == String {
     subscript(safe key: Key?) -> Value? {
         get {
@@ -181,10 +194,10 @@ public final class Executor: Sendable {
     public let locator: ServiceLocator?
     private let lockedContext: LazyLock<Context>
     public let logger: Logger
-    
+
     public let anyDecoder = AnyDecoder()
     public let anyEncoder = AnyEncoder()
-        
+
     public init(locator: ServiceLocator? = nil, context: Context = Context(), logger: Logger = .init()) {
         self.locator = locator
         self.lockedContext = .init(context)

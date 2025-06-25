@@ -59,11 +59,11 @@ extension TemplateNode {
         let context = executor.context
 
         let result = try template.render(context.filter(keys: nil))
-        context.pipe.withLock({
+        context.output.withLock({
             $0 = .block(result)
         })
     }
-    
+
     func update(_ context: Context, value: any Context.Value) throws {
         try self.updateIntoResult(context, value: value)
     }

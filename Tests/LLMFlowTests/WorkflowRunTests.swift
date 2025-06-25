@@ -81,8 +81,9 @@ func testWorkflowRun() async throws {
 
         let states = try workflow.run0(inputs: inputs)
         for try await state in states {
-            workflow.logger.debug("[*] State: \(state)")
-            if case let .stream(_, stream) = state {
+            workflow.logger.debug("[*] State: \(String(describing: state))")
+
+            if let stream = state.stream {
                 for try await value in stream {
                     let response: OpenAIModelStreamResponse = try AnyDecoder().decode(from: value)
                     workflow.logger.debug("[*] Stream Response: \(String(describing: response))")
@@ -167,7 +168,9 @@ func testWorkflowRunWithConfig() async throws {
         let states = try workflow.run0(inputs: inputs)
         for try await state in states {
             print("[*] \(state)")
-            if case let .stream(_, stream) = state {
+
+
+            if let stream = state.stream {
                 for try await value in stream {
                     print("[*] \(value)")
                 }

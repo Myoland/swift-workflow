@@ -34,7 +34,7 @@ extension StartNode {
     public func run(executor: Executor) async throws {
         let context = executor.context
 
-        guard case .block(let value) = context.pipe.withLock({ $0 }),
+        guard case .block(let value) = context.output.withLock({ $0 }),
               let value = value as? [NodeVariableKey: FlowData]
         else {
             return
@@ -43,7 +43,7 @@ extension StartNode {
         executor.logger.debug("[*] Start Node. Values: \(value)")
 
         try verify(data: value)
-        context.pipe.withLock { $0 = .block(value.asAny) }
+        context.output.withLock { $0 = .block(value.asAny) }
 
         executor.logger.info("[*] Start Node. Verify Success.")
     }

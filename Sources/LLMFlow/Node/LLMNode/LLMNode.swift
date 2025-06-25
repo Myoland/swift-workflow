@@ -16,7 +16,7 @@ import AsyncAlgorithms
 import OSLog
 
 
-public enum LLMProviderType: Hashable, Codable, Sendable {
+public enum LLMProviderType: String, Hashable, Codable, Sendable {
     case OpenAI
     case OpenAICompatible
     case Gemini
@@ -112,7 +112,7 @@ extension LLMNode {
             default:
                 todo("Throw error that llm model is not supported")
         }
-        context.pipe.withLock { $0 = output }
+        context.output.withLock { $0 = output }
     }
 }
 
@@ -193,7 +193,7 @@ extension LLMNode {
         }
 
         let jsonDecoder = JSONDecoder()
-        
+
         guard let contentType = response.contentType, contentType.starts(with: ServerSentEvent.MIME_String) else {
 
             let data = try await response.body.collect(upTo: .max)
@@ -228,7 +228,7 @@ extension LLMNode {
             let msg = buffer?.readString(length: contentLength, encoding: .utf8)
             todo("throw Node Runtime Error. Msg: \(msg ?? "nil")")
         }
-        
+
         let jsonDecoder = JSONDecoder()
 
         guard let contentType = response.contentType, contentType.starts(with: ServerSentEvent.MIME_String) else {
