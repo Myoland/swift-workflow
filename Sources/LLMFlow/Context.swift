@@ -37,10 +37,10 @@ public final class Context: Sendable {
 
     public typealias Store = [Key: Value]
 
-    let output: LazyLock<NodeOutput>
-    let store: LazyLock<Store>
+    let output: LazyLockedValue<NodeOutput>
+    let store: LazyLockedValue<Store>
 
-    let snapshots: LazyLock<[Snapshot]>
+    let snapshots: LazyLockedValue<[Snapshot]>
 
     public init(output: NodeOutput = .none, store: Store = [:]) {
         self.output = .init(output)
@@ -192,7 +192,7 @@ extension Collection {
 
 public final class Executor: Sendable {
     public let locator: ServiceLocator?
-    private let lockedContext: LazyLock<Context>
+    private let lockedContext: LazyLockedValue<Context>
     public let logger: Logger
 
     public let anyDecoder = AnyDecoder()
