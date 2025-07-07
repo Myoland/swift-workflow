@@ -12,8 +12,8 @@ import LazyKit
 // MARK: Workflow + Run
 
 extension Workflow {
-    
-    public func run0(inputs: [String: FlowData]) throws -> RunningUpdates {
+
+    public func run(inputs: [String: FlowData]) throws -> RunningUpdates {
         try RunningUpdates(workflow: self, startNode: self.requireStartNode(), inputs: inputs)
     }
 }
@@ -29,6 +29,8 @@ extension Workflow {
     public enum PipeStateType: Hashable, Sendable {
         case start
         case generating
+        case startGenerating
+        case finishGenerating
         case running
         case end
     }
@@ -39,7 +41,7 @@ extension Workflow {
 
         // Notice: get stream through stream property only
         let context: Context
-        
+
         let value: Context.Value?
     }
 }
@@ -51,6 +53,10 @@ extension Workflow.PipeStateType: CustomStringConvertible {
             "start"
         case .generating:
             "generating"
+        case .startGenerating:
+            "generating"
+        case .finishGenerating:
+            "finishGenerating"
         case .running:
             "running"
         case .end:
@@ -101,17 +107,17 @@ extension Workflow.RunningUpdates {
         case initial(StartNode)
         case modifying
         case running(current: any Node, previous: (any Node)?)
-        case generating(current: any Node, next: any Node, AnyAsyncSequence<Context.Value>.AsyncIterator)
+        case generating(current: any Node, AnyAsyncSequence<Context.Value>.AsyncIterator)
         case end
     }
-    
-    
+
+
     public struct Iterator: AsyncIteratorProtocol, Sendable {
         typealias Err = Workflow.PipeErr
 
         private let delegate: any WorkflowControl
         public let executor: Executor
-        
+
         public let state: LazyLockedValue<RunningState>
 
         public init(delegate: any WorkflowControl, executor: Executor, node: StartNode, inputs: [String: FlowData]) {
@@ -136,7 +142,7 @@ extension Workflow.RunningUpdates {
                 }
                 return old
             }
-            
+
             let context = executor.context
             switch state {
             case .end:
@@ -146,7 +152,7 @@ extension Workflow.RunningUpdates {
             default:
                 break
             }
-            
+
             switch state {
             case .end, .initial(_):
                 preconditionFailure("unreachable")
@@ -154,51 +160,58 @@ extension Workflow.RunningUpdates {
             case .running(current: let node, previous: _) where node is EndNode:
                 // summarize
                 self.state.withLock { $0 = .end }
-                return Workflow.PipeState(type: .end, node: node, context: context, value: nil)
-                
+                return Workflow.PipeState(type: .end, node: node, context: context, value: "TODO: Object Used for summrize")
+
             case .running(current: let node, previous: _):
                 try await node.run(executor: executor)
-                
-                let edges = delegate.edges(from: node.id)
-                
-                if let to = edges.first?.to,
-                   let next = delegate.node(id: to),
-                   next is EndNode,
-                   let stream = context.output.withLock({ $0 }).stream
-                {
+
+                let output = context.output.withLock { $0 }
+
+                switch output {
+                case .none:
+                    break
+                case .stream(let stream):
                     let iterator = stream.makeAsyncIterator()
-                    self.state.withLock { $0 = .generating(current: node, next: next, iterator) }
-                    return Workflow.PipeState(type: .running, node: node, context: context, value: nil)
-                }
-                
-                // Block the node stream if needed and match a edge by condition.
-                let variable = try await node.wait(context)
-                context.output.withLock { $0 = .none }
-
-                if let variable {
-                    try node.update(context, value: variable)
-                    executor.logger.info("[*] Node(\(node.id)). Update Success. Value: \(String(describing: variable))")
+                    self.state.withLock { $0 = .generating(current: node, iterator) }
+                    return Workflow.PipeState(type: .startGenerating, node: node, context: context, value: nil)
+                case .block(let value):
+                    try node.update(context, value: value)
+                    executor.logger.info("[*] Node(\(node.id)). Update Success. Value: \(String(describing: value))")
                 }
 
-                let edge = edges.first { $0.condition?.eval(context.filter(keys: nil)) ?? true }
+                let next = try requireNextNode(from: node.id, context: context.filter(keys: nil))
 
-                guard let edge else { throw Err.notMatchEdge }
-
-                guard let next = delegate.node(id: edge.to) else { throw Err.nodeNotFound }
-                
                 self.state.withLock { $0 = .running(current: next, previous: node) }
                 return Workflow.PipeState(type: .running, node: node, context: context, value: nil)
-            case .generating(let node, let next, var iterator):
+
+            case .generating(let node, var iterator):
                 if let elem = try await iterator.next() {
-                    self.state.withLock { $0 = .generating(current: node, next: next, iterator) }
+                    self.state.withLock { $0 = .generating(current: node, iterator) }
                     return Workflow.PipeState(type: .generating, node: node, context: context, value: elem)
-                } else {
-                    self.state.withLock { $0 = .running(current: next, previous: nil) }
-                    return Workflow.PipeState(type: .running, node: node, context: context, value: nil)
                 }
+
+                // iterator finished
+                let value = try await node.wait(context)
+                try node.update(context, value: value)
+                executor.logger.info("[*] Node(\(node.id)). Update Success. Value: \(String(describing: value))")
+
+                let next = try requireNextNode(from: node.id, context: context.filter(keys: nil))
+
+                self.state.withLock { $0 = .running(current: next, previous: nil) }
+                return Workflow.PipeState(type: .finishGenerating, node: node, context: context, value: nil)
             case .modifying:
                 preconditionFailure("unreachable")
             }
+        }
+        
+        public func requireNextNode(from nodeID: Node.ID, context: [Context.Key: Context.Value]) throws -> any Node {
+            let edges = delegate.edges(from: nodeID)
+            let edge = edges.first { $0.condition?.eval(context) ?? true }
+            
+            guard let edge else { throw Err.notMatchEdge }
+            guard let next = delegate.node(id: edge.to) else { throw Err.nodeNotFound }
+            
+            return next
         }
     }
 }

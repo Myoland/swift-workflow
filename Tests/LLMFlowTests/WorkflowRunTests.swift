@@ -79,7 +79,7 @@ func testWorkflowRun() async throws {
             "message": "ping"
         ]
         
-        let states = try workflow.run0(inputs: inputs)
+        let states = try workflow.run(inputs: inputs)
         for try await state in states {
             workflow.logger.debug("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
@@ -158,7 +158,7 @@ func testWorkflowRunWithConfig() async throws {
             "message": "ping"
         ]
 
-        let states = try workflow.run0(inputs: inputs)
+        let states = try workflow.run(inputs: inputs)
         for try await state in states {
             print("[*] \(state)")
         }

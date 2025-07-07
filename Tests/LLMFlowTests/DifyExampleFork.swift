@@ -46,7 +46,7 @@ func testDifyExampleFork() async throws {
             :
         ]
 
-        let states = try workflow.run0(inputs: inputs)
+        let states = try workflow.run(inputs: inputs)
         for try await state in states {
             print("[*] \(state)")
         }

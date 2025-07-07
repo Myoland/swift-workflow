@@ -260,16 +260,17 @@ extension LLMNode {
 }
 
 extension LLMNode {
-    public func wait(_ pipe: NodeOutput) async throws -> Context.Value? {
-        if case .none = pipe {
+    public func wait(_ context: Context) async throws -> Context.Value? {
+        let output = context.output.withLock { $0 }
+        if case .none = output {
             return nil
         }
 
-        if case let .block(value) = pipe {
+        if case let .block(value) = output {
             return value
         }
 
-        guard case .stream(let stream) = pipe else {
+        guard case .stream(let stream) = output else {
             return nil
         }
 
