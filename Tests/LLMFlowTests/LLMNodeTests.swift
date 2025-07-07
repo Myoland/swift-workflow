@@ -173,3 +173,68 @@ func testLLMNodeOpenAICompatibleRun() async throws {
 
     try await client.shutdown()
 }
+
+
+@Test("testXXXX")
+func testXXXX() async throws {
+    try Dotenv.make()
+    
+    let client = HTTPClient()
+
+    let openai = OpenAICompatibleClient(httpClient: client, configuration: .init(apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v0"))
+    
+    let response = try await openai.send(request: .init(
+            messages: [
+                .system(.init(role: .system, content: .text("""
+                        be an echo server.
+                        what I send to you, you send back.
+
+                        the exceptions:
+                        1. send "ping", back "pong"
+                        2. send "ding", back "dang"
+                    """), name: nil)),
+                .user(.init(role: .user, content: .text("ping"), name: nil))
+            ],
+            model: "gpt-4o-mini",
+            audio: nil,
+            frequencyPenalty: nil,
+            logitBias: nil,
+            logprobs: nil,
+            maxCompletionTokens: nil,
+            metadata: nil,
+            modalities: nil,
+            n: nil,
+            parallelToolCalls: nil,
+            prediction: nil,
+            presencePenalty: nil,
+            reasoningEffort: nil,
+            responseFormat: nil,
+            seed: nil,
+            serviceTier: nil,
+            stop: nil,
+            store: nil,
+            stream: true,
+            streamOptions: nil,
+            temperature: nil,
+            toolChoice: nil,
+            tools: nil,
+            topLogprobs: nil,
+            topP: nil,
+            user: nil,
+            webSearchOptions: nil
+        ))
+    
+    let body = response.body.buffer(policy: .unbounded).cached()
+    for try await chunk in body {
+        let str = String(buffer: chunk)
+        print(str)
+    }
+    
+    for try await chunk in body {
+        let str = String(buffer: chunk)
+        print(str)
+    }
+    
+    
+    try await client.shutdown()
+}

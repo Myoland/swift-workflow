@@ -26,8 +26,8 @@ public struct ServerSentEvent: Sendable, Codable {
 /// The Interpreter will process as [specification](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation) descried.
 final class ServerSentEventsInterpreter: Sendable {
 
-    private let clientLastEventId: LazyLock<String?> = .init(nil)
-    public let logger: Logger = .init()
+    private let clientLastEventId: LazyLockedValue<String?> = .init(nil)
+    public let logger: Logger = .init(subsystem: "me.afuture.server.sse", category: "interpreter")
 
     func process(buffer: Data) -> [ServerSentEvent] {
         // Streams must be decoded using the UTF-8 decode algorithm.

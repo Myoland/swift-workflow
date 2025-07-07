@@ -78,17 +78,10 @@ func testWorkflowRun() async throws {
             "name": "John",
             "message": "ping"
         ]
-
+        
         let states = try workflow.run0(inputs: inputs)
         for try await state in states {
-            workflow.logger.debug("[*] State: \(String(describing: state))")
-
-            if let stream = state.stream {
-                for try await value in stream {
-                    let response: OpenAIModelStreamResponse = try AnyDecoder().decode(from: value)
-                    workflow.logger.debug("[*] Stream Response: \(String(describing: response))")
-                }
-            }
+            workflow.logger.debug("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
     } catch {
         Issue.record("Unexpected \(error)")
@@ -168,13 +161,6 @@ func testWorkflowRunWithConfig() async throws {
         let states = try workflow.run0(inputs: inputs)
         for try await state in states {
             print("[*] \(state)")
-
-
-            if let stream = state.stream {
-                for try await value in stream {
-                    print("[*] \(value)")
-                }
-            }
         }
     } catch {
         Issue.record("Unexpected \(error)")

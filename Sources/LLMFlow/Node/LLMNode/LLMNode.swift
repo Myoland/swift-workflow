@@ -212,9 +212,10 @@ extension LLMNode {
             guard let data = $0.data.data(using: .utf8) else {
                 todo("Throw Error")
             }
-            let obj = try jsonDecoder.decode(OpenAIModelStreamResponse.self, from: data)
-            return try AnyEncoder().encode(obj)
-        }))
+            return try jsonDecoder.decode(OpenAIModelStreamResponse.self, from: data)
+        }.map { (res: OpenAIModelStreamResponse) in
+            return try AnyEncoder().encode(res)
+        }.cached()))
     }
 
     func preformOpenAICompatibleRequest(client: HttpClientAbstract, qualifiedModel: LLMQualifiedModel, request: OpenAIChatCompletionRequest) async throws -> NodeOutput {
@@ -251,9 +252,10 @@ extension LLMNode {
                 todo("Throw Error")
             }
 
-            let obj = try jsonDecoder.decode(OpenAIChatCompletionStreamResponse.self, from: data)
-            return try AnyEncoder().encode(obj)
-        }))
+            return try jsonDecoder.decode(OpenAIChatCompletionStreamResponse.self, from: data)
+        }.map { (res: OpenAIChatCompletionStreamResponse) in
+            return try AnyEncoder().encode(res)
+        }.cached()))
     }
 }
 
