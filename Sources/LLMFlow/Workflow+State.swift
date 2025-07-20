@@ -6,7 +6,7 @@
 //
 
 import LazyKit
-
+import SynchronizationKit
 
 
 // MARK: Workflow + Run
@@ -186,7 +186,8 @@ extension Workflow.RunningUpdates {
 
             case .generating(let node, var iterator):
                 if let elem = try await iterator.next() {
-                    self.state.withLock { $0 = .generating(current: node, iterator) }
+                    let iter = iterator
+                    self.state.withLock { $0 = .generating(current: node, iter) }
                     return Workflow.PipeState(type: .generating, node: node, context: context, value: elem)
                 }
 

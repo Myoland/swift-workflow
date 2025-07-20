@@ -1,15 +1,6 @@
 {
-  "originHash" : "7ce7571ec565b3c9f4401a2ccd1542d79ad1614ef481c52bfcba451aeae1cce0",
+  "originHash" : "020ea43924911e0fc8db2981849f33bd8930d473f2b647b3bd65dbec3ab37457",
   "pins" : [
-    {
-      "identity" : "async-http-client",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swift-server/async-http-client.git",
-      "state" : {
-        "revision" : "333f51104b75d1a5b94cb3b99e4c58a3b442c9f7",
-        "version" : "1.25.2"
-      }
-    },
     {
       "identity" : "jinja",
       "kind" : "remoteSourceControl",
@@ -22,7 +13,7 @@
     {
       "identity" : "swift-algorithms",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-algorithms.git",
+      "location" : "https://github.com/apple/swift-algorithms",
       "state" : {
         "revision" : "87e50f483c54e6efd60e885f7f5aa946cee68023",
         "version" : "1.2.1"
@@ -35,15 +26,6 @@
       "state" : {
         "revision" : "042e1c4d9d19748c9c228f8d4ebc97bb1e339b0b",
         "version" : "1.0.4"
-      }
-    },
-    {
-      "identity" : "swift-atomics",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-atomics.git",
-      "state" : {
-        "revision" : "cd142fd2f64be2100422d658e7411e39489da985",
-        "version" : "1.2.0"
       }
     },
     {
@@ -74,12 +56,12 @@
       }
     },
     {
-      "identity" : "swift-http-structured-headers",
+      "identity" : "swift-gpt",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-http-structured-headers.git",
+      "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
-        "revision" : "f280fc7676b9940ff2c6598642751ea333c6544f",
-        "version" : "1.2.2"
+        "branch" : "main",
+        "revision" : "862a0e19353ca0b0b9bd862f9e0ee48b4408e3d8"
       }
     },
     {
@@ -92,60 +74,6 @@
       }
     },
     {
-      "identity" : "swift-log",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-log.git",
-      "state" : {
-        "revision" : "3d8596ed08bd13520157f0355e35caed215ffbfa",
-        "version" : "1.6.3"
-      }
-    },
-    {
-      "identity" : "swift-nio",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-nio.git",
-      "state" : {
-        "revision" : "6e17bc946821e550b88d22fd964423f70f1ce42d",
-        "version" : "2.82.0"
-      }
-    },
-    {
-      "identity" : "swift-nio-extras",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-nio-extras.git",
-      "state" : {
-        "revision" : "f1f6f772198bee35d99dd145f1513d8581a54f2c",
-        "version" : "1.26.0"
-      }
-    },
-    {
-      "identity" : "swift-nio-http2",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-nio-http2.git",
-      "state" : {
-        "revision" : "4281466512f63d1bd530e33f4aa6993ee7864be0",
-        "version" : "1.36.0"
-      }
-    },
-    {
-      "identity" : "swift-nio-ssl",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-nio-ssl.git",
-      "state" : {
-        "revision" : "6df102a39c8da5fdc2eae29a0f63546d660866fc",
-        "version" : "2.30.0"
-      }
-    },
-    {
-      "identity" : "swift-nio-transport-services",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-nio-transport-services.git",
-      "state" : {
-        "revision" : "cd1e89816d345d2523b11c55654570acd5cd4c56",
-        "version" : "1.24.0"
-      }
-    },
-    {
       "identity" : "swift-numerics",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-numerics.git",
@@ -155,12 +83,21 @@
       }
     },
     {
-      "identity" : "swift-system",
+      "identity" : "swift-openapi-runtime",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-system.git",
+      "location" : "https://github.com/apple/swift-openapi-runtime",
       "state" : {
-        "revision" : "a34201439c74b53f0fd71ef11741af7e7caf01e1",
-        "version" : "1.4.2"
+        "revision" : "8f33cc5dfe81169fb167da73584b9c72c3e8bc23",
+        "version" : "1.8.2"
+      }
+    },
+    {
+      "identity" : "swift-synchronization",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AFutureD/swift-synchronization",
+      "state" : {
+        "branch" : "main",
+        "revision" : "2796e5cc569acd8774468ab45bb294ba41028d30"
       }
     },
     {

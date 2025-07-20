@@ -5,6 +5,7 @@
 //  Created by AFuture on 2025/6/3.
 //
 
+import Algorithms
 
 extension Workflow {
 
