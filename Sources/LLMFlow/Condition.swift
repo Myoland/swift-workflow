@@ -53,11 +53,11 @@ extension Condition: Hashable {}
 
 
 protocol Evaluatable {
-    func eval(_ context: [String: Any]) -> Bool
+    func eval(_ context: [String: Any?]) -> Bool
 }
 
 extension Condition: Evaluatable {
-    func eval(_ context: [String: Any]) -> Bool {
+    func eval(_ context: [String: Any?]) -> Bool {
         switch self {
         case .and(let andCondition):
             return andCondition.allSatisfy { $0.eval(context) }
@@ -74,7 +74,7 @@ extension Condition: Evaluatable {
 }
 
 extension Condition.IntEval: Evaluatable {
-    func eval(_ inputs: [String: Any]) -> Bool {
+    func eval(_ inputs: [String: Any?]) -> Bool {
         switch self {
         case .equal(let variableKey, let value):
             guard let variable = inputs[variableKey] else {
@@ -165,7 +165,7 @@ extension Condition.IntEval: Evaluatable {
 
 
 extension Condition.StringEval: Evaluatable {
-    func eval(_ inputs: [String: Any]) -> Bool {
+    func eval(_ inputs: [String: Any?]) -> Bool {
         switch self {
         case .equal(let variableKey, let value):
             guard let variable = inputs[variableKey] else {

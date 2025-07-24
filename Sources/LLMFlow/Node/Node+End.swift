@@ -19,6 +19,6 @@ struct EndNode: Node {
 
     public func run(executor: Executor) async throws {}
     
-    func update(_ context: Context, value: any Context.Value) throws {
+    func update(_ context: Context, value: Context.Value) throws {
     }
 }

@@ -1,25 +1,29 @@
 import AsyncHTTPClient
+import OpenAPIAsyncHTTPClient
+import GPT
 import LazyKit
 import Foundation
 import SwiftDotenv
 import Testing
 import TestKit
 import Yams
+import os.log
 
 @testable import LLMFlow
 
 
 @Test("testWorkflowRun")
 func testWorkflowRun() async throws {
-
+    let logger = Logger(subsystem: "me.afuture.workflow.node.llm", category: "debug")
+    
     try Dotenv.make()
 
-    let openai = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
+    let openai = LLMProviderConfiguration(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
 
-    let client = HTTPClient()
+    let client = AsyncHTTPClientTransport()
     let solver = DummyLLMProviderSolver(
         "gpt-4o-mini",
-        .init(name: "gpt-4o-mini", type: .OpenAI, models: [.init(name: "gpt-4o-mini", provider: openai)])
+        .init(name: "gpt-4o-mini", models: [.init(model: .init(name: "gpt-4o-mini"), provider: openai)])
     )
     let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
 
@@ -28,35 +32,25 @@ func testWorkflowRun() async throws {
         name: nil,
         modelName: "gpt-4o-mini",
         request: .init([
-            "$model": ["inputs", "model"],
             "stream": true,
-            "input": [[
-                "role": "system",
-                "content": [[
-                    "type": "input_text",
-                    "text": """
-                        be an echo server.
-                        before response, say 'hi [USER NAME]' first.
-                        what I send to you, you send back.
+            "instructions": """
+                be an echo server.
+                before response, say 'hi [USER NAME]' first.
+                what I send to you, you send back.
 
-                        the exceptions:
-                        1. send "ping", back "pong"
-                        2. send "ding", back "dang"
-                    """
-                ]]
-            ], [
+                the exceptions:
+                1. send "ping", back "pong"
+                2. send "ding", back "dang"
+            """,
+            "inputs": [[
+                "type": "text",
                 "role": "system",
-                "content": [[
-                    "type": "input_text",
-                    "#text": "you are talking to {{inputs.name}}"
-                ]]
+                "#content": "you are talking to {{inputs.name}}"
             ], [
+                "type": "text",
                 "role": "user",
-                "content": [[
-                    "type": "input_text",
-                    "$text": ["inputs", "message"]
-                ]]
-            ]],
+                "$content": ["inputs", "message"],
+            ]]
         ]))
 
     let endNode = EndNode(id: UUID().uuidString, name: nil)
@@ -81,17 +75,17 @@ func testWorkflowRun() async throws {
         
         let states = try workflow.run(inputs: inputs)
         for try await state in states {
-            workflow.logger.debug("[*] State: \(state.type) -> \(String(describing: state.value))")
+            logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
     } catch {
         Issue.record("Unexpected \(error)")
     }
-
-    try await client.shutdown()
 }
 
 @Test("testWorkflowRunWithConfig")
 func testWorkflowRunWithConfig() async throws {
+    let logger = Logger(subsystem: "me.afuture.workflow.node.llm", category: "debug")
+    
     let str = """
     nodes:
     - id: start_id
@@ -104,25 +98,17 @@ func testWorkflowRunWithConfig() async throws {
       type: LLM
       modelName: test_openai
       request:
-        $model:
-          - inputs
-          - model
         stream: true
-        input:
-            - role: system
-              content:
-                - type: input_text
-                  text: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"pong\\"\n2. send \\"ding\\", back \\"dang\\""
-            - role: system
-              content:
-                - type: input_text
-                  "#text": you are talking to {{inputs.name}}
-            - role: user
-              content:
-                - type: input_text
-                  $text:
-                    - inputs
-                    - message
+        instructions: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"pong\\"\n2. send \\"ding\\", back \\"dang\\""
+        inputs:
+            - type: text
+              role: user
+              '#content': "you are talking to {{inputs.name}}"
+            - type: text
+              role: user
+              $content: 
+                  - inputs
+                  - message
 
     - id: end_id
       type: END
@@ -139,13 +125,13 @@ func testWorkflowRunWithConfig() async throws {
 
     try Dotenv.make()
 
-    let client = HTTPClient()
+    let client = AsyncHTTPClientTransport()
 
-    let openai = LLMProvider(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
+    let openai = LLMProviderConfiguration(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
 
     let solver = DummyLLMProviderSolver(
-        "gpt-4o-mini",
-        .init(name: "gpt-4o-mini", type: .OpenAI, models: [.init(name: "gpt-4o-mini", provider: openai)])
+        "test_openai",
+        .init(name: "test_openai", models: [.init(model: .init(name: "gpt-4o-mini"), provider: openai)])
     )
 
     let locator = DummySimpleLocater(client, solver)
@@ -160,11 +146,9 @@ func testWorkflowRunWithConfig() async throws {
 
         let states = try workflow.run(inputs: inputs)
         for try await state in states {
-            print("[*] \(state)")
+            logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
     } catch {
         Issue.record("Unexpected \(error)")
     }
-
-    try await client.shutdown()
 }

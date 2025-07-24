@@ -70,7 +70,7 @@ extension ModelDeclKey: Hashable {}
 public struct ModelDecl: Codable, Sendable, Hashable {
     let body: [String: FlowData]
 
-    public func render(_ values: [String: AnySendable]) throws -> [String: Any] {
+    public func render(_ values: [String: AnySendable]) throws -> [String: Any?] {
         return try body.render(values)
     }
     

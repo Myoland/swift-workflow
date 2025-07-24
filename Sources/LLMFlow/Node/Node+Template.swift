@@ -33,7 +33,7 @@ public struct Template: Codable, ExpressibleByStringLiteral, Hashable, Sendable 
         try Jinja.Template(content)
     }
 
-    public func render(_ items: [String: Any]) throws -> String {
+    public func render(_ items: [String: Any?]) throws -> String {
         try toJinja().render(items)
     }
 }
@@ -64,7 +64,7 @@ extension TemplateNode {
         })
     }
 
-    func update(_ context: Context, value: any Context.Value) throws {
+    func update(_ context: Context, value: Context.Value) throws {
         try self.updateIntoResult(context, value: value)
     }
 }
