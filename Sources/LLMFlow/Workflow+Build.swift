@@ -30,11 +30,11 @@ extension Workflow.Config {
     func requireStartNode() throws -> StartNode {
         let startNodes = findNodes(of: .START)
         guard startNodes.count == 1 else {
-            throw Err.missingStartNode
+            throw ConstructError.missingStartNode
         }
 
         guard let startNode = startNodes.first as? StartNode else {
-            throw Err.typeMissMatchStartNode
+            throw ConstructError.typeMissMatchStartNode
         }
 
         return startNode

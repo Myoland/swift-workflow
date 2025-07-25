@@ -7,18 +7,17 @@
 //
 //
 
+import AsyncAlgorithms
 import Foundation
+import GPT
 import HTTPTypes
 import LazyKit
-import AsyncAlgorithms
 import OSLog
 import OpenAPIRuntime
-import GPT
 
 public protocol LLMProviderSolver {
     func resolve(modelName: String) -> LLMQualifiedModel?
 }
-
 
 struct LLMNode: Node {
     let id: ID
@@ -48,11 +47,11 @@ extension LLMNode {
         guard let locator = executor.locator else {
             todo("Throw error for LLMModel not found locator")
         }
-        
+
         guard let client = locator.resolve(shared: ClientTransport.self) else {
             todo("Throw error for LLMModel not found client")
         }
-        
+
         guard
             let llmSolver = locator.resolve(shared: LLMProviderSolver.self),
             let llm = llmSolver.resolve(modelName: modelName)
@@ -61,20 +60,21 @@ extension LLMNode {
         }
 
         let context = executor.context
-        let inputs = context.filter(keys: nil)
+
+        let inputs = context.filter(keys: nil) // TODO: only get necessary values
         let renderedValues = try request.render(inputs)
         let prompt: Prompt = try AnyDecoder().decode(from: renderedValues)
         executor.logger.info("[*] LLMNode(\(id)) Prompt: \(String(describing: prompt))")
-        
+
         let session = GPTSession(client: client)
-        
+
         for model in llm.models {
             let stream = try await session.send(prompt, model: model)
             let output = stream.map { response in
                 return try AnyEncoder().encode(response)
             }.cached().eraseToAnyAsyncSequence()
             context.output.withLock { $0 = .stream(output) }
-            return // TODO: retry
+            return  // TODO: retry
         }
     }
 }
@@ -94,7 +94,14 @@ extension LLMNode {
             return nil
         }
 
-        return try await Array(stream)
+        let response = try await stream.first { value in
+            let response = value as? [String: AnySendable]
+            let event = response?["event"] as? String
+            return event == ModelStreamResponse.EventName.completed.rawValue
+                || event == ModelStreamResponse.EventName.error.rawValue
+        }
+
+        return response
     }
 
     func update(_ context: Context, value: Context.Value) throws {

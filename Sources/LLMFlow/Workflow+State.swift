@@ -12,7 +12,6 @@ import SynchronizationKit
 // MARK: Workflow + Run
 
 extension Workflow {
-
     public func run(inputs: [String: FlowData]) throws -> RunningUpdates {
         try RunningUpdates(workflow: self, startNode: self.requireStartNode(), inputs: inputs)
     }
@@ -36,13 +35,13 @@ extension Workflow {
     }
 
     public struct PipeState {
-        let type: PipeStateType
-        let node: any Node
+        public let type: PipeStateType
+        public let node: any Node
 
-        // Notice: get stream through stream property only
-        let context: Context
+        public let context: Context
 
-        let value: Context.Value?
+        /// Available when type equal to ``Workflow/PipeStateType/generating``
+        public let value: Context.Value?
     }
 }
 
@@ -66,7 +65,7 @@ extension Workflow.PipeStateType: CustomStringConvertible {
 }
 
 extension Workflow.PipeState {
-    var output: NodeOutput {
+    public var output: NodeOutput {
         context.output.withLock { $0 }
     }
 }
@@ -74,9 +73,9 @@ extension Workflow.PipeState {
 
 extension Workflow {
     public struct RunningUpdates: AsyncSequence, Sendable {
-        let workflow: Workflow
-        let startNode: StartNode
-        let inputs: [String: FlowData]
+        public let workflow: Workflow
+        public let startNode: StartNode
+        public let inputs: [String: FlowData]
 
         public func makeAsyncIterator() -> Iterator {
             Iterator(delegate: workflow,

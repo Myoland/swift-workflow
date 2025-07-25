@@ -31,16 +31,28 @@ public struct Workflow : Sendable{
 
     public let locator: ServiceLocator
     
-    public let logger: Logger = .init()
+    public let logger: Logger
+
+    public init(
+        nodes: [Node.ID : any Node],
+        flows: [Node.ID : Edges],
+        startNodeID: Node.ID,
+        locator: ServiceLocator,
+        logger: Logger? = nil
+    ) {
+        self.nodes = nodes
+        self.flows = flows
+        self.startNodeID = startNodeID
+        self.locator = locator
+        self.logger = logger ?? .init(subsystem: .Log.subsystem, category: .Log.Category.workflow)
+    }
 }
 
 extension Workflow {
-
     public func requireStartNode() throws -> StartNode  {
         guard let node = nodes[startNodeID] as? StartNode else {
-            throw Err.StartNodeNotFound
+            throw RuntimeError.StartNodeNotFound
         }
         return node
     }
-
 }

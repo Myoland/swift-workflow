@@ -4,24 +4,6 @@ import SynchronizationKit
 
 public typealias AnySendable = Any & Sendable
 
-
-extension Context {
-    public struct Snapshot: Sendable {
-        enum Change: Sendable {
-            case insert(DataKeyPaths, Context.Value)
-            // TODO: [2025/06/25 <Huanan>] Add update, delete
-        }
-
-        let createdAt: Date
-
-        let modifiedBy: Node.ID
-        let result: Context.Store
-
-        let changes: [Change]
-    }
-}
-
-
 public protocol AnyStorageValue: Sendable {}
 
 public protocol ServiceLocator: AnyStorageValue {
@@ -38,10 +20,10 @@ public final class Context: Sendable {
 
     public typealias Store = [Key: Value]
 
-    let output: LazyLockedValue<NodeOutput>
-    let store: LazyLockedValue<Store>
+    public let output: LazyLockedValue<NodeOutput>
+    public let store: LazyLockedValue<Store>
 
-    let snapshots: LazyLockedValue<[Snapshot]>
+    public let snapshots: LazyLockedValue<[Snapshot]>
 
     public init(output: NodeOutput = .none, store: Store = [:]) {
         self.output = .init(output)
@@ -50,8 +32,10 @@ public final class Context: Sendable {
     }
 }
 
+// MARK: Context + Store Access
+
 extension Context {
-    subscript(key: Key?) -> Value? {
+    public subscript(key: Key?) -> Value? {
         get {
             store.withLock { store in
                 store[safe: key]
@@ -65,7 +49,7 @@ extension Context {
         }
     }
 
-    subscript<T>(safe key: Key?, as type: T.Type = T.self) -> T? {
+    public subscript<T>(safe key: Key?, as type: T.Type = T.self) -> T? {
         get {
             store.withLock { store in
                 store[safe: key] as? T
@@ -73,7 +57,7 @@ extension Context {
         }
     }
 
-    subscript(path keys: Key...) -> Value? {
+    public subscript(path keys: Key...) -> Value? {
         get {
             self[path: keys]
         }
@@ -83,7 +67,7 @@ extension Context {
         }
     }
 
-    subscript(path keys: [Key]?) -> Value? {
+    public subscript(path keys: [Key]?) -> Value? {
         get {
             store.withLock { store in
                 store[path: keys]
@@ -186,30 +170,7 @@ extension Dictionary where Value == AnySendable, Key == String {
 }
 
 extension Collection {
-    func separateFirst() -> (Element?, [Element]?) {
+    fileprivate func separateFirst() -> (Element?, [Element]?) {
         (self.first, Array(self.dropFirst()))
-    }
-}
-
-public final class Executor: Sendable {
-    public let locator: ServiceLocator?
-    private let lockedContext: LazyLockedValue<Context>
-    public let logger: Logger
-
-    public let anyDecoder = AnyDecoder()
-    public let anyEncoder = AnyEncoder()
-
-    public init(locator: ServiceLocator? = nil, context: Context = Context(), logger: Logger = .init()) {
-        self.locator = locator
-        self.lockedContext = .init(context)
-        self.logger = logger
-    }
-}
-
-extension Executor {
-    var context: Context {
-        get {
-            self.lockedContext.withLock { $0 }
-        }
     }
 }

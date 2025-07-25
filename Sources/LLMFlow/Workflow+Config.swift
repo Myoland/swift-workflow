@@ -5,14 +5,17 @@
 //  Created by AFuture on 2025/6/3.
 //
 
-
-
 extension Workflow {
     public struct Config {
 
         public let nodes: [any Node]
 
         public let edges: [Edge]
+
+        public init(nodes: [any Node], edges: [Edge]) {
+            self.nodes = nodes
+            self.edges = edges
+        }
     }
 }
 
