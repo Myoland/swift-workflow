@@ -48,10 +48,8 @@ extension StartNode {
         executor.logger.info("[*] Start Node. Verify Success.")
     }
 
-    static public let resultKey: String = "inputs"
-
     public func update(_ context: Context, value: Context.Value) throws {
-        context[path: Self.resultKey] = value
+        context[path: DataKeyPath.WorkflowInputsKeyPath] = value
     }
 
     public func verify(

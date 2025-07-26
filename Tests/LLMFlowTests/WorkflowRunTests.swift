@@ -45,11 +45,11 @@ func testWorkflowRun() async throws {
             "inputs": [[
                 "type": "text",
                 "role": "system",
-                "#content": "you are talking to {{inputs.name}}"
+                "#content": "you are talking to {{workflow.inputs.name}}"
             ], [
                 "type": "text",
                 "role": "user",
-                "$content": ["inputs", "message"],
+                "$content": ["workflow", "inputs", "message"],
             ]]
         ]))
 
@@ -73,7 +73,8 @@ func testWorkflowRun() async throws {
             "message": "ping"
         ]
         
-        let states = try workflow.run(inputs: inputs)
+        let context = Context()
+        let states = try workflow.run(inputs: inputs, context: context)
         for try await state in states {
             logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
@@ -103,10 +104,11 @@ func testWorkflowRunWithConfig() async throws {
         inputs:
             - type: text
               role: user
-              '#content': "you are talking to {{inputs.name}}"
+              '#content': "you are talking to {{workflow.inputs.name}}"
             - type: text
               role: user
               $content: 
+                  - workflow
                   - inputs
                   - message
 
@@ -144,10 +146,18 @@ func testWorkflowRunWithConfig() async throws {
             "message": "ping"
         ]
 
-        let states = try workflow.run(inputs: inputs)
+        let states = try workflow.run(inputs: inputs, context: .init())
         for try await state in states {
             logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
+        
+        let nodeResult = states.context[path: "llm_id", DataKeyPath.WorkflowNodeRunResultKey]
+        let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
+        let usage = response.usage
+        let content = response.items.first?.message?.content?.first?.text?.content
+        logger.info("[*] \(content ?? "nil")")
+        logger.info("[*] \(String(describing: usage))")
+        
     } catch {
         Issue.record("Unexpected \(error)")
     }

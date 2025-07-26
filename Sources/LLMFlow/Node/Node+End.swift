@@ -6,7 +6,7 @@
 //
 
 struct EndNode: Node {
-
+    
     let id: ID
     let name: String?
     let type: NodeType = .END

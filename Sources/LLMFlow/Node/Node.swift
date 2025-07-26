@@ -35,12 +35,9 @@ public protocol Node: Sendable, Hashable, Codable {
     func wait(_ context: Context) async throws -> Context.Value?
 
     func update(_ context: Context, value: Context.Value) throws
-
-    static var resultKey: String { get }
 }
 
 extension Node {
-    public static var resultKey: String { DataKeyPath.NodeRunResultKey }
 
     // force convert the pipe to blocked value
     // please check if it should be blocked.
@@ -57,8 +54,10 @@ extension Node {
         }
     }
 
+    public var resultKeyPaths: DataKeyPaths { [id, DataKeyPath.WorkflowNodeRunResultKey] }
+    
     public func updateIntoResult(_ context: Context, value: Context.Value) throws {
-        context[path: id, DataKeyPath.NodeRunResultKey] = value
+        context[path: resultKeyPaths] = value
     }
 }
 

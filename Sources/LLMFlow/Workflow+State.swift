@@ -12,8 +12,9 @@ import SynchronizationKit
 // MARK: Workflow + Run
 
 extension Workflow {
-    public func run(inputs: [String: FlowData]) throws -> RunningUpdates {
-        try RunningUpdates(workflow: self, startNode: self.requireStartNode(), inputs: inputs)
+    public func run(inputs: [String: FlowData], context: Context = .init()) throws -> RunningUpdates {
+        context.output.withLock { $0 = .block(inputs) }
+        return try RunningUpdates(workflow: self, startNode: self.requireStartNode(), inputs: inputs, context: context)
     }
 }
 
@@ -76,12 +77,12 @@ extension Workflow {
         public let workflow: Workflow
         public let startNode: StartNode
         public let inputs: [String: FlowData]
+        public let context: Context
 
         public func makeAsyncIterator() -> Iterator {
             Iterator(delegate: workflow,
-                     executor: Executor(locator: workflow.locator, context: .init(output: .block(inputs)), logger: workflow.logger),
-                     node: startNode,
-                     inputs: inputs)
+                     executor: Executor(locator: workflow.locator, context: context, logger: workflow.logger),
+                     node: startNode)
         }
     }
 }
@@ -119,7 +120,7 @@ extension Workflow.RunningUpdates {
 
         public let state: LazyLockedValue<RunningState>
 
-        public init(delegate: any WorkflowControl, executor: Executor, node: StartNode, inputs: [String: FlowData]) {
+        public init(delegate: any WorkflowControl, executor: Executor, node: StartNode) {
             self.delegate = delegate
             self.executor = executor
             self.state = .init(.initial(node))

@@ -98,10 +98,9 @@ extension LLMNode {
             let response = value as? [String: AnySendable]
             let event = response?["event"] as? String
             return event == ModelStreamResponse.EventName.completed.rawValue
-                || event == ModelStreamResponse.EventName.error.rawValue
-        }
+        } as? [String: AnySendable]
 
-        return response
+        return response?["data"]
     }
 
     func update(_ context: Context, value: Context.Value) throws {

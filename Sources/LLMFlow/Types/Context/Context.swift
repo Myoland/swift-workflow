@@ -20,7 +20,7 @@ public final class Context: Sendable {
 
     public typealias Store = [Key: Value]
 
-    public let output: LazyLockedValue<NodeOutput>
+    public let output: LazyLockedValue<NodeOutput> // May be rename to other name ?
     public let store: LazyLockedValue<Store>
 
     public let snapshots: LazyLockedValue<[Snapshot]>
