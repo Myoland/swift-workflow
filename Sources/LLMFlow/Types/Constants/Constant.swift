@@ -5,10 +5,9 @@
 //  Created by AFuture on 2025/5/27.
 //
 
-
 extension DataKeyPath {
-    static let WorkflowRootKey: DataKeyPath = "workflow"
-    static let WorkflowInputsKeyPath: DataKeyPaths = [WorkflowRootKey, "inputs"]
-    
-    static let WorkflowNodeRunResultKey: DataKeyPath = "result"
+    public static let WorkflowRootKey: DataKeyPath = "workflow"
+    public static let WorkflowInputsKeyPath: DataKeyPaths = [WorkflowRootKey, "inputs"]
+
+    public static let WorkflowNodeRunResultKey: DataKeyPath = "result"
 }

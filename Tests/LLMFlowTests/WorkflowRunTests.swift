@@ -94,6 +94,12 @@ func testWorkflowRunWithConfig() async throws {
       inputs:
         message: String
         name: String
+        langauge: String
+    
+    - id: template_id
+      type: TEMPLATE
+      template: >
+        {% if workflow.inputs.langauge == "zh-Hans" %}简体中文{% elif workflow.inputs.langauge == "zh-Hant" or workflow.inputs.langauge == "zh" %}繁體中文{% elif  workflow.inputs.langauge == "ja"%}日本語{% elif  workflow.inputs.langauge == "vi"%}Tiếng Việt{% elif  workflow.inputs.langauge == "ko"%}한국어{% else %}English{% endif %}
 
     - id: llm_id
       type: LLM
@@ -104,7 +110,7 @@ func testWorkflowRunWithConfig() async throws {
         inputs:
             - type: text
               role: user
-              '#content': "you are talking to {{workflow.inputs.name}}"
+              '#content': "you are talking to {{workflow.inputs.name}} in {{ workflow.template_id.result }}"
             - type: text
               role: user
               $content: 
@@ -117,6 +123,8 @@ func testWorkflowRunWithConfig() async throws {
 
     edges:
     - from: start_id
+      to: template_id
+    - from: template_id
       to: llm_id
     - from: llm_id
       to: end_id
@@ -143,7 +151,8 @@ func testWorkflowRunWithConfig() async throws {
 
         let inputs: [String: FlowData] = [
             "name": "John",
-            "message": "ping"
+            "message": "ping",
+            "langauge": "zh-Hans"
         ]
 
         let states = try workflow.run(inputs: inputs, context: .init())
