@@ -112,9 +112,6 @@ func testWorkflowRunWithConfig() async throws {
               role: user
               '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.result }}"
             - type: text
-              role: assistant
-              '#content': "OK"
-            - type: text
               role: user
               $content: 
                   - workflow
@@ -160,7 +157,7 @@ func testWorkflowRunWithConfig() async throws {
 
         let states = try workflow.run(inputs: inputs, context: .init())
         for try await state in states {
-            logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
+            logger.info("[*] State: \(state.node.type.rawValue) \(state.node.id) \(state.type) -> \(String(describing: state.value))")
         }
         
         let nodeResult = states.context[path: "llm_id", DataKeyPath.WorkflowNodeRunResultKey]
