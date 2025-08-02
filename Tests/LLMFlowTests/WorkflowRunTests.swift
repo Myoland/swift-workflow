@@ -234,7 +234,7 @@ func testWorkflowRunWithConfigOpenRouter() async throws {
 
     let solver = DummyLLMProviderSolver(
         "test_openai",
-        .init(name: "test_openai", models: [.init(model: .init(name: "openai/o1-mini-2024-09-12"), provider: openai)])
+        .init(name: "test_openai", models: [.init(model: .init(name: "openai/gpt-4o-mini"), provider: openai)])
     )
 
     let locator = DummySimpleLocater(client, solver)
