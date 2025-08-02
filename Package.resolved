@@ -22,7 +22,7 @@
     {
       "identity" : "swift-algorithms",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-algorithms",
+      "location" : "https://github.com/apple/swift-algorithms.git",
       "state" : {
         "revision" : "87e50f483c54e6efd60e885f7f5aa946cee68023",
         "version" : "1.2.1"
@@ -106,7 +106,7 @@
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
         "branch" : "main",
-        "revision" : "e01ae6cb727c653b0b154b2ed7a64ba50041cf92"
+        "revision" : "498f29e79c6cd93382780a48edd1be6ec42d5b42"
       }
     },
     {

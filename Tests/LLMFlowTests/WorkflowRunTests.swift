@@ -197,6 +197,8 @@ func testWorkflowRunWithConfigOpenRouter() async throws {
       request:
         stream: true
         instructions: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"pong\\"\n2. send \\"ding\\", back \\"dang\\""
+        tempture: 0.0
+        topP: 1.0
         inputs:
             - type: text
               role: user
