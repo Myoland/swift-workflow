@@ -112,6 +112,9 @@ func testWorkflowRunWithConfig() async throws {
               role: user
               '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.result }}"
             - type: text
+              role: assistant
+              '#content': "OK"
+            - type: text
               role: user
               $content: 
                   - workflow
