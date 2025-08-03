@@ -112,6 +112,9 @@ func testWorkflowRunWithConfig() async throws {
               role: user
               '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.result }}"
             - type: text
+              role: assistant
+              '#content': "OK"
+            - type: text
               role: user
               $content: 
                   - workflow
@@ -197,7 +200,7 @@ func testWorkflowRunWithConfigOpenRouter() async throws {
       request:
         stream: true
         instructions: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"pong\\"\n2. send \\"ding\\", back \\"dang\\""
-        tempture: 0.0
+        temperature: 0.0
         topP: 1.0
         inputs:
             - type: text
@@ -232,7 +235,7 @@ func testWorkflowRunWithConfigOpenRouter() async throws {
 
     let client = AsyncHTTPClientTransport()
 
-    let openai = LLMProviderConfiguration(type: .OpenAICompatible, name: "openai", apiKey: Dotenv["OPENROUTER_API_KEY"]!.stringValue, apiURL: "https://openrouter.ai/api/v1")
+    let openai = LLMProviderConfiguration(type: .OpenAICompatible, name: "openai", apiKey: Dotenv["OPENROUTER_API_KEY"]!.stringValue, apiURL: "https://gateway.ai.cloudflare.com/v1/3450ee851bc2d21db2c2c0de5656343e/openai/openrouter")
 
     let solver = DummyLLMProviderSolver(
         "test_openai",

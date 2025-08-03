@@ -78,8 +78,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-crypto.git",
       "state" : {
-        "revision" : "84b1d494118d63629a785230135f82991f02329e",
-        "version" : "3.13.2"
+        "revision" : "176abc28e002a9952470f08745cd26fad9286776",
+        "version" : "3.13.3"
       }
     },
     {
@@ -106,7 +106,7 @@
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
         "branch" : "main",
-        "revision" : "f19497a682c13d2c6ddf48d5ec758af27be01920"
+        "revision" : "18a43297ea3097e16d0a9b8c56d7b3cb8d972426"
       }
     },
     {
@@ -150,8 +150,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio",
       "state" : {
-        "revision" : "ad6b5f17270a7008f60d35ec5378e6144a575162",
-        "version" : "2.84.0"
+        "revision" : "a5fea865badcb1c993c85b0f0e8d05a4bd2270fb",
+        "version" : "2.85.0"
       }
     },
     {
@@ -240,8 +240,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-system.git",
       "state" : {
-        "revision" : "41daa93a5d229e1548ec86ab527ce4783ca84dda",
-        "version" : "1.6.0"
+        "revision" : "b63d24d465e237966c3f59f47dcac6c70fb0bca3",
+        "version" : "1.6.1"
       }
     },
     {
@@ -249,8 +249,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jpsim/Yams",
       "state" : {
-        "revision" : "b4b8042411dc7bbb696300a34a4bf3ba1b7ad19b",
-        "version" : "5.3.1"
+        "revision" : "3d6871d5b4a5cd519adf233fbb576e0a2af71c17",
+        "version" : "5.4.0"
       }
     }
   ],
