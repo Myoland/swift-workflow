@@ -1,5 +1,5 @@
 {
-  "originHash" : "95114f4f6fc01ee42746338e140c7d99f88c4d80b04e2884a5f70404335305c2",
+  "originHash" : "eed3b7f200dfbd4590519a9d9240eca8190c10a7bbb5f32da74316737165f4e1",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -22,7 +22,7 @@
     {
       "identity" : "swift-algorithms",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-algorithms",
+      "location" : "https://github.com/apple/swift-algorithms.git",
       "state" : {
         "revision" : "87e50f483c54e6efd60e885f7f5aa946cee68023",
         "version" : "1.2.1"
@@ -106,7 +106,7 @@
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
         "branch" : "main",
-        "revision" : "18a43297ea3097e16d0a9b8c56d7b3cb8d972426"
+        "revision" : "d141a10cfeda48463b981b4d44b21716ac880f74"
       }
     },
     {
@@ -133,7 +133,7 @@
       "location" : "https://github.com/Myoland/swift-lazy",
       "state" : {
         "branch" : "main",
-        "revision" : "8da9ef875dde447615e93d5a5f7c414f52c08d1d"
+        "revision" : "95e3eecb758c542231600dc717612321e6830843"
       }
     },
     {
@@ -240,8 +240,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-system.git",
       "state" : {
-        "revision" : "b63d24d465e237966c3f59f47dcac6c70fb0bca3",
-        "version" : "1.6.1"
+        "revision" : "890830fff1a577dc83134890c7984020c5f6b43b",
+        "version" : "1.6.2"
       }
     },
     {

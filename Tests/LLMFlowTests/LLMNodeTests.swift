@@ -6,7 +6,7 @@ import SwiftDotenv
 import Testing
 import TestKit
 import GPT
-import os.log
+import Logging
 
 @testable import LLMFlow
 
@@ -47,7 +47,7 @@ struct DummyLLMProviderSolver: LLMProviderSolver {
 
 @Test("testLLMNodeOpenAIRun")
 func testLLMNodeOpenAIRun() async throws {
-    let logger = Logger(subsystem: "me.afuture.workflow.node.llm", category: "debug")
+    let logger = Logger(label: "me.afuture.workflow.node.llm")
     try Dotenv.make()
 
     let openai = LLMProviderConfiguration(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")

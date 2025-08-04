@@ -1,5 +1,5 @@
 import Foundation
-import os.log
+import Logging
 import LazyKit
 
 
@@ -44,7 +44,7 @@ public struct Workflow : Sendable{
         self.flows = flows
         self.startNodeID = startNodeID
         self.locator = locator
-        self.logger = logger ?? .init(subsystem: .Log.subsystem, category: .Log.Category.workflow)
+        self.logger = logger ?? .init(label: .Log.subsystem)
     }
 }
 

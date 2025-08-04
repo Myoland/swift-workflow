@@ -12,7 +12,7 @@ import Foundation
 import GPT
 import HTTPTypes
 import LazyKit
-import OSLog
+import Logging
 import OpenAPIRuntime
 
 public protocol LLMProviderSolver {

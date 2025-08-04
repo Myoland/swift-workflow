@@ -1,5 +1,5 @@
 import LazyKit
-import OSLog
+import Logging
 import SynchronizationKit
 
 public typealias AnySendable = Any & Sendable

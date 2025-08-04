@@ -24,6 +24,7 @@ let package = Package(
         .package(url: "https://github.com/jpsim/Yams", from: "5.3.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.8.2"),
         .package(url: "https://github.com/AFutureD/swift-synchronization", branch: "main"),
+        .package(url: "https://github.com/apple/swift-log", from: "1.6.0"),
         
         // Test
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client", from: "1.0.0"),
@@ -34,6 +35,7 @@ let package = Package(
         .target(
             name: "LLMFlow",
             dependencies: [
+                .product(name: "Logging", package: "swift-log"),
                 .product(name: "SynchronizationKit", package: "swift-synchronization"),
                 .product(name: "LazyKit", package: "swift-lazy"),
                 .product(name: "AsyncAlgorithms", package: "swift-async-algorithms"),

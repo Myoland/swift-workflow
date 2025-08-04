@@ -5,7 +5,7 @@
 //  Created by Huanan on 2025/7/25.
 //
 
-import OSLog
+import Logging
 
 extension String {
     enum Log {}

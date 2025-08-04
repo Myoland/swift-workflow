@@ -7,7 +7,7 @@
 
 import LazyKit
 import SynchronizationKit
-import OSLog
+import Logging
 
 public final class Executor: Sendable {
     public let locator: ServiceLocator?
@@ -24,7 +24,7 @@ public final class Executor: Sendable {
     ) {
         self.locator = locator
         self.lockedContext = .init(context)
-        self.logger = logger ?? .init(subsystem: .Log.subsystem, category: .Log.Category.executor)
+        self.logger = logger ?? .init(label: .Log.subsystem)
     }
 }
 
