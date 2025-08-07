@@ -20,7 +20,7 @@ let package = Package(
         .package(url: "https://github.com/Myoland/swift-lazy", branch: "main"),
         .package(url: "https://github.com/apple/swift-async-algorithms", from: "1.0.0"),
         .package(url: "https://github.com/objecthub/swift-dynamicjson", from: "1.0.2"),
-        .package(url: "https://github.com/maiqingqiang/Jinja", branch: "main"),
+        .package(url: "https://github.com/kevinzhow/Jinja", branch: "main"),
         .package(url: "https://github.com/jpsim/Yams", from: "5.3.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.8.2"),
         .package(url: "https://github.com/AFutureD/swift-synchronization", branch: "main"),
@@ -28,6 +28,7 @@ let package = Package(
         
         // Test
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client", from: "1.0.0"),
+//        .package(path: "../Jinja"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
