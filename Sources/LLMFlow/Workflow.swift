@@ -44,7 +44,7 @@ public struct Workflow : Sendable{
         self.flows = flows
         self.startNodeID = startNodeID
         self.locator = locator
-        self.logger = logger ?? .init(label: .Log.subsystem)
+        self.logger = logger ?? Logger.Internal
     }
 }
 

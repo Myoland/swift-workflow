@@ -6,10 +6,11 @@
 //
 
 import Algorithms
+import Logging
 
 extension Workflow {
 
-    public init?(config: Workflow.Config, locator: ServiceLocator) throws {
+    public init?(config: Workflow.Config, locator: ServiceLocator, logger: Logger? = nil) throws {
         try config.validate()
 
         let startNode = try config.requireStartNode()
@@ -17,7 +18,7 @@ extension Workflow {
         let nodes: [String: any Node] = config.nodes.keyed { $0.id }
         let flows: [Node.ID: Edges] = config.edges.grouped { $0.from }
 
-        self.init(nodes: nodes, flows: flows, startNodeID: startNode.id, locator: locator)
+        self.init(nodes: nodes, flows: flows, startNodeID: startNode.id, locator: locator, logger: logger)
     }
 }
 

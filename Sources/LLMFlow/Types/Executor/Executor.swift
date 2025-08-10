@@ -24,7 +24,7 @@ public final class Executor: Sendable {
     ) {
         self.locator = locator
         self.lockedContext = .init(context)
-        self.logger = logger ?? .init(label: .Log.subsystem)
+        self.logger = logger ?? Logger.Internal
     }
 }
 

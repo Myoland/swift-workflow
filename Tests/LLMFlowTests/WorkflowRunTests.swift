@@ -14,7 +14,7 @@ import Logging
 
 @Test("testWorkflowRun")
 func testWorkflowRun() async throws {
-    let logger = Logger(label: "me.afuture.workflow.node.llm")
+    let logger = Logger.testing
     
     try Dotenv.make()
 
@@ -85,7 +85,7 @@ func testWorkflowRun() async throws {
 
 @Test("testWorkflowRunWithConfig")
 func testWorkflowRunWithConfig() async throws {
-    let logger = Logger(label:  "me.afuture.workflow.node.llm")
+    let logger = Logger.testing
     
     let str = """
     nodes:
@@ -178,7 +178,7 @@ func testWorkflowRunWithConfig() async throws {
 
 @Test("testWorkflowRunWithConfigOpenRouter")
 func testWorkflowRunWithConfigOpenRouter() async throws {
-    let logger = Logger(label: "me.afuture.workflow.node.llm")
+    let logger = Logger.testing
     
     let str = """
     nodes:
@@ -267,7 +267,7 @@ func testWorkflowRunWithConfigOpenRouter() async throws {
 
 @Test("testWorkflowRunWithConfigOpenRouterRepeat")
 func testWorkflowRunWithConfigOpenRouterRepeat() async throws {
-    let logger = Logger(label:"me.afuture.workflow.node.llm")
+    let logger = Logger.testing
     
     let str = """
     nodes:

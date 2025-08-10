@@ -12,14 +12,16 @@ extension String {
 }
 
 extension String.Log {
-    static let subsystem = "me.afuture.workflow"
+    internal static let subsystem = "me.afuture.workflow"
 }
 
-extension String.Log {
-    enum Category {}
-}
-
-extension String.Log.Category {
-    static let workflow = "Workflow"
-    static let executor = "Executor"
+extension Logger {
+    internal static let disabled = Self(label: .Log.subsystem, factory: { _ in SwiftLogNoOpLogHandler() })
+    
+#if DEBUG
+    static let Internal = Self(label: .Log.subsystem)
+#else
+    static let Internal = disabled
+#endif
+    
 }
