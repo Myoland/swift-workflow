@@ -1,5 +1,5 @@
 {
-  "originHash" : "eed3b7f200dfbd4590519a9d9240eca8190c10a7bbb5f32da74316737165f4e1",
+  "originHash" : "b2855cc88411ad1b9fd452cad90844d4f8a7c826882e1140ae64707c0113d8da",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -13,10 +13,10 @@
     {
       "identity" : "jinja",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/maiqingqiang/Jinja",
+      "location" : "https://github.com/johnmai-dev/Jinja",
       "state" : {
-        "branch" : "main",
-        "revision" : "fc1233dea1142897d474bda2f1f9a6c3fe7acab6"
+        "revision" : "bb238dd96fbe4c18014f3107c00edd6edb15428e",
+        "version" : "1.2.4"
       }
     },
     {
@@ -105,8 +105,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
-        "branch" : "main",
-        "revision" : "d141a10cfeda48463b981b4d44b21716ac880f74"
+        "revision" : "306b33943866c6e7a4f8b04904c607fd9448060b"
       }
     },
     {
