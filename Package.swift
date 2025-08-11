@@ -16,7 +16,7 @@ let package = Package(
     dependencies: [
 //        .package(path: "../swift-lazy"),
 //        .package(path: "../swift-gpt"),
-        .package(url: "https://github.com/AFutureD/swift-gpt", revision: "306b33943866c6e7a4f8b04904c607fd9448060b"),
+        .package(url: "https://github.com/AFutureD/swift-gpt", revision: "d141a10cfeda48463b981b4d44b21716ac880f74"),
         .package(url: "https://github.com/Myoland/swift-lazy", branch: "main"),
         .package(url: "https://github.com/apple/swift-async-algorithms", from: "1.0.0"),
         .package(url: "https://github.com/objecthub/swift-dynamicjson", from: "1.0.2"),
