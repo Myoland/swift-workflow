@@ -1,5 +1,5 @@
 {
-  "originHash" : "eed3b7f200dfbd4590519a9d9240eca8190c10a7bbb5f32da74316737165f4e1",
+  "originHash" : "1d93d57a042a55f03de0ad5a78676a91b61681f12f412b6b057a02fcbc63ae2b",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -13,7 +13,7 @@
     {
       "identity" : "jinja",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/maiqingqiang/Jinja",
+      "location" : "https://github.com/kevinzhow/Jinja",
       "state" : {
         "branch" : "main",
         "revision" : "fc1233dea1142897d474bda2f1f9a6c3fe7acab6"
@@ -22,7 +22,7 @@
     {
       "identity" : "swift-algorithms",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-algorithms",
+      "location" : "https://github.com/apple/swift-algorithms.git",
       "state" : {
         "revision" : "87e50f483c54e6efd60e885f7f5aa946cee68023",
         "version" : "1.2.1"
