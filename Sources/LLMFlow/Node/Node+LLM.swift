@@ -66,7 +66,7 @@ extension LLMNode {
         let prompt: Prompt = try AnyDecoder().decode(from: renderedValues)
         executor.logger.info("[*] LLMNode(\(id)) Prompt: \(String(describing: prompt))")
 
-        let session = GPTSession(client: client)
+        let session = GPTSession(client: client, logger: executor.logger)
 
         let response = try await session.send(prompt, model: llm)
         let output = response.map { response in
