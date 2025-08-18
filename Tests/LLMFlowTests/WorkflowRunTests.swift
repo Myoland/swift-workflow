@@ -588,10 +588,9 @@ func testWorkflowRunWithConditionEdge() async throws {
     - from: template_id
       to: llm_special_id
       condiftion:
-        or:
-          - equal:
-            variable: workflow.inputs.model
-            value: special
+        equal:
+          variable: workflow.inputs.model
+          value: special
     - from: template_id
       to: llm_id
     - from: llm_id
