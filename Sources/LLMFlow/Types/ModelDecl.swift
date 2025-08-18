@@ -106,7 +106,7 @@ extension Dictionary where Key == String, Value == FlowData {
                 let value = value.asAny
                 
                 if let key = value as? String {
-                    result[ref] = values[key]
+                    result[ref] = values[path: ContextStorePath(key)]
                 } else if let keys = value as? [String] {
                     result[ref] = values[path: keys]
                 }

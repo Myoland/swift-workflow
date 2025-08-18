@@ -573,10 +573,7 @@ func testWorkflowRunWithConditionEdge() async throws {
               '#content': "OK"
             - type: text
               role: user
-              $content: 
-                  - workflow
-                  - inputs
-                  - message
+              $content: workflow.inputs.message
 
 
     - id: end_id

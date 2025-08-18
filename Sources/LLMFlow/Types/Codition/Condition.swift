@@ -19,17 +19,17 @@ public indirect enum Condition: Sendable {
 
 extension Condition {
     public enum StringEval: Sendable {
-        case equal(variable: String, value: String)
-        case empty(variable: String)
-        case contains(variable: String, value: String, position: StringContainingPosition)
+        case equal(variable: ContextStorePath, value: String)
+        case empty(variable: ContextStorePath)
+        case contains(variable: ContextStorePath, value: String, position: StringContainingPosition)
     }
     
     public enum IntEval: Sendable {
-        case equal(variable: String, value: Int)
-        case greater(variable: String, value: Int)
-        case greater_or_equal(variable: String, value: Int)
-        case smaller(variable: String, value: Int)
-        case smaller_or_equal(variable: String, value: Int)
+        case equal(variable: ContextStorePath, value: Int)
+        case greater(variable: ContextStorePath, value: Int)
+        case greater_or_equal(variable: ContextStorePath, value: Int)
+        case smaller(variable: ContextStorePath, value: Int)
+        case smaller_or_equal(variable: ContextStorePath, value: Int)
     }
 }
 
@@ -53,11 +53,11 @@ extension Condition: Hashable {}
 
 
 protocol Evaluatable {
-    func eval(_ context: [String: Any?]) -> Bool
+    func eval(_ context: [String: AnySendable]) -> Bool
 }
 
 extension Condition: Evaluatable {
-    func eval(_ context: [String: Any?]) -> Bool {
+    func eval(_ context: [String: AnySendable]) -> Bool {
         switch self {
         case .and(let andCondition):
             return andCondition.allSatisfy { $0.eval(context) }
@@ -74,10 +74,10 @@ extension Condition: Evaluatable {
 }
 
 extension Condition.IntEval: Evaluatable {
-    func eval(_ inputs: [String: Any?]) -> Bool {
+    func eval(_ inputs: [String: AnySendable]) -> Bool {
         switch self {
         case .equal(let variableKey, let value):
-            guard let variable = inputs[variableKey] else {
+            guard let variable = inputs[path: variableKey] else {
                 return false
             }
             
@@ -93,7 +93,7 @@ extension Condition.IntEval: Evaluatable {
             
             return intValue == value
         case .greater(let variableKey, let value):
-            guard let variable = inputs[variableKey] else {
+            guard let variable = inputs[path: variableKey] else {
                 return false
             }
             
@@ -109,7 +109,7 @@ extension Condition.IntEval: Evaluatable {
             
             return intValue > value
         case .greater_or_equal(let variableKey, let value):
-            guard let variable = inputs[variableKey] else {
+            guard let variable = inputs[path: variableKey] else {
                 return false
             }
             
@@ -126,7 +126,7 @@ extension Condition.IntEval: Evaluatable {
             
             return intValue >= value
         case .smaller(let variableKey, let value):
-            guard let variable = inputs[variableKey] else {
+            guard let variable = inputs[path: variableKey] else {
                 return false
             }
             
@@ -143,7 +143,7 @@ extension Condition.IntEval: Evaluatable {
             
             return intValue < value
         case .smaller_or_equal(let variableKey, let value):
-            guard let variable = inputs[variableKey] else {
+            guard let variable = inputs[path: variableKey] else {
                 return false
             }
             
@@ -165,10 +165,10 @@ extension Condition.IntEval: Evaluatable {
 
 
 extension Condition.StringEval: Evaluatable {
-    func eval(_ inputs: [String: Any?]) -> Bool {
+    func eval(_ inputs: [String: AnySendable]) -> Bool {
         switch self {
         case .equal(let variableKey, let value):
-            guard let variable = inputs[variableKey] else {
+            guard let variable = inputs[path: variableKey] else {
                 return false
             }
             
@@ -184,7 +184,7 @@ extension Condition.StringEval: Evaluatable {
             
             return stringValue == value
         case .empty(let variableKey):
-            guard let variable = inputs[variableKey] else {
+            guard let variable = inputs[path: variableKey] else {
                 return false
             }
             
@@ -200,7 +200,7 @@ extension Condition.StringEval: Evaluatable {
             
             return stringValue.isEmpty
         case .contains(let variableKey, let value, let position):
-            guard let variable = inputs[variableKey] else {
+            guard let variable = inputs[path: variableKey] else {
                 return false
             }
             

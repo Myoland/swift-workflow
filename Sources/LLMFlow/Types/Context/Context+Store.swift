@@ -6,12 +6,12 @@
 //
 
 
-struct ContextStorePath {
-    struct Key {
+public struct ContextStorePath: Hashable, Sendable {
+    public struct Key: Hashable, Sendable {
         let strValue: String
         let intValue: Int?
         
-        init(strValue: String) {
+        public init(strValue: String) {
             if let intValue = Int(strValue) {
                 self.init(strValue: strValue, intValue: intValue)
             } else {
@@ -19,7 +19,7 @@ struct ContextStorePath {
             }
         }
         
-        init(intValue: Int) {
+        public init(intValue: Int) {
             self.init(strValue: "\(intValue)", intValue: intValue)
         }
         
@@ -31,32 +31,32 @@ struct ContextStorePath {
     
     let keys: [Key]
     
-    init(keys: [Key]) {
+    public init(keys: [Key]) {
         self.keys = keys
     }
 }
 
 extension ContextStorePath: CustomStringConvertible {
-    var description: String {
+    public var description: String {
         self.keys.map(\.strValue).joined(separator: ".")
     }
 }
 
 extension ContextStorePath: LosslessStringConvertible {
-    init(_ description: String) {
+    public init(_ description: String) {
         let keys = description.split(separator: ".").map { ContextStorePath.Key(strValue: String($0)) }
         self.init(keys: keys)
     }
 }
 
 extension ContextStorePath: Codable {
-    init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let raw = try container.decode(String.self)
         self.init(raw)
     }
     
-    func encode(to encoder: any Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(self.description)
     }
@@ -64,30 +64,30 @@ extension ContextStorePath: Codable {
 
 
 extension ContextStorePath: ExpressibleByStringLiteral {
-    init(stringLiteral value: String) {
+    public init(stringLiteral value: String) {
         self.init(value)
     }
 }
 
 extension ContextStorePath: ExpressibleByIntegerLiteral {
-    init(integerLiteral value: Int) {
+    public init(integerLiteral value: Int) {
         self.init(keys: [.init(intValue: value)])
     }
 }
 extension ContextStorePath.Key: ExpressibleByStringLiteral {
-    init(stringLiteral value: String) {
+    public init(stringLiteral value: String) {
         self.init(strValue: value)
     }
 }
 
 extension ContextStorePath.Key: ExpressibleByIntegerLiteral {
-    init(integerLiteral value: Int) {
+    public init(integerLiteral value: Int) {
         self.init(intValue: value)
     }
 }
 
 extension ContextStorePath: ExpressibleByArrayLiteral {
-    init(arrayLiteral elements: ContextStorePath.Key...) {
+    public init(arrayLiteral elements: ContextStorePath.Key...) {
         self.init(keys: elements)
     }
 }
@@ -175,10 +175,12 @@ extension MutableCollection where Element == AnySendable, Index == Int {
                 return
             }
             
-            if var dict = self[key: key] as? [String: Element] {
+            if rest.first?.intValue == nil {
+                var dict = self[key: key] as? [String: Element] ?? [:]
                 dict[keys: rest] = newValue
                 self[key: key] = dict
-            } else if var list = self[key: key] as? [Element] {
+            } else {
+                var list = self[key: key] as? [Element] ?? []
                 list[keys: rest] = newValue
                 self[key: key] = list
             }
@@ -257,10 +259,12 @@ extension Dictionary where Value == AnySendable, Key == String {
                 return
             }
             
-            if var dict = self[key: key] as? [String: Value] {
+            if rest.first?.intValue == nil {
+                var dict = self[key: key] as? [String: Value] ?? [:]
                 dict[keys: rest] = newValue
                 self[key: key] = dict
-            } else if var list = self[key: key] as? [Value] {
+            } else {
+                var list = self[key: key] as? [Value] ?? []
                 list[keys: rest] = newValue
                 self[key: key] = list
             }
@@ -290,11 +294,11 @@ extension Dictionary where Value == AnySendable, Key == String {
     
     subscript(path keys: [Key]?) -> Value? {
         get {
-            self[keys: keys?.map { ContextStorePath.Key(strValue: $0) }]
+            self[keys: keys?.map { ContextStorePath.Key(strValue: $0, intValue: nil) }]
         }
         
         set {
-            self[keys: keys?.map { ContextStorePath.Key(strValue: $0) }] = newValue
+            self[keys: keys?.map { ContextStorePath.Key(strValue: $0, intValue: nil) }] = newValue
         }
     }
 }
