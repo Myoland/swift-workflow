@@ -587,7 +587,7 @@ func testWorkflowRunWithConditionEdge() async throws {
       to: template_id
     - from: template_id
       to: llm_special_id
-      condiftion:
+      condition:
         equal:
           variable: workflow.inputs.model
           value: special
