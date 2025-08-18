@@ -630,12 +630,39 @@ func testWorkflowRunWithConditionEdge() async throws {
             logger.info("[*] State: \(state.node.type.rawValue) \(state.node.id) \(state.type) -> \(String(describing: state.value))")
         }
         
+        let nodeResult = states.context[path: "llm_id", DataKeyPath.WorkflowNodeRunResultKey]
+        let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
+        let usage = response.usage
+        let content = response.items.first?.message?.content?.first?.text?.content
+        logger.info("[*] \(content ?? "nil")")
+        logger.info("[*] \(String(describing: usage))")
+        #expect(content?.contains("special") == false)
+        
+    } catch {
+        Issue.record("Unexpected \(error)")
+    }
+    
+    do {
+
+        let inputs: [String: FlowData] = [
+            "name": "John",
+            "message": "ping",
+            "langauge": "zh-Hans",
+            "model": "special"
+        ]
+
+        let states = try workflow.run(inputs: inputs, context: .init())
+        for try await state in states {
+            logger.info("[*] State: \(state.node.type.rawValue) \(state.node.id) \(state.type) -> \(String(describing: state.value))")
+        }
+        
         let nodeResult = states.context[path: "llm_special_id", DataKeyPath.WorkflowNodeRunResultKey]
         let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
         let usage = response.usage
         let content = response.items.first?.message?.content?.first?.text?.content
         logger.info("[*] \(content ?? "nil")")
         logger.info("[*] \(String(describing: usage))")
+        #expect(content?.contains("special") == true)
         
     } catch {
         Issue.record("Unexpected \(error)")
