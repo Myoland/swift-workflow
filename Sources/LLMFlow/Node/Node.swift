@@ -42,6 +42,12 @@ public protocol Node: Sendable, Hashable, Codable {
 // MARK: Node + Default
 
 extension Node {
+    public func updateIntoResult(_ context: Context, path: ContextStoreKeyPath, value: Context.Value) throws {
+        context[path: path] = value
+    }
+}
+
+extension Node {
 
     // force convert the pipe to blocked value
     // please check if it should be blocked.
@@ -60,12 +66,14 @@ extension Node {
 
     public var resultKeyPaths: ContextStoreKeyPath { [id, ContextStoreKey.WorkflowNodeRunResultKey] }
 
-    public func updateIntoResult(_ context: Context, path: ContextStoreKeyPath, value: Context.Value) throws {
-        context[path: path] = value
-    }
-
     public func updateIntoResult(_ context: Context, value: Context.Value) throws {
         try updateIntoResult(context, path: resultKeyPaths, value: value)
+    }
+}
+
+extension Node {
+    public func getResult(_ context: Context) -> AnySendable {
+        context[path: resultKeyPaths]
     }
 }
 
@@ -86,6 +94,12 @@ extension ResultResaveableNode {
     func resave(_ context: Context, value: Context.Value) throws {
         guard let key = outputKeyPaths else { return }
         try updateIntoResult(context, path: key, value: value)
+    }
+}
+
+extension ResultResaveableNode {
+    public func getOutput(_ context: Context) -> AnySendable {
+        context[path: outputKeyPaths]
     }
 }
 
