@@ -66,6 +66,7 @@ func testLLMNodeOpenAIRun() async throws {
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "model_foo",
+                       output: nil,
                        request: .init([
                            "$instructions": """
                                 be an echo server.

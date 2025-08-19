@@ -202,63 +202,53 @@ extension MutableCollection where Element == AnySendable, Index == Int {
 // MARK: Dictionary
 
 extension Dictionary where Value == AnySendable, Key == String {
-    subscript(safe key: Key?) -> Value? {
+
+    // Designated Accesser
+    subscript(key key: ContextStorePath.Key?) -> Value? {
         get {
-            guard let key else { return nil }
-            return self[key]
+            guard key?.intValue == nil, let key = key?.strValue else { return nil }
+            return self[safe: key]
         }
-        
+
         set {
-            guard let key else { return }
-            self[key] = newValue
+            guard key?.intValue == nil, let key = key?.strValue else { return }
+            self[safe: key] = newValue
         }
     }
-    
-    subscript(key path: ContextStorePath.Key?) -> Value? {
-        get {
-            guard let key = path?.strValue, path?.intValue == nil else { return nil }
-            return self[key]
-        }
-        
-        set {
-            guard let key = path?.strValue, path?.intValue == nil else { return }
-            self[key] = newValue
-        }
-    }
-    
+
     subscript(keys keys: [ContextStorePath.Key]?) -> Value? {
         get {
             guard let keys else { return nil }
-            
+
             let (key, rest) = keys.separateFirst()
-            
+
             guard let value = self[key: key] else {
                 return nil
             }
-            
+
             guard let rest, !rest.isEmpty else {
                 return value
             }
-            
+
             if let dic = value as? [Key: Value] {
                 return dic[path: .init(keys: rest)]
             } else if let list = value as? [Value] {
                 return list[path: .init(keys: rest)]
             }
-            
+
             return nil
         }
-        
+
         set {
             guard let keys else { return }
-            
+
             let (key, rest) = keys.separateFirst()
-            
+
             guard let rest, !rest.isEmpty else {
                 self[key: key] = newValue
                 return
             }
-            
+
             if rest.first?.intValue == nil {
                 var dict = self[key: key] as? [String: Value] ?? [:]
                 dict[keys: rest] = newValue
@@ -270,8 +260,9 @@ extension Dictionary where Value == AnySendable, Key == String {
             }
         }
     }
-    
-    
+}
+
+extension Dictionary where Value == AnySendable, Key == String {
     subscript(path path: ContextStorePath?) -> Value? {
         get {
             self[keys: path?.keys]
@@ -281,7 +272,20 @@ extension Dictionary where Value == AnySendable, Key == String {
             self[keys: path?.keys] = newValue
         }
     }
-    
+
+    subscript(path key: Key?) -> Value? {
+        get {
+            guard let key else { return nil }
+            return self[path: ContextStorePath(key)]
+        }
+
+        set {
+            guard let key else { return }
+            self[path: ContextStorePath(key)] = newValue
+        }
+    }
+
+
     subscript(path keys: Key...) -> Value? {
         get {
             self[keys: keys.map {ContextStorePath.Key(strValue: $0)} ]
@@ -303,7 +307,19 @@ extension Dictionary where Value == AnySendable, Key == String {
     }
 }
 
+extension Dictionary {
+    private subscript(safe key: Key?) -> Value? {
+        get {
+            guard let key else { return nil }
+            return self[key]
+        }
 
+        set {
+            guard let key else { return }
+            self[key] = newValue
+        }
+    }
+}
 
 extension Collection {
     fileprivate func separateFirst() -> (Element?, [Element]?) {

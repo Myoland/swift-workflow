@@ -15,6 +15,6 @@ func testDataKeyPath() async throws {
     let str = "{\"foo\":\"bar\"}"
     let decoder = JSONDecoder()
     
-    let decoded = try decoder.decode([DataKeyPath: String].self, from: str.data(using: .utf8)!)
+    let decoded = try decoder.decode([ContextStoreKey: String].self, from: str.data(using: .utf8)!)
     print(decoded)
 }

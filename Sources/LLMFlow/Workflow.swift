@@ -21,7 +21,7 @@ extension Workflow.Edge: Hashable {}
 // MARK: Workflow
 
 public struct Workflow : Sendable{
-    public typealias VariableKey = NodeVariableKey
+    public typealias VariableKey = Context.Key
     public typealias VariableValue = Context.Value
 
     public let nodes: [Node.ID: any Node]

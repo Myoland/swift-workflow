@@ -10,17 +10,17 @@ public struct StartNode: Node {
     public let name: String?
     public let type: NodeType
 
-    public let inputs: [NodeVariableKey: FlowData.TypeDecl]
+    public let inputs: [Context.Key: FlowData.TypeDecl]
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(StartNode.ID.self, forKey: .id)
         self.name = try container.decodeIfPresent(String.self, forKey: .name)
         self.type = try container.decode(NodeType.self, forKey: .type)
-        self.inputs = try container.decode([NodeVariableKey: FlowData.TypeDecl].self, forKey: .inputs)
+        self.inputs = try container.decode([Context.Key: FlowData.TypeDecl].self, forKey: .inputs)
     }
 
-    public init(id: StartNode.ID, name: String? = nil, inputs: [NodeVariableKey: FlowData.TypeDecl]) {
+    public init(id: StartNode.ID, name: String? = nil, inputs: [Context.Key: FlowData.TypeDecl]) {
         self.id = id
         self.name = name
         self.type = .START
@@ -35,7 +35,7 @@ extension StartNode {
         let context = executor.context
 
         guard case .block(let value) = context.output.withLock({ $0 }),
-              let value = value as? [NodeVariableKey: FlowData]
+              let value = value as? [Context.Key: FlowData]
         else {
             return
         }
@@ -49,18 +49,18 @@ extension StartNode {
     }
 
     public func update(_ context: Context, value: Context.Value) throws {
-        context[path: DataKeyPath.WorkflowInputsKeyPath] = value
+        context[path: ContextStoreKey.WorkflowInputsKeyPath] = value
     }
 
     public func verify(
-        data: [DataKeyPath: FlowData]
+        data: [ContextStoreKey: FlowData]
     ) throws {
         try Self.verify(data: data, decls: self.inputs)
     }
 
     public static func verify(
-        data: [DataKeyPath: FlowData],
-        decls: [DataKeyPath: FlowData.TypeDecl]
+        data: [ContextStoreKey: FlowData],
+        decls: [ContextStoreKey: FlowData.TypeDecl]
     ) throws {
         for (key, decl) in decls {
             guard let data = data[key] else {

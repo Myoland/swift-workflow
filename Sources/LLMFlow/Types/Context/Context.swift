@@ -11,11 +11,11 @@ public protocol ServiceLocator: AnyStorageValue {
     func resolve<K, T>(for key: K.Type, as type: T.Type) -> T?
 }
 
-public typealias DataKeyPaths = [DataKeyPath]
-public typealias DataKeyPath = String
+public typealias ContextStoreKeyPath = [ContextStoreKey]
+public typealias ContextStoreKey = String
 
 public final class Context: Sendable {
-    public typealias Key = DataKeyPath
+    public typealias Key = ContextStoreKey
     public typealias Value = AnySendable
 
     public typealias Store = [Key: Value]
@@ -38,13 +38,13 @@ extension Context {
     public subscript(key: Key?) -> Value? {
         get {
             store.withLock { store in
-                store[safe: key]
+                store[path: key]
             }
         }
 
         set {
             store.withLock { store in
-                store[safe: key] = newValue
+                store[path: key] = newValue
             }
         }
     }
@@ -52,7 +52,7 @@ extension Context {
     public subscript<T>(safe key: Key?, as type: T.Type = T.self) -> T? {
         get {
             store.withLock { store in
-                store[safe: key] as? T
+                store[path: key] as? T
             }
         }
     }

@@ -9,6 +9,7 @@ import LazyKit
 import AsyncAlgorithms
 import Foundation
 
+// MARK: Node + Output
 
 public enum NodeOutput: Sendable {
     case none
@@ -23,6 +24,7 @@ extension NodeOutput {
     }
 }
 
+// MARK: Node
 
 public protocol Node: Sendable, Hashable, Codable {
     typealias ID = String
@@ -36,6 +38,8 @@ public protocol Node: Sendable, Hashable, Codable {
 
     func update(_ context: Context, value: Context.Value) throws
 }
+
+// MARK: Node + Default
 
 extension Node {
 
@@ -54,15 +58,38 @@ extension Node {
         }
     }
 
-    public var resultKeyPaths: DataKeyPaths { [id, DataKeyPath.WorkflowNodeRunResultKey] }
-    
+    public var resultKeyPaths: ContextStoreKeyPath { [id, ContextStoreKey.WorkflowNodeRunResultKey] }
+
+    public func updateIntoResult(_ context: Context, path: ContextStoreKeyPath, value: Context.Value) throws {
+        context[path: path] = value
+    }
+
     public func updateIntoResult(_ context: Context, value: Context.Value) throws {
-        context[path: resultKeyPaths] = value
+        try updateIntoResult(context, path: resultKeyPaths, value: value)
     }
 }
 
-public typealias NodeVariableKey = Context.Key
+// MAKR: Node + Save
 
+protocol ResultResaveableNode: Node {
+    var output: ID? { get }
+
+    func resave(_ context: Context, value: Context.Value) throws
+}
+
+extension ResultResaveableNode {
+    public var outputKeyPaths: ContextStoreKeyPath? {
+        guard let output else { return nil }
+        return ContextStoreKey.WorkflowOutputKeyPath + [output]
+    }
+
+    func resave(_ context: Context, value: Context.Value) throws {
+        guard let key = outputKeyPaths else { return }
+        try updateIntoResult(context, path: key, value: value)
+    }
+}
+
+// MARK: Node + Type
 
 public struct NodeType: RawRepresentable, Sendable {
     public let rawValue: String

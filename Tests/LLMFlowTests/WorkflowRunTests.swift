@@ -27,10 +27,12 @@ func testWorkflowRun() async throws {
     )
     let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
 
+    let outputKey = "ultimate"
     let llmNode  = LLMNode(
         id: UUID().uuidString,
         name: nil,
         modelName: "gpt-4o-mini",
+        output: outputKey,
         request: .init([
             "stream": true,
             "instructions": """
@@ -78,6 +80,9 @@ func testWorkflowRun() async throws {
         for try await state in states {
             logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
+        print(context.store.withLock({ $0 }))
+        let response = context["workflow.output.\(outputKey).items.0.content.0.content"] as? String
+        #expect(response?.contains("pong") ?? false)
     } catch {
         Issue.record("Unexpected \(error)")
     }
@@ -163,7 +168,7 @@ func testWorkflowRunWithConfig() async throws {
             logger.info("[*] State: \(state.node.type.rawValue) \(state.node.id) \(state.type) -> \(String(describing: state.value))")
         }
         
-        let nodeResult = states.context[path: "llm_id", DataKeyPath.WorkflowNodeRunResultKey]
+        let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
         let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
         let usage = response.usage
         let content = response.items.first?.message?.content?.first?.text?.content
@@ -256,7 +261,7 @@ func testWorkflowRunWithConfigOpenRouter() async throws {
         logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
     }
     
-    let nodeResult = states.context[path: "llm_id", DataKeyPath.WorkflowNodeRunResultKey]
+    let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
     let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
     let usage = response.usage
     let content = response.items.first?.message?.content?.first?.text?.content
@@ -345,7 +350,7 @@ func testWorkflowRunWithConfigOpenRouterRepeat() async throws {
         logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
     }
     
-    let nodeResult = states.context[path: "llm_id", DataKeyPath.WorkflowNodeRunResultKey]
+    let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
     let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
     let usage = response.usage
     let content = response.items.first?.message?.content?.first?.text?.content
@@ -379,6 +384,7 @@ func testWorkflowProviderTimeout() async throws {
         id: "llm_id",
         name: nil,
         modelName: "gpt-4o-mini",
+        output: nil,
         request: .init([
             "stream": true,
             "instructions": """
@@ -426,7 +432,7 @@ func testWorkflowProviderTimeout() async throws {
         for try await state in states {
             logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
-        let nodeResult = states.context[path: "llm_id", DataKeyPath.WorkflowNodeRunResultKey]
+        let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
         let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
         let usage = response.usage
         let content = response.items.first?.message?.content?.first?.text?.content
@@ -461,6 +467,7 @@ func testWorkflowProvider500Error() async throws {
         id: "llm_id",
         name: nil,
         modelName: "gpt-4o-mini",
+        output: nil,
         request: .init([
             "stream": true,
             "instructions": """
@@ -508,7 +515,7 @@ func testWorkflowProvider500Error() async throws {
         for try await state in states {
             logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
-        let nodeResult = states.context[path: "llm_id", DataKeyPath.WorkflowNodeRunResultKey]
+        let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
         let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
         let usage = response.usage
         let content = response.items.first?.message?.content?.first?.text?.content
@@ -627,7 +634,7 @@ func testWorkflowRunWithConditionEdge() async throws {
             logger.info("[*] State: \(state.node.type.rawValue) \(state.node.id) \(state.type) -> \(String(describing: state.value))")
         }
         
-        let nodeResult = states.context[path: "llm_id", DataKeyPath.WorkflowNodeRunResultKey]
+        let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
         let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
         let usage = response.usage
         let content = response.items.first?.message?.content?.first?.text?.content
@@ -653,7 +660,7 @@ func testWorkflowRunWithConditionEdge() async throws {
             logger.info("[*] State: \(state.node.type.rawValue) \(state.node.id) \(state.type) -> \(String(describing: state.value))")
         }
         
-        let nodeResult = states.context[path: "llm_special_id", DataKeyPath.WorkflowNodeRunResultKey]
+        let nodeResult = states.context[path: "llm_special_id", ContextStoreKey.WorkflowNodeRunResultKey]
         let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
         let usage = response.usage
         let content = response.items.first?.message?.content?.first?.text?.content

@@ -12,7 +12,7 @@ import Foundation
 extension Context {
     public struct Snapshot: Sendable {
         public enum Change: Sendable {
-            case insert(DataKeyPaths, Context.Value)
+            case insert(ContextStoreKeyPath, Context.Value)
             // TODO: [2025/06/25 <Huanan>] Add update, delete
         }
 
