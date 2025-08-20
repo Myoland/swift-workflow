@@ -204,7 +204,7 @@ func testWorkflowRunWithConfigOpenRouter() async throws {
       type: LLM
       modelName: test_openai
       request:
-        stream: true
+        stream: false
         instructions: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"pong\\"\n2. send \\"ding\\", back \\"dang\\""
         temperature: 0.0
         topP: 1.0
@@ -292,7 +292,7 @@ func testWorkflowRunWithConfigOpenRouterRepeat() async throws {
       type: LLM
       modelName: test_openai
       request:
-        stream: true
+        stream: false
         instructions: |
             You are an experienced translator, and your task is accurately and vividly translating content or word into {{ workflow.inputs.langauge }}.
             These examples demonstrates the importance of paying attention to personal pronouns when translating sentences.
