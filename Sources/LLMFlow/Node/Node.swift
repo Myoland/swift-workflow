@@ -113,7 +113,7 @@ public struct NodeType: RawRepresentable, Sendable {
     }
 }
 
-extension NodeType {
+public extension NodeType {
     static let START = NodeType(rawValue: "START")
     static let END = NodeType(rawValue: "END")
     static let TEMPLATE = NodeType(rawValue: "TEMPLATE")
