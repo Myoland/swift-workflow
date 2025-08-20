@@ -34,7 +34,7 @@ func testWorkflowRun() async throws {
         modelName: "gpt-4o-mini",
         output: outputKey,
         request: .init([
-            "stream": true,
+            "stream": false,
             "instructions": """
                 be an echo server.
                 before response, say 'hi [USER NAME]' first.
@@ -80,6 +80,7 @@ func testWorkflowRun() async throws {
         for try await state in states {
             logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
         }
+        
         print(context.store.withLock({ $0 }))
         let response = context["workflow.output.\(outputKey).items.0.content.0.content"] as? String
         #expect(response?.contains("pong") ?? false)

@@ -73,12 +73,19 @@ extension LLMNode {
 
         let session = GPTSession(client: client, logger: executor.logger)
 
-        let response = try await session.send(prompt, model: llm)
-        let output = response.map { response in
-            return try AnyEncoder().encode(response)
-        }.cached().eraseToAnyAsyncSequence()
-        
-        context.output.withLock { $0 = .stream(output) }
+        if prompt.stream == true {
+            let response = try await session.stream(prompt, model: llm)
+            let output = response.map { response in
+                return try AnyEncoder().encode(response)
+            }.cached().eraseToAnyAsyncSequence()
+            
+            context.output.withLock { $0 = .stream(output) }
+        } else {
+            let response = try await session.generate(prompt, model: llm)
+            let output = try AnyEncoder().encode(response)
+            
+            context.output.withLock { $0 = .block(output) }
+        }
     }
 }
 
