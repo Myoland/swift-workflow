@@ -103,12 +103,26 @@ extension Workflow: WorkflowControl {
 }
 
 extension Workflow.RunningUpdates {
-    public enum RunningState {
+    public enum RunningState: Sendable {
         case initial(StartNode)
         case modifying
         case running(current: any Node, previous: (any Node)?)
         case generating(current: any Node, AnyAsyncSequence<Context.Value>.AsyncIterator)
         case end
+        
+        var isModifying: Bool {
+            guard case .modifying = self else {
+                return false
+            }
+            return true
+        }
+        
+        var isEnd: Bool {
+            guard case .end = self else {
+                return false
+            }
+            return true
+        }
     }
 
 
@@ -118,88 +132,78 @@ extension Workflow.RunningUpdates {
         private let delegate: any WorkflowControl
         public let executor: Executor
 
-        public let state: LazyLockedValue<RunningState>
+        private let lockedState: LazyLockedValue<RunningState>
 
         public init(delegate: any WorkflowControl, executor: Executor, node: StartNode) {
             self.delegate = delegate
             self.executor = executor
-            self.state = .init(.initial(node))
+            self.lockedState = .init(.initial(node))
         }
 
         public mutating func next() async throws -> Workflow.PipeState? {
-            // prepare state and lock it if nessary
-            let state: RunningState = self.state.withLock { state in
+            let state: RunningState = self.lockedState.withLock { state in
                 let old = state
                 switch state {
-                case .initial(let node):
-                    state = .running(current: node, previous: node)
-                case .running(current: _, previous: _):
-                    state = .modifying
-                case .modifying:
-                    preconditionFailure("unreachable")
-                default:
+                case .end:
                     break
+                default:
+                    state = .modifying
                 }
                 return old
             }
-
-            let context = executor.context
+            assert(state.isModifying == false) // Make sure next() is not re-enter.
+            
+            let cxtRef = executor.context
             switch state {
             case .end:
                 return nil
-            case .initial(let node):
-                return Workflow.PipeState(type: .start, node: node, context: context, value: nil)
-            default:
-                break
-            }
 
-            switch state {
-            case .end, .initial(_):
-                preconditionFailure("unreachable")
+            case .initial(let node):
+                self.state = .running(current: node, previous: nil)
+                return Workflow.PipeState(type: .start, node: node, context: cxtRef, value: nil)
 
             case .running(current: let node, previous: _) where node is EndNode:
-                // summarize
-                self.state.withLock { $0 = .end }
-                return Workflow.PipeState(type: .end, node: node, context: context, value: "TODO: Object Used for summrize")
+                self.state = .end
+                return Workflow.PipeState(type: .end, node: node, context: cxtRef, value: "TODO: Object Used for summrize")
 
             case .running(current: let node, previous: _):
                 let output = try await node.run(executor: executor)
-                context.payload.withLock { $0 = output }
+                cxtRef.payload.withLock { $0 = output }
 
                 if let stream = output?.stream {
                     let iterator = stream.makeAsyncIterator()
-                    self.state.withLock { $0 = .generating(current: node, iterator) }
-                    return Workflow.PipeState(type: .startGenerating, node: node, context: context, value: nil)
+                    self.state = .generating(current: node, iterator)
+                    return Workflow.PipeState(type: .startGenerating, node: node, context: cxtRef, value: nil)
                 }
 
                 if let value = output?.value {
-                    try node.update(context, value: value)
+                    try node.update(cxtRef, value: value)
                     executor.logger.info("[*] Node(\(node.id)). Update Success. Value: \(String(describing: value))")
                 }
 
-                let next = try requireNextNode(from: node.id, context: context.filter(keys: nil))
+                let next = try requireNextNode(from: node.id, context: cxtRef.filter(keys: nil))
 
-                self.state.withLock { $0 = .running(current: next, previous: node) }
-                return Workflow.PipeState(type: .running, node: node, context: context, value: nil)
+                self.state = .running(current: next, previous: node)
+                return Workflow.PipeState(type: .running, node: node, context: cxtRef, value: nil)
 
             case .generating(let node, var iterator):
                 if let elem = try await iterator.next() {
-                    let iter = iterator
-                    self.state.withLock { $0 = .generating(current: node, iter) }
-                    return Workflow.PipeState(type: .generating, node: node, context: context, value: elem)
+                    self.state = .generating(current: node, iterator)
+                    return Workflow.PipeState(type: .generating, node: node, context: cxtRef, value: elem)
                 }
 
                 // iterator finished
-                let value = try await node.wait(context)
-                try node.update(context, value: value)
+                let value = try await node.wait(cxtRef)
+                try node.update(cxtRef, value: value)
                 executor.logger.info("[*] Node(\(node.id)). Update Success. Value: \(String(describing: value))")
 
-                let next = try requireNextNode(from: node.id, context: context.filter(keys: nil))
+                let next = try requireNextNode(from: node.id, context: cxtRef.filter(keys: nil))
 
-                self.state.withLock { $0 = .running(current: next, previous: nil) }
-                return Workflow.PipeState(type: .finishGenerating, node: node, context: context, value: nil)
+                self.state = .running(current: next, previous: node)
+                return Workflow.PipeState(type: .finishGenerating, node: node, context: cxtRef, value: nil)
+
             case .modifying:
-                preconditionFailure("unreachable")
+                unreachable()
             }
         }
 
@@ -211,6 +215,18 @@ extension Workflow.RunningUpdates {
             guard let next = delegate.node(id: edge.to) else { throw Err.nodeNotFound }
 
             return next
+        }
+    }
+}
+
+
+extension Workflow.RunningUpdates.Iterator {
+    var state: Workflow.RunningUpdates.RunningState {
+        get {
+            self.lockedState.withLock { $0 }
+        }
+        set {
+            self.lockedState.withLock { $0 = newValue }
         }
     }
 }
