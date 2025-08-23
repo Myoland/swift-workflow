@@ -46,7 +46,7 @@ func testWorkflowRunWithConfig() async throws {
                   '#content': "OK"
                 - type: text
                   role: user
-                  $content: 
+                  $content:
                       - workflow
                       - inputs
                       - message
@@ -84,29 +84,23 @@ func testWorkflowRunWithConfig() async throws {
     let locator = DummySimpleLocater(client, solver)
     let workflow = try Workflow(config: config, locator: locator)!
 
-    do {
+    let inputs: [String: FlowData] = [
+        "name": "John",
+        "message": "ping",
+        "langauge": "zh-Hans",
+    ]
 
-        let inputs: [String: FlowData] = [
-            "name": "John",
-            "message": "ping",
-            "langauge": "zh-Hans",
-        ]
-
-        let states = try workflow.run(inputs: inputs, context: .init())
-        for try await state in states {
-            logger.info(
-                "[*] State: \(state.node.type.rawValue) \(state.node.id) \(state.type) -> \(String(describing: state.value))"
-            )
-        }
-
-        let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
-        let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
-        let usage = response.usage
-        let content = response.items.first?.message?.content?.first?.text?.content
-        logger.info("[*] \(content ?? "nil")")
-        logger.info("[*] \(String(describing: usage))")
-
-    } catch {
-        Issue.record("Unexpected \(error)")
+    let states = try workflow.run(inputs: inputs, context: .init())
+    for try await state in states {
+        logger.info(
+            "[*] State: \(state.node.type.rawValue) \(state.node.id) \(state.type) -> \(String(describing: state.value))"
+        )
     }
+
+    let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
+    let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
+    let usage = response.usage
+    let content = response.items.first?.message?.content?.first?.text?.content
+    logger.info("[*] \(content ?? "nil")")
+    logger.info("[*] \(String(describing: usage))")
 }

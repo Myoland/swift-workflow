@@ -48,7 +48,7 @@ struct LLMNode: ResultResaveableNode {
 
 extension LLMNode {
 
-    public func run(executor: Executor) async throws {
+    public func run(executor: Executor) async throws -> NodeOutput? {
         guard let locator = executor.locator else {
             todo("Throw error for LLMModel not found locator")
         }
@@ -79,22 +79,22 @@ extension LLMNode {
                 return try AnyEncoder().encode(response)
             }.cached().eraseToAnyAsyncSequence()
 
-            context.output.withLock { $0 = .stream(output) }
+            return .stream(output)
         } else {
             let response = try await session.generate(prompt, model: llm)
             let output = try AnyEncoder().encode(response)
 
-            context.output.withLock { $0 = .block(output) }
+            return .block(output)
         }
     }
 }
 
 extension LLMNode {
     public func wait(_ context: Context) async throws -> Context.Value? {
-        let output = context.output.withLock { $0 }
+        let output = context.payload.withLock { $0 }
 
-        guard case .stream(let stream) = output else {
-            return output.value
+        guard let stream = output?.stream else {
+            return output?.value
         }
 
         let response = try await stream.first { value in

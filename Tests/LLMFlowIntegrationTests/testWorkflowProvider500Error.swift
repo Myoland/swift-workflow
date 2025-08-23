@@ -83,27 +83,25 @@ func testWorkflowProvider500Error() async throws {
         flows: [
             startNode.id: [.init(from: startNode.id, to: llmNode.id, condition: nil)],
             llmNode.id: [.init(from: llmNode.id, to: endNode.id, condition: nil)],
-        ], startNodeID: startNode.id, locator: locator)
+        ],
+        startNodeID: startNode.id,
+        locator: locator
+    )
 
-    do {
+    let inputs: [String: FlowData] = [
+        "name": "John",
+        "message": "ping",
+    ]
 
-        let inputs: [String: FlowData] = [
-            "name": "John",
-            "message": "ping",
-        ]
-
-        let context = Context()
-        let states = try workflow.run(inputs: inputs, context: context)
-        for try await state in states {
-            logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
-        }
-        let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
-        let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
-        let usage = response.usage
-        let content = response.items.first?.message?.content?.first?.text?.content
-        logger.info("[*] \(content ?? "nil")")
-        logger.info("[*] \(String(describing: usage))")
-    } catch {
-        Issue.record("Unexpected \(error)")
+    let context = Context()
+    let states = try workflow.run(inputs: inputs, context: context)
+    for try await state in states {
+        logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
     }
+    let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
+    let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
+    let usage = response.usage
+    let content = response.items.first?.message?.content?.first?.text?.content
+    logger.info("[*] \(content ?? "nil")")
+    logger.info("[*] \(String(describing: usage))")
 }

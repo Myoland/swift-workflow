@@ -6,7 +6,7 @@
 //
 
 struct EndNode: Node {
-    
+
     let id: ID
     let name: String?
     let type: NodeType = .END
@@ -17,8 +17,7 @@ struct EndNode: Node {
         case type
     }
 
-    public func run(executor: Executor) async throws {}
-    
-    func update(_ context: Context, value: Context.Value) throws {
-    }
+    func run(executor: Executor) async throws -> NodeOutput? { nil }
+
+    func update(_ context: Context, value: Context.Value) throws {}
 }

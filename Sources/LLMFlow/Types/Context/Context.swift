@@ -20,13 +20,13 @@ public final class Context: Sendable {
 
     public typealias Store = [Key: Value]
 
-    public let output: LazyLockedValue<NodeOutput> // May be rename to other name ?
+    public let payload: LazyLockedValue<NodeOutput?> // May be rename to other name ?
     public let store: LazyLockedValue<Store>
 
     public let snapshots: LazyLockedValue<[Snapshot]>
 
-    public init(output: NodeOutput = .none, store: Store = [:]) {
-        self.output = .init(output)
+    public init(payload: NodeOutput? = nil, store: Store = [:]) {
+        self.payload = .init(payload)
         self.store = .init(store)
         self.snapshots = .init([])
     }

@@ -48,7 +48,7 @@ func testWorkflowRunWithConfigOpenRouterRepeat() async throws {
             inputs:
                 - type: text
                   role: user
-                  $content: 
+                  $content:
                       - workflow
                       - inputs
                       - message

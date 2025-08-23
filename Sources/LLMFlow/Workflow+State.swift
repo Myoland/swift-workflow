@@ -13,7 +13,7 @@ import SynchronizationKit
 
 extension Workflow {
     public func run(inputs: [String: FlowData], context: Context = .init()) throws -> RunningUpdates {
-        context.output.withLock { $0 = .block(inputs) }
+        context.payload.withLock { $0 = .block(inputs) }
         return try RunningUpdates(workflow: self, startNode: self.requireStartNode(), inputs: inputs, context: context)
     }
 }
@@ -66,8 +66,8 @@ extension Workflow.PipeStateType: CustomStringConvertible {
 }
 
 extension Workflow.PipeState {
-    public var output: NodeOutput {
-        context.output.withLock { $0 }
+    public var payload: NodeOutput? {
+        context.payload.withLock { $0 }
     }
 }
 
@@ -163,18 +163,16 @@ extension Workflow.RunningUpdates {
                 return Workflow.PipeState(type: .end, node: node, context: context, value: "TODO: Object Used for summrize")
 
             case .running(current: let node, previous: _):
-                try await node.run(executor: executor)
+                let output = try await node.run(executor: executor)
+                context.payload.withLock { $0 = output }
 
-                let output = context.output.withLock { $0 }
-
-                switch output {
-                case .none:
-                    break
-                case .stream(let stream):
+                if let stream = output?.stream {
                     let iterator = stream.makeAsyncIterator()
                     self.state.withLock { $0 = .generating(current: node, iterator) }
                     return Workflow.PipeState(type: .startGenerating, node: node, context: context, value: nil)
-                case .block(let value):
+                }
+
+                if let value = output?.value {
                     try node.update(context, value: value)
                     executor.logger.info("[*] Node(\(node.id)). Update Success. Value: \(String(describing: value))")
                 }

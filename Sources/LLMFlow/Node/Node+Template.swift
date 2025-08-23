@@ -55,13 +55,11 @@ struct TemplateNode: Node {
 
 extension TemplateNode {
 
-    public func run(executor: Executor) async throws {
+    public func run(executor: Executor) async throws -> NodeOutput? {
         let context = executor.context
 
         let result = try template.render(context.filter(keys: nil))
-        context.output.withLock({
-            $0 = .block(result)
-        })
+        return .block(result)
     }
 
     func update(_ context: Context, value: Context.Value) throws {

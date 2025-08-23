@@ -31,21 +31,19 @@ public struct StartNode: Node {
 extension StartNode {
 
 
-    public func run(executor: Executor) async throws {
-        let context = executor.context
+    public func run(executor: Executor) async throws -> NodeOutput? {
+        let payload = executor.context.payload.withLock({ $0 })
 
-        guard case .block(let value) = context.output.withLock({ $0 }),
-              let value = value as? [Context.Key: FlowData]
-        else {
-            return
+        guard let value = payload?.value as? [Context.Key: FlowData] else {
+            return .none
         }
 
         executor.logger.debug("[*] Start Node. Values: \(value)")
 
         try verify(data: value)
-        context.output.withLock { $0 = .block(value.asAny) }
 
         executor.logger.info("[*] Start Node. Verify Success.")
+        return .block(value.asAny)
     }
 
     public func update(_ context: Context, value: Context.Value) throws {

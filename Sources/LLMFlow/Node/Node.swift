@@ -12,7 +12,6 @@ import Foundation
 // MARK: Node + Output
 
 public enum NodeOutput: Sendable {
-    case none
     case block(Context.Value?)
     case stream(AnyAsyncSequence<Context.Value>)
 }
@@ -37,7 +36,7 @@ public protocol Node: Sendable, Hashable, Codable {
     var id: ID { get }
     var type: NodeType { get }
 
-    func run(executor: Executor) async throws
+    func run(executor: Executor) async throws -> NodeOutput?
 
     func wait(_ context: Context) async throws -> Context.Value?
 
@@ -57,8 +56,8 @@ extension Node {
     // force convert the pipe to blocked value
     // please check if it should be blocked.
     public func wait(_ context: Context) async throws -> Context.Value? {
-        let output = context.output.withLock { $0 }
-        return output.value
+        let output = context.payload.withLock { $0 }
+        return output?.value
     }
 
     public var resultKeyPaths: ContextStoreKeyPath { [id, ContextStoreKey.WorkflowNodeRunResultKey] }

@@ -16,7 +16,7 @@ import LLMFlowTestKit
 @Test("testWorkflowRun")
 func testWorkflowRun() async throws {
     let logger = Logger.testing
-    
+
     try Dotenv.make()
 
     let openai = LLMProviderConfiguration(type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue, apiURL: "https://api.openai.com/v1")
@@ -69,23 +69,18 @@ func testWorkflowRun() async throws {
     ], startNodeID: startNode.id, locator: locator)
 
 
-    do {
+    let inputs: [String: FlowData] = [
+        "name": "John",
+        "message": "ping"
+    ]
 
-        let inputs: [String: FlowData] = [
-            "name": "John",
-            "message": "ping"
-        ]
-        
-        let context = Context()
-        let states = try workflow.run(inputs: inputs, context: context)
-        for try await state in states {
-            logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
-        }
-        
-        print(context.store.withLock({ $0 }))
-        let response = context["workflow.output.\(outputKey).items.0.content.0.content"] as? String
-        #expect(response?.contains("pong") ?? false)
-    } catch {
-        Issue.record("Unexpected \(error)")
+    let context = Context()
+    let states = try workflow.run(inputs: inputs, context: context)
+    for try await state in states {
+        logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
     }
+
+    print(context.store.withLock({ $0 }))
+    let response = context["workflow.output.\(outputKey).items.0.content.0.content"] as? String
+    #expect(response?.contains("pong") ?? false)
 }
