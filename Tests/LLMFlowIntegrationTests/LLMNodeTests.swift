@@ -7,43 +7,9 @@ import Testing
 import TestKit
 import GPT
 import Logging
+import LLMFlowTestKit
 
 @testable import LLMFlow
-
-final class DummySimpleLocater: ServiceLocator {
-    typealias Store = AnySendable
-
-    let stores: [Store]
-
-    init(_ stores: Store...) {
-        self.stores = stores
-    }
-
-    func resolve<T>(shared _: T.Type) -> T? {
-        (stores.first { $0 is T }) as? T
-    }
-
-    func resolve<K, T>(for _: K.Type, as _: T.Type) -> T? {
-        (stores.first { $0 is T }) as? T
-    }
-}
-
-struct DummyLLMProviderSolver: LLMProviderSolver {
-    let store: [String: LLMQualifiedModel]
-
-    init(_ store: [String: LLMQualifiedModel]) {
-        self.store = store
-    }
-
-    init(_ name: String, _ provider: LLMQualifiedModel) {
-        store = [name: provider]
-    }
-
-    func resolve(modelName: String) -> LLMQualifiedModel? {
-        store[modelName]
-    }
-}
-
 
 @Test("testLLMNodeOpenAIRun")
 func testLLMNodeOpenAIRun() async throws {
@@ -61,7 +27,7 @@ func testLLMNodeOpenAIRun() async throws {
     let locator = DummySimpleLocater(client, solver)
 
     let context = Context()
-    let executor = Executor(locator: locator, context: context)
+    let executor = Executor(locator: locator, context: context) 
 
     let node = LLMNode(id: "ID",
                        name: nil,

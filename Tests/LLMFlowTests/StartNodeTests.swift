@@ -61,7 +61,7 @@ func testStartNodeVerify() async throws {
         try StartNode.verify(data: [:], decls: ["foo": .single(.int)])
     }
 
-    #expect(throws: StartNode.VerifyErr.inputDataTypeMissMatch(key: "foo", expect: .single(.int), actual: nil)) {
+    #expect(throws: StartNode.VerifyErr.inputDataTypeMissMatch(key: "foo", expect: .single(.int), actual: "a")) {
         try StartNode.verify(data: ["foo": .single(.string("a"))], decls: ["foo": .single(.int)])
     }
 }

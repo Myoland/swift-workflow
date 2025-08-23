@@ -10,7 +10,7 @@ import Yams
         id: '1'
         name: '11'
         type: START
-        input: {}
+        inputs: {}
         """
     ), (
         EndNode(id: "2", name: "22"),

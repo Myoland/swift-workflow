@@ -8,6 +8,7 @@
 import Logging
 @testable import LLMFlow
 
+
 extension Logger {
-    static let testing = Self(label: .Log.subsystem + ".tests")
+    public static let testing = Self(label: .Log.subsystem + ".tests")
 }

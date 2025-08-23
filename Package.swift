@@ -8,10 +8,7 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
-        .library(
-            name: "LLMFlow",
-            targets: ["LLMFlow"]
-        ),
+        .library(name: "LLMFlow", targets: ["LLMFlow"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-async-algorithms", from: "1.0.0"),
@@ -46,12 +43,29 @@ let package = Package(
         .testTarget(
             name: "LLMFlowTests",
             dependencies: [
+                "LLMFlowTestKit",
                 "LLMFlow",
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "TestKit", package: "swift-lazy"),
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
-            ],
-            resources: [.process("Resources")]
+            ]
         ),
+        .testTarget(
+            name: "LLMFlowIntegrationTests",
+            dependencies: [
+                "LLMFlowTestKit",
+                "LLMFlow",
+                .product(name: "Yams", package: "Yams"),
+                .product(name: "TestKit", package: "swift-lazy"),
+                .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
+            ]
+        ),
+        .testTarget(
+            name: "LLMFlowTestKit", 
+            dependencies: [
+                "LLMFlow",
+                .product(name: "Logging", package: "swift-log")
+            ]
+        )
     ]
 )
