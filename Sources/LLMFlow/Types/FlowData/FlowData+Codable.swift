@@ -1,4 +1,7 @@
 extension FlowData.Single: Codable {
+    /// Decodes a `Single` value from a single-value container.
+    ///
+    /// It attempts to decode the value as a `Bool`, `Int`, or `String`, in that order.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
 
@@ -13,10 +16,11 @@ extension FlowData.Single: Codable {
                 FlowData.Single.self,
                 .init(
                     codingPath: container.codingPath,
-                    debugDescription: "Only Support String and Int."))
+                    debugDescription: "Only Support String, Int, and Bool."))
         }
     }
 
+    /// Encodes the `Single` value into a single-value container.
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
@@ -31,6 +35,7 @@ extension FlowData.Single: Codable {
 }
 
 extension FlowData.List: Codable {
+    /// Decodes a `List` from a single-value container holding an array of `FlowData`.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let elements = try container.decode([FlowData].self)
@@ -39,6 +44,7 @@ extension FlowData.List: Codable {
         self.elemDecl = elements.decl
     }
 
+    /// Encodes the `List`'s elements into a single-value container.
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(elements)
@@ -46,6 +52,7 @@ extension FlowData.List: Codable {
 }
 
 extension FlowData.Map: Codable {
+    /// Decodes a `Map` from a single-value container holding a dictionary of `[String: FlowData]`.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let values = try container.decode([String: FlowData].self)
@@ -54,6 +61,7 @@ extension FlowData.Map: Codable {
         self.elemDecl = values.values.decl
     }
 
+    /// Encodes the `Map`'s elements into a single-value container.
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
         try container.encode(elememts)
@@ -62,6 +70,7 @@ extension FlowData.Map: Codable {
 
 extension FlowData: Codable {
 
+    /// Decodes a `FlowData` instance by attempting to decode it as a single value, a list, or a map.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
 
@@ -74,11 +83,12 @@ extension FlowData: Codable {
         } else {
             throw DecodingError.typeMismatch(
                 FlowData.self,
-                .init(codingPath: container.codingPath, debugDescription: "")
+                .init(codingPath: container.codingPath, debugDescription: "Could not decode FlowData as single, list, or map.")
             )
         }
     }
 
+    /// Encodes the `FlowData` instance into the appropriate container based on its case.
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
 

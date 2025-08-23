@@ -6,9 +6,14 @@
 //
 
 extension ContextStoreKey {
+    /// The root key under which all workflow-related data is stored in the ``Context``.
     public static let WorkflowRootKey: ContextStoreKey = "workflow"
-    public static let WorkflowInputsKeyPath: ContextStoreKeyPath = [WorkflowRootKey, "inputs"]
-    public static let WorkflowOutputKeyPath: ContextStoreKeyPath = [WorkflowRootKey, "output"]
 
+    /// The key path to the dictionary of initial inputs provided to the workflow.
+    public static let WorkflowInputsKeyPath: ContextStoreKeyPath = [WorkflowRootKey, "inputs"]
+    /// The key path where nodes can write their final outputs to be collected.
+    public static let WorkflowOutputKeyPath: ContextStoreKeyPath = [WorkflowRootKey, "output"]
+    
+    /// The key used within a node's result dictionary to store its primary output.
     public static let WorkflowNodeRunResultKey: ContextStoreKey = "result"
 }

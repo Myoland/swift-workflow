@@ -6,11 +6,23 @@
 //
 
 
+/// A type-safe path for accessing nested data within a ``Context/Store``.
+///
+/// `ContextStorePath` allows you to specify a dot-separated path to a value within a nested structure
+/// of dictionaries and arrays. It supports both string keys for dictionaries and integer indices for arrays.
+///
+/// ## Example
+/// ```swift
+/// let path = ContextStorePath("workflow.inputs.user_query")
+/// let value = context[path: path]
+/// ```
 public struct ContextStorePath: Hashable, Sendable {
+    /// A single component of a `ContextStorePath`, which can be either a string or an integer.
     public struct Key: Hashable, Sendable {
         let strValue: String
         let intValue: Int?
         
+        /// Initializes a key from a string. If the string can be parsed as an integer, it will be.
         public init(strValue: String) {
             if let intValue = Int(strValue) {
                 self.init(strValue: strValue, intValue: intValue)
@@ -19,6 +31,7 @@ public struct ContextStorePath: Hashable, Sendable {
             }
         }
         
+        /// Initializes a key from an integer.
         public init(intValue: Int) {
             self.init(strValue: "\(intValue)", intValue: intValue)
         }
@@ -31,6 +44,7 @@ public struct ContextStorePath: Hashable, Sendable {
     
     let keys: [Key]
     
+    /// Initializes a path with an array of keys.
     public init(keys: [Key]) {
         self.keys = keys
     }

@@ -9,13 +9,13 @@
 
 extension Condition.StringEval: Codable {
     
-    public enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey {
         case equal
         case empty
         case contains
     }
     
-    public enum NestedCodingKeys: CodingKey {
+    private enum NestedCodingKeys: CodingKey {
         case variable
         case value
         case position
@@ -83,7 +83,7 @@ extension Condition.StringEval: Codable {
 
 extension Condition.IntEval: Codable {
     
-    public enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey {
         case equal
         case greater
         case greater_or_equal
@@ -91,7 +91,7 @@ extension Condition.IntEval: Codable {
         case smaller_or_equal
     }
     
-    public enum NestedCodingKeys: CodingKey {
+    private enum NestedCodingKeys: CodingKey {
         case variable
         case value
     }
@@ -169,7 +169,7 @@ extension Condition.IntEval: Codable {
 
 extension Condition: Codable {
     
-    public enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey {
         case and
         case or
         case not

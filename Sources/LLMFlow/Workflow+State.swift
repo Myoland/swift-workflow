@@ -12,6 +12,16 @@ import SynchronizationKit
 // MARK: Workflow + Run
 
 extension Workflow {
+    /// Runs the workflow with the given inputs.
+    ///
+    /// This method is the primary entry point for executing a workflow. It initializes the execution context
+    /// with the provided inputs and returns an asynchronous sequence of state updates.
+    ///
+    /// - Parameters:
+    ///   - inputs: A dictionary of input data for the workflow, keyed by the input names defined in the ``StartNode``.
+    ///   - context: An optional initial ``Context`` for the workflow. If not provided, a new empty context is created.
+    /// - Throws: An error if the workflow is misconfigured (e.g., cannot find the start node).
+    /// - Returns: A ``RunningUpdates`` object, which is an `AsyncSequence` that emits ``PipeState`` updates as the workflow progresses.
     public func run(inputs: [String: FlowData], context: Context = .init()) throws -> RunningUpdates {
         context.payload.withLock { $0 = .block(inputs) }
         return try RunningUpdates(workflow: self, startNode: self.requireStartNode(), inputs: inputs, context: context)
@@ -20,22 +30,34 @@ extension Workflow {
 
 
 extension Workflow {
+    /// Represents the state of a node's execution within a running workflow.
     public enum PipeStateType: Hashable, Sendable {
+        /// The workflow is starting at the ``StartNode``.
         case start
+        /// A node is actively streaming its output. A ``PipeState`` with this type will be emitted for each chunk of the stream.
         case generating
+        /// A node has begun a streaming operation.
         case startGenerating
+        /// A node has completed a streaming operation.
         case finishGenerating
+        /// A node has finished its execution (for non-streaming nodes) and the workflow is transitioning to the next node.
         case running
+        /// The workflow has reached an `EndNode` and has completed.
         case end
     }
 
+    /// A snapshot of the workflow's state at a specific point in its execution.
+    ///
+    /// The ``RunningUpdates`` async sequence emits `PipeState` instances, allowing you to observe the
+    /// progress of a workflow, including which node is running and what data is being produced.
     public struct PipeState {
+        /// The type of state this update represents.
         public let type: PipeStateType
+        /// The node that this state update pertains to.
         public let node: any Node
-
+        /// A reference to the workflow's current ``Context``.
         public let context: Context
-
-        /// Available when type equal to ``Workflow/PipeStateType/generating``
+        /// The value associated with this state, typically a chunk of data for `.generating` states.
         public let value: Context.Value?
     }
 }
@@ -60,6 +82,7 @@ extension Workflow.PipeStateType: CustomStringConvertible {
 }
 
 extension Workflow.PipeState {
+    /// The most recent output from the node, available in the context.
     public var payload: NodeOutput? {
         context.payload.withLock { $0 }
     }
@@ -67,12 +90,34 @@ extension Workflow.PipeState {
 
 
 extension Workflow {
+    /// An `AsyncSequence` that provides real-time updates on the state of a running ``Workflow``.
+    ///
+    /// You can iterate over this sequence to receive ``PipeState`` objects as the workflow executes,
+    /// allowing for observation of the flow's progress, streaming of LLM outputs, and access to intermediate data.
+    ///
+    /// ```swift
+    /// let updates = try workflow.run(inputs: ["query": "Tell me a joke."])
+    /// for try await state in updates {
+    ///     print("Node '\(state.node.id)' is now in state '\(state.type)'.")
+    ///     if state.type == .generating, let chunk = state.value {
+    ///         print("Received chunk: \(chunk)")
+    ///     }
+    /// }
+    /// ```
     public struct RunningUpdates: AsyncSequence, Sendable {
+        public typealias Element = PipeState
+        public typealias AsyncIterator = Iterator
+
+        /// The ``Workflow`` instance being executed.
         public let workflow: Workflow
+        /// The ``StartNode`` where the execution begins.
         public let startNode: StartNode
+        /// The initial inputs provided to the workflow.
         public let inputs: [String: FlowData]
+        /// The shared ``Context`` for this workflow run.
         public let context: Context
 
+        /// Creates an asynchronous iterator to begin the workflow execution.
         public func makeAsyncIterator() -> Iterator {
             Iterator(delegate: workflow,
                      executor: Executor(locator: workflow.locator, context: context, logger: workflow.logger),
@@ -81,8 +126,19 @@ extension Workflow {
     }
 }
 
+/// A protocol that provides the ``Workflow/RunningUpdates/Iterator`` with access to the workflow's structure.
+///
+/// This abstraction decouples the iterator's execution logic from the concrete `Workflow` type,
+/// aiding in testability and modularity.
 public protocol WorkflowControl: Sendable {
+    /// Retrieves the outgoing edges for a given node.
+    /// - Parameter id: The ID of the source node.
+    /// - Returns: An array of ``Workflow/Edge``s.
     func edges(from id: Node.ID) -> [Workflow.Edge]
+    
+    /// Retrieves a node by its ID.
+    /// - Parameter id: The ID of the node to retrieve.
+    /// - Returns: The ``RunnableNode`` if found, otherwise `nil`.
     func node(id: Node.ID) -> (any RunnableNode)?
 }
 
@@ -96,6 +152,7 @@ extension Workflow: WorkflowControl {
     }
 }
 
+/// A type alias for a type that conforms to both ``Runnable`` and ``Node``.
 public typealias RunnableNode = Runnable & Node
 
 extension Workflow.RunningUpdates {
@@ -106,14 +163,14 @@ extension Workflow.RunningUpdates {
         case generating(current: any RunnableNode, AnyAsyncSequence<Context.Value>.AsyncIterator)
         case end
         
-        var isModifying: Bool {
+        public var isModifying: Bool {
             guard case .modifying = self else {
                 return false
             }
             return true
         }
         
-        var isEnd: Bool {
+        public var isEnd: Bool {
             guard case .end = self else {
                 return false
             }
@@ -123,20 +180,33 @@ extension Workflow.RunningUpdates {
 }
 
 extension Workflow.RunningUpdates {
+    /// The asynchronous iterator that drives the execution of a ``Workflow``.
+    ///
+    /// This iterator manages the state machine of the workflow, advancing from one node to the next,
+    /// handling node execution, and emitting ``PipeState`` updates.
     public struct Iterator: AsyncIteratorProtocol, Sendable {
         typealias Err = RuntimeError
 
         private let delegate: any WorkflowControl
+        /// The executor responsible for running the logic of each node.
         public let executor: Executor
 
         private let lockedState: LazyLockedValue<RunningState>
 
+        /// Initializes the iterator for a workflow execution.
         public init(delegate: any WorkflowControl, executor: Executor, node: StartNode) {
             self.delegate = delegate
             self.executor = executor
             self.lockedState = .init(.initial(node))
         }
 
+        /// Asynchronously advances the workflow to the next state and returns it.
+        ///
+        /// This method contains the core logic of the workflow's state machine. It is called repeatedly
+        /// by the `for-try-await` loop on a ``RunningUpdates`` sequence.
+        ///
+        /// - Returns: The next ``Workflow/PipeState`` in the execution, or `nil` if the workflow has completed.
+        /// - Throws: A ``RuntimeError`` if an issue occurs during execution, such as a node not being found or an edge condition failing.
         public mutating func next() async throws -> Workflow.PipeState? {
             let state: RunningState = self.lockedState.withLock { state in
                 let old = state
@@ -204,6 +274,16 @@ extension Workflow.RunningUpdates {
             }
         }
 
+        /// Determines the next node to execute based on the outgoing edges of the current node.
+        ///
+        /// It evaluates the ``Condition`` on each edge and selects the first one that passes.
+        ///
+        /// - Parameters:
+        ///   - nodeID: The ID of the current node.
+        ///   - context: The current workflow context, used for evaluating conditions.
+        /// - Throws: ``RuntimeError/CanNotMatchAnEdge`` if no outgoing edge's condition is met.
+        /// - Throws: ``RuntimeError/NextNodeNotFound`` if the target node of the matched edge does not exist.
+        /// - Returns: The next ``RunnableNode`` to be executed.
         public func requireNextNode(from nodeID: Node.ID, context: [Context.Key: Context.Value]) throws -> any RunnableNode {
             let edges = delegate.edges(from: nodeID)
             let edge = edges.first { $0.condition?.eval(context) ?? true }
@@ -218,6 +298,7 @@ extension Workflow.RunningUpdates {
 
 
 extension Workflow.RunningUpdates.Iterator {
+    /// Provides thread-safe access to the internal running state of the iterator.
     var state: Workflow.RunningUpdates.RunningState {
         get {
             self.lockedState.withLock { $0 }

@@ -11,6 +11,8 @@ let package = Package(
         .library(name: "LLMFlow", targets: ["LLMFlow"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
+
         .package(url: "https://github.com/apple/swift-async-algorithms", from: "1.0.0"),
         .package(url: "https://github.com/AFutureD/swift-synchronization", from: "0.1.0"),
         .package(url: "https://github.com/apple/swift-log", from: "1.6.0"),

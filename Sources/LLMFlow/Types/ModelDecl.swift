@@ -1,11 +1,21 @@
 import LazyKit
 
 
+/// Defines the type of a key in a ``ModelDecl`` body, allowing for constants, references, and templates.
+///
+/// A `ModelDeclKey` interprets special prefixes on string keys to determine their behavior:
+/// - `$` prefix: Indicates a reference to a value in the ``Context``. The key's value should be the path to the desired data.
+/// - `#` prefix: Indicates a Jinja template. The key's value should be a template string to be rendered.
+/// - No prefix: A constant key whose value is taken literally.
 public enum ModelDeclKey: Sendable {
+    /// A literal key.
     case constant(String)
+    /// A key that references a value from the ``Context``.
     case ref(String)
+    /// A key whose value is a Jinja template to be rendered.
     case template(String)
     
+    /// Initializes a `ModelDeclKey` from a raw string, parsing prefixes.
     public init(_ rawValue: String) {
         if rawValue.starts(with: "$") {
             self = .ref(rawValue.replacing("$", with: "", maxReplacements: 1))
@@ -67,13 +77,53 @@ extension ModelDeclKey: Equatable {
 
 extension ModelDeclKey: Hashable {}
 
+/// A declarative representation of a model's input parameters.
+///
+/// `ModelDecl` (Model Declaration) is used to construct the input payload for services like LLM providers.
+/// It supports dynamically rendering values from the workflow's ``Context`` by using special key prefixes
+/// defined by ``ModelDeclKey``.
+///
+/// This allows you to define a static structure for an API request while pulling in dynamic data at runtime.
+///
+/// ## Example
+/// Consider an LLM node that needs to be configured with a model name from the workflow's inputs and a
+/// system prompt from a template.
+///
+/// ```swift
+/// let modelDecl = ModelDecl([
+///     "model": .single(.string("$model_name")), // Reference to context value
+///     "system_prompt": .single(.string("# Sarcastic assistant")), // Template
+///     "temperature": .single(.double(0.8)) // Constant
+/// ])
+///
+/// var context = Context()
+/// context["model_name"] = "gpt-4"
+///
+/// let rendered = try modelDecl.render(context.store)
+/// // rendered will be:
+/// // [
+/// //     "model": "gpt-4",
+/// //     "system_prompt": "Sarcastic assistant",
+/// //     "temperature": 0.8
+/// // ]
+/// ```
 public struct ModelDecl: Codable, Sendable, Hashable {
+    /// The dictionary defining the model's parameters. Keys may have special prefixes
+    /// as interpreted by ``ModelDeclKey``.
     public let body: [String: FlowData]
 
+    /// Renders the `body` dictionary using values from the provided context store.
+    ///
+    /// This method processes each key-value pair in the `body`, resolving references and rendering templates
+    /// to produce a final dictionary of concrete values.
+    ///
+    /// - Parameter values: The context store containing the data for rendering.
+    /// - Returns: A dictionary with rendered values.
     public func render(_ values: [String: AnySendable]) throws -> [String: Any?] {
         return try body.render(values)
     }
     
+    /// Initializes a `ModelDecl` with a body dictionary.
     public init(_ body: [String: FlowData]) {
         self.body = body
     }
@@ -87,7 +137,6 @@ public struct ModelDecl: Codable, Sendable, Hashable {
         var container = encoder.singleValueContainer()
         try container.encode(self.body)
     }
-    
 }
 
 // MARK: Context Render
@@ -147,4 +196,3 @@ extension FlowData.List {
         return try self.elements.map { try $0.render(values) }
     }
 }
-

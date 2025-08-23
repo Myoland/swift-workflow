@@ -6,25 +6,52 @@ public typealias AnySendable = Any & Sendable
 
 public protocol AnyStorageValue: Sendable {}
 
+/// A protocol for a dependency injection container that provides services to workflow nodes.
+///
+/// The `ServiceLocator` is used by nodes (e.g., `LLMNode`) to resolve dependencies like API clients
+/// for external services.
 public protocol ServiceLocator: AnyStorageValue {
+    /// Resolves a service of a given type.
     func resolve<T>(shared type: T.Type) -> T?
+    /// Resolves a service for a given key and type.
     func resolve<K, T>(for key: K.Type, as type: T.Type) -> T?
 }
 
+/// A key path for accessing nested values within a ``Context/Store``.
 public typealias ContextStoreKeyPath = [ContextStoreKey]
+/// A key for storing and retrieving values in a ``Context/Store``.
 public typealias ContextStoreKey = String
 
+/// A thread-safe container for managing the state and data of a running ``Workflow``.
+///
+/// The `Context` serves as the central repository for all data within a workflow. It holds:
+/// - A `store` for arbitrary key-value data that can be accessed and modified by nodes.
+/// - A `payload` that holds the most recent output of a node.
+/// - A series of `snapshots` that capture the state of the context at different points in time.
+///
+/// `Context` is a reference type (`final class`) to ensure that all nodes in a workflow run share the same
+/// state. Access to its internal storage is synchronized to prevent data races.
 public final class Context: Sendable {
+    /// A type alias for a key in the context store.
     public typealias Key = ContextStoreKey
+    /// A type alias for a value in the context store.
     public typealias Value = AnySendable
 
+    /// The underlying dictionary that holds the workflow's state.
     public typealias Store = [Key: Value]
 
-    public let payload: LazyLockedValue<NodeOutput?> // May be rename to other name ?
+    /// The most recent output produced by a node. This is used to pass data between nodes implicitly.
+    public let payload: LazyLockedValue<NodeOutput?>
+    /// The main key-value store for the workflow's state.
     public let store: LazyLockedValue<Store>
 
+    /// A log of historical states of the context, used for debugging and introspection.
     public let snapshots: LazyLockedValue<[Snapshot]>
 
+    /// Initializes a new `Context`.
+    /// - Parameters:
+    ///   - payload: The initial node output payload.
+    ///   - store: The initial key-value store.
     public init(payload: NodeOutput? = nil, store: Store = [:]) {
         self.payload = .init(payload)
         self.store = .init(store)

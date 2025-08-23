@@ -16,7 +16,7 @@ extension TemplateNode: Runnable {
         return .block(result)
     }
     
-    func update(_ context: Context, value: Context.Value) throws {
+    public func update(_ context: Context, value: Context.Value) throws {
         context[path: resultKeyPaths] = value
     }
 }

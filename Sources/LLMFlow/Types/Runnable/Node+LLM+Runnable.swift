@@ -75,7 +75,7 @@ extension LLMNode {
         return response?["data"]
     }
     
-    func update(_ context: Context, value: Context.Value) throws {
+    public func update(_ context: Context, value: Context.Value) throws {
         context[path: resultKeyPaths] = value
         context[path: outputKeyPaths] = value
     }
