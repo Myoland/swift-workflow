@@ -17,11 +17,11 @@ extension String.Log {
 
 extension Logger {
     internal static let disabled = Self(label: .Log.subsystem, factory: { _ in SwiftLogNoOpLogHandler() })
-    
+
 #if DEBUG
     static let Internal = Self(label: .Log.subsystem)
 #else
     static let Internal = disabled
 #endif
-    
+
 }

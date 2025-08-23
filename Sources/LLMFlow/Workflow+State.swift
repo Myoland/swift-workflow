@@ -204,14 +204,14 @@ extension Workflow.RunningUpdates {
                 preconditionFailure("unreachable")
             }
         }
-        
+
         public func requireNextNode(from nodeID: Node.ID, context: [Context.Key: Context.Value]) throws -> any Node {
             let edges = delegate.edges(from: nodeID)
             let edge = edges.first { $0.condition?.eval(context) ?? true }
-            
+
             guard let edge else { throw Err.notMatchEdge }
             guard let next = delegate.node(id: edge.to) else { throw Err.nodeNotFound }
-            
+
             return next
         }
     }

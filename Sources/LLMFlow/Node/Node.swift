@@ -18,6 +18,11 @@ public enum NodeOutput: Sendable {
 }
 
 extension NodeOutput {
+    var value: Context.Value? {
+        guard case let .block(value) = self else { return nil }
+        return value
+    }
+
     var stream: AnyAsyncSequence<Context.Value>? {
         guard case let .stream(stream) = self else { return nil }
         return stream
@@ -52,16 +57,8 @@ extension Node {
     // force convert the pipe to blocked value
     // please check if it should be blocked.
     public func wait(_ context: Context) async throws -> Context.Value? {
-        let pipe = context.output.withLock { $0 }
-
-        return switch pipe {
-        case .none:
-            nil
-        case let .block(value):
-            value
-        case .stream:
-            nil
-        }
+        let output = context.output.withLock { $0 }
+        return output.value
     }
 
     public var resultKeyPaths: ContextStoreKeyPath { [id, ContextStoreKey.WorkflowNodeRunResultKey] }

@@ -78,12 +78,12 @@ extension LLMNode {
             let output = response.map { response in
                 return try AnyEncoder().encode(response)
             }.cached().eraseToAnyAsyncSequence()
-            
+
             context.output.withLock { $0 = .stream(output) }
         } else {
             let response = try await session.generate(prompt, model: llm)
             let output = try AnyEncoder().encode(response)
-            
+
             context.output.withLock { $0 = .block(output) }
         }
     }
@@ -92,16 +92,9 @@ extension LLMNode {
 extension LLMNode {
     public func wait(_ context: Context) async throws -> Context.Value? {
         let output = context.output.withLock { $0 }
-        if case .none = output {
-            return nil
-        }
-
-        if case let .block(value) = output {
-            return value
-        }
 
         guard case .stream(let stream) = output else {
-            return nil
+            return output.value
         }
 
         let response = try await stream.first { value in
