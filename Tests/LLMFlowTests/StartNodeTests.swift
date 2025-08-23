@@ -57,11 +57,11 @@ func testStartNodeVerify() async throws {
             ])
     }
 
-    #expect(throws: StartNode.VerifyErr.inputDataNotFound(key: "foo")) {
+    #expect(throws: PayloadVerifyErr.inputDataNotFound(key: "foo")) {
         try StartNode.verify(data: [:], decls: ["foo": .single(.int)])
     }
 
-    #expect(throws: StartNode.VerifyErr.inputDataTypeMissMatch(key: "foo", expect: .single(.int), actual: "a")) {
+    #expect(throws: PayloadVerifyErr.inputDataTypeMissMatch(key: "foo", expect: .single(.int), actual: "a")) {
         try StartNode.verify(data: ["foo": .single(.string("a"))], decls: ["foo": .single(.int)])
     }
 }

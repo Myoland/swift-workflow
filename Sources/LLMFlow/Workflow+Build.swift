@@ -15,7 +15,7 @@ extension Workflow {
 
         let startNode = try config.requireStartNode()
 
-        let nodes: [String: any Node] = config.nodes.keyed { $0.id }
+        let nodes: [String: any RunnableNode] = config.nodes.keyed { $0.id }
         let flows: [Node.ID: Edges] = config.edges.grouped { $0.from }
 
         self.init(nodes: nodes, flows: flows, startNodeID: startNode.id, locator: locator, logger: logger)

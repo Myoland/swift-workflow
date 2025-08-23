@@ -89,7 +89,7 @@ extension Workflow {
 
 public protocol WorkflowControl: Sendable {
     func edges(from id: Node.ID) -> [Workflow.Edge]
-    func node(id: Node.ID) -> (any Node)?
+    func node(id: Node.ID) -> (any RunnableNode)?
 }
 
 extension Workflow: WorkflowControl {
@@ -97,17 +97,19 @@ extension Workflow: WorkflowControl {
         flows[id] ?? []
     }
 
-    public func node(id: String) -> (any Node)? {
+    public func node(id: String) -> (any RunnableNode)? {
         self.nodes[id]
     }
 }
+
+public typealias RunnableNode = Runnable & Node
 
 extension Workflow.RunningUpdates {
     public enum RunningState: Sendable {
         case initial(StartNode)
         case modifying
-        case running(current: any Node, previous: (any Node)?)
-        case generating(current: any Node, AnyAsyncSequence<Context.Value>.AsyncIterator)
+        case running(current: any RunnableNode, previous: (any RunnableNode)?)
+        case generating(current: any RunnableNode, AnyAsyncSequence<Context.Value>.AsyncIterator)
         case end
         
         var isModifying: Bool {
@@ -207,7 +209,7 @@ extension Workflow.RunningUpdates {
             }
         }
 
-        public func requireNextNode(from nodeID: Node.ID, context: [Context.Key: Context.Value]) throws -> any Node {
+        public func requireNextNode(from nodeID: Node.ID, context: [Context.Key: Context.Value]) throws -> any RunnableNode {
             let edges = delegate.edges(from: nodeID)
             let edge = edges.first { $0.condition?.eval(context) ?? true }
 

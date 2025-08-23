@@ -24,7 +24,7 @@ public struct Workflow : Sendable{
     public typealias VariableKey = Context.Key
     public typealias VariableValue = Context.Value
 
-    public let nodes: [Node.ID: any Node]
+    public let nodes: [Node.ID: any RunnableNode]
     public let flows: [Node.ID: Edges]
 
     public let startNodeID: Node.ID
@@ -34,7 +34,7 @@ public struct Workflow : Sendable{
     public let logger: Logger
 
     public init(
-        nodes: [Node.ID : any Node],
+        nodes: [Node.ID : any RunnableNode],
         flows: [Node.ID : Edges],
         startNodeID: Node.ID,
         locator: ServiceLocator,

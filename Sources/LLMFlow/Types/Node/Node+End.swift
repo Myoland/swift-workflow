@@ -16,8 +16,4 @@ struct EndNode: Node {
         case name
         case type
     }
-
-    func run(executor: Executor) async throws -> NodeOutput? { nil }
-
-    func update(_ context: Context, value: Context.Value) throws {}
 }

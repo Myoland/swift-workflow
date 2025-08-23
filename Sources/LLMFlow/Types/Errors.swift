@@ -16,3 +16,21 @@ public enum ConstructError: Error {
     case typeMissMatchStartNode
 }
 
+enum PayloadVerifyErr: Error, Hashable {
+    case inputDataNotFound(key: String)
+    case inputDataTypeMissMatch(key: String, expect: FlowData.TypeDecl, actual: FlowData?)
+    case other(String)
+}
+
+extension PayloadVerifyErr: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .inputDataNotFound(let key):
+            return "Key Not Found For Key: '\(key)'."
+        case .inputDataTypeMissMatch(let key, let expect, let actual):
+            return "Data Type Miss Match For Key: '\(key)'. Expected: \(expect), Actual: \(actual ?? "nil")"
+        case .other(let message):
+            return "Unknown Error: \(message)."
+        }
+    }
+}

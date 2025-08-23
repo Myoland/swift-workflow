@@ -1,0 +1,29 @@
+//
+//  Runnable.swift
+//  swift-workflow
+//
+//  Created by AFuture on 2025-08-23.
+//
+
+public protocol Runnable: Sendable {
+    func run(executor: Executor) async throws -> NodeOutput?
+    
+    func wait(_ context: Context) async throws -> Context.Value?
+    
+    func update(_ context: Context, value: Context.Value) throws
+}
+
+extension Runnable {
+//    public func updateIntoResult(_ context: Context, path: ContextStoreKeyPath, value: Context.Value) throws {
+//        context[path: path] = value
+//    }
+}
+
+extension Runnable {
+    public func wait(_ context: Context) async throws -> Context.Value? {
+        let output = context.payload.withLock { $0 }
+        return output?.value
+    }
+}
+
+

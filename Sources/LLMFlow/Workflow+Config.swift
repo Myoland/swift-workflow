@@ -8,11 +8,11 @@
 extension Workflow {
     public struct Config {
 
-        public let nodes: [any Node]
+        public let nodes: [any RunnableNode]
 
         public let edges: [Edge]
 
-        public init(nodes: [any Node], edges: [Edge]) {
+        public init(nodes: [any RunnableNode], edges: [Edge]) {
             self.nodes = nodes
             self.edges = edges
         }
@@ -48,7 +48,7 @@ extension Workflow.Config: Codable {
 
         var nested = try container.nestedUnkeyedContainer(forKey: .nodes)
 
-        var nodes: [any Node] = []
+        var nodes: [any RunnableNode] = []
         while !nested.isAtEnd {
             let nodeDecoder = try nested.superDecoder()
 
