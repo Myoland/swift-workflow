@@ -1,5 +1,5 @@
 {
-  "originHash" : "1d93d57a042a55f03de0ad5a78676a91b61681f12f412b6b057a02fcbc63ae2b",
+  "originHash" : "bfcfe129b2034d8af1a71074eaf25a6ba4d58b85ad4fc63ae3fb4e845332b8fc",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -13,16 +13,16 @@
     {
       "identity" : "jinja",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kevinzhow/Jinja",
+      "location" : "https://github.com/johnmai-dev/Jinja",
       "state" : {
-        "branch" : "main",
-        "revision" : "fc1233dea1142897d474bda2f1f9a6c3fe7acab6"
+        "revision" : "bb238dd96fbe4c18014f3107c00edd6edb15428e",
+        "version" : "1.2.4"
       }
     },
     {
       "identity" : "swift-algorithms",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-algorithms.git",
+      "location" : "https://github.com/apple/swift-algorithms",
       "state" : {
         "revision" : "87e50f483c54e6efd60e885f7f5aa946cee68023",
         "version" : "1.2.1"
@@ -105,8 +105,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
-        "branch" : "main",
-        "revision" : "b565fe6c7788f48480903ff0f8622b07f03ea9b2"
+        "revision" : "ece9aa6fc21b5a50c22181ec89276dc3943c5dd6",
+        "version" : "0.1.0"
       }
     },
     {
@@ -132,8 +132,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Myoland/swift-lazy",
       "state" : {
-        "branch" : "main",
-        "revision" : "606dad4111026ada9a26b711c274f78a82a75d12"
+        "revision" : "059a3554ea6f73b0a95366d632c148a6d32876c0",
+        "version" : "0.1.0"
       }
     },
     {
@@ -231,8 +231,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AFutureD/swift-synchronization",
       "state" : {
-        "branch" : "main",
-        "revision" : "2796e5cc569acd8774468ab45bb294ba41028d30"
+        "revision" : "5995386326f11f1eeb4848171c709e75077a389b",
+        "version" : "0.1.0"
       }
     },
     {
