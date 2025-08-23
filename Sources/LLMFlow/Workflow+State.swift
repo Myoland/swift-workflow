@@ -20,12 +20,6 @@ extension Workflow {
 
 
 extension Workflow {
-
-    public enum PipeErr: Error {
-        case nodeNotFound
-        case notMatchEdge
-    }
-
     public enum PipeStateType: Hashable, Sendable {
         case start
         case generating
@@ -126,10 +120,11 @@ extension Workflow.RunningUpdates {
             return true
         }
     }
+}
 
-
+extension Workflow.RunningUpdates {
     public struct Iterator: AsyncIteratorProtocol, Sendable {
-        typealias Err = Workflow.PipeErr
+        typealias Err = RuntimeError
 
         private let delegate: any WorkflowControl
         public let executor: Executor
@@ -213,8 +208,8 @@ extension Workflow.RunningUpdates {
             let edges = delegate.edges(from: nodeID)
             let edge = edges.first { $0.condition?.eval(context) ?? true }
 
-            guard let edge else { throw Err.notMatchEdge }
-            guard let next = delegate.node(id: edge.to) else { throw Err.nodeNotFound }
+            guard let edge else { throw Err.CanNotMatchAnEdge }
+            guard let next = delegate.node(id: edge.to) else { throw Err.NextNodeNotFound }
 
             return next
         }

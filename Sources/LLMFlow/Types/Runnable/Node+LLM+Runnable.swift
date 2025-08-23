@@ -14,21 +14,23 @@ public protocol LLMProviderSolver {
 }
 
 extension LLMNode: Runnable {
+    typealias Err = RuntimeError
     
     public func run(executor: Executor) async throws -> NodeOutput? {
         guard let locator = executor.locator else {
-            todo("Throw error for LLMModel not found locator")
+            throw Err.locatorNotFound
         }
         
         guard let client = locator.resolve(shared: ClientTransport.self) else {
-            todo("Throw error for LLMModel not found client")
+            throw Err.serviceNotFound(name: "ClientTransport")
         }
         
-        guard
-            let llmSolver = locator.resolve(shared: LLMProviderSolver.self),
-            let llm = llmSolver.resolve(modelName: modelName)
-        else {
-            todo("Throw error for miss LLMModel name '\(modelName)'")
+        guard let llmSolver = locator.resolve(shared: LLMProviderSolver.self) else {
+            throw Err.serviceNotFound(name: "LLMProviderSolver")
+        }
+        
+        guard let llm = llmSolver.resolve(modelName: modelName) else {
+            throw Err.unknow(message: "Throw error for miss LLMModel name '\(modelName)'")
         }
         
         let context = executor.context

@@ -6,9 +6,13 @@
 //
 
 public enum RuntimeError: Error {
+    case unknow(message: String)
     case StartNodeNotFound
     case CanNotMatchAnEdge
     case NextNodeNotFound
+    
+    case locatorNotFound
+    case serviceNotFound(name: String)
 }
 
 public enum ConstructError: Error {
