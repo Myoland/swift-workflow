@@ -12,58 +12,18 @@ import Logging
 @testable import LLMFlow
 
 
-@Test("testWorkflowRunWithConfig")
-func testWorkflowRunWithConfig() async throws {
+@Test("testWorkflowRunWithYaml")
+func testWorkflowRunWithYaml() async throws {
     let logger = Logger.testing
 
-    let str = """
-        nodes:
-        - id: start_id
-          type: START
-          inputs:
-            message: String
-            name: String
-            langauge: String
-
-        - id: template_id
-          type: TEMPLATE
-          template: >
-            {% if workflow.inputs.langauge == "zh-Hans" %}简体中文{% elif workflow.inputs.langauge == "zh-Hant" or workflow.inputs.langauge == "zh" %}繁體中文{% elif  workflow.inputs.langauge == "ja"%}日本語{% elif  workflow.inputs.langauge == "vi"%}Tiếng Việt{% elif  workflow.inputs.langauge == "ko"%}한국어{% else %}English{% endif %}
-
-        - id: llm_id
-          type: LLM
-          modelName: test_openai
-          request:
-            stream: true
-            instructions: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"pong\\"\n2. send \\"ding\\", back \\"dang\\""
-            inputs:
-                - type: text
-                  role: user
-                  '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.result }}"
-                - type: text
-                  role: assistant
-                  '#content': "OK"
-                - type: text
-                  role: user
-                  $content:
-                      - workflow
-                      - inputs
-                      - message
-
-        - id: end_id
-          type: END
-
-        edges:
-        - from: start_id
-          to: template_id
-        - from: template_id
-          to: llm_id
-        - from: llm_id
-          to: end_id
-        """
-
+    guard let url = Bundle.module.url(forResource: "testWorkflowRunWithYaml", withExtension: "yaml") else {
+        Issue.record("yaml file read failed")
+        return
+    }
+    let data = try Data(contentsOf: url)
+    
     let decoder = YAMLDecoder()
-    let config = try decoder.decode(Workflow.Config.self, from: str.data(using: .utf8)!)
+    let config = try decoder.decode(Workflow.Config.self, from: data)
 
     try Dotenv.make()
 
@@ -81,7 +41,7 @@ func testWorkflowRunWithConfig() async throws {
     )
 
     let locator = DummySimpleLocater(client, solver)
-    let workflow = try Workflow(config: config, locator: locator)!
+    let workflow = try Workflow(config: config, locator: locator)
 
     let inputs: [String: FlowData] = [
         "name": "John",

@@ -107,7 +107,7 @@ func testWorkflowRunWithConditionEdge() async throws {
     )
 
     let locator = DummySimpleLocater(client, solver)
-    let workflow = try Workflow(config: config, locator: locator)!
+    let workflow = try Workflow(config: config, locator: locator)
 
     do {
         let inputs: [String: FlowData] = [

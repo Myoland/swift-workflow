@@ -85,7 +85,7 @@ func testWorkflowRunWithConfigOpenRouter() async throws {
     )
 
     let locator = DummySimpleLocater(client, solver)
-    let workflow = try Workflow(config: config, locator: locator)!
+    let workflow = try Workflow(config: config, locator: locator)
 
     let inputs: [String: FlowData] = [
         "name": "John",
