@@ -8,9 +8,15 @@
 import LazyKit
 import OpenAPIRuntime
 import GPT
+import SynchronizationKit
 
 public protocol LLMProviderSolver {
     func resolve(modelName: String) -> LLMQualifiedModel?
+}
+
+public protocol GPTConversationCache: Sendable {
+    func get(conversationID: String?) -> Conversation?
+    func update(conversationID: String?, conversation: Conversation?)
 }
 
 extension LLMNode: Runnable {
@@ -33,26 +39,42 @@ extension LLMNode: Runnable {
             throw Err.unknow(message: "Throw error for miss LLMModel name '\(modelName)'")
         }
         
+        let conversationCache = locator.resolve(shared: GPTConversationCache.self)
+
         let context = executor.context
         
         let inputs = context.filter(keys: nil) // TODO: only get necessary values
         let renderedValues = try request.render(inputs)
         let prompt: Prompt = try AnyDecoder().decode(from: renderedValues)
         executor.logger.info("[*] LLMNode(\(id)) Prompt: \(String(describing: prompt))")
-        
-        let session = GPTSession(client: client, logger: executor.logger)
-        
+
+        let conversationID = prompt.conversationID
+        let conversation = conversationCache?.get(conversationID: conversationID)
+        let session = GPTSession(client: client, conversation: conversation, logger: executor.logger)
+
         if prompt.stream == true {
             let response = try await session.stream(prompt, model: llm)
-            let output = response.map { response in
-                return try AnyEncoder().encode(response)
-            }.cached().eraseToAnyAsyncSequence()
+            // let output = response.map { response in
+            //     return try AnyEncoder().encode(response)
+            // }.cached().eraseToAnyAsyncSequence()
             
-            return .stream(output)
+            // return .stream(output)
+            let iter = response.makeAsyncIterator()
+            let output = AsyncThrowingStream(unfolding: { [iter] in
+                var iter = iter
+                if let next = try await iter.next() {
+                    return try AnyEncoder().encode(next) as AnySendable
+                } else {
+                    conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
+                    return nil
+                }
+            })
+            return .stream(output.cached().eraseToAnyAsyncSequence())
         } else {
             let response = try await session.generate(prompt, model: llm)
             let output = try AnyEncoder().encode(response)
             
+            conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
             return .block(output)
         }
     }

@@ -22,6 +22,10 @@ public final class DummySimpleLocater: ServiceLocator {
 public struct DummyLLMProviderSolver: LLMProviderSolver, Sendable {
     let store: [String: LLMQualifiedModel]
 
+    public init( _ models: LLMQualifiedModel...) {
+        self.store = Dictionary(uniqueKeysWithValues: models.map { ($0.name, $0) })
+    }
+
     public init(_ store: [String: LLMQualifiedModel]) {
         self.store = store
     }
