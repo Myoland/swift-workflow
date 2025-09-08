@@ -18,5 +18,5 @@ extension ContextStoreKey {
     public static let WorkflowNodeRunInputsKey: ContextStoreKey = "inputs"
 
     /// The key used within a node's result dictionary to store its primary output.
-    public static let WorkflowNodeRunResultKey: ContextStoreKey = "output"
+    public static let WorkflowNodeRunOutputKey: ContextStoreKey = "output"
 }

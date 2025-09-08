@@ -38,7 +38,7 @@ public protocol Node: Sendable, Hashable, Codable {
 }
 
 extension Node {
-    public var resultKeyPaths: ContextStoreKeyPath { [id, ContextStoreKey.WorkflowNodeRunResultKey] }
+    public var resultKeyPaths: ContextStoreKeyPath { [id, ContextStoreKey.WorkflowNodeRunOutputKey] }
 }
 
 extension Node {
