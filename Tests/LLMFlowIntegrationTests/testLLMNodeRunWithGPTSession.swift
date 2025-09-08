@@ -41,7 +41,6 @@ func testLLMNodeRunWithGPTSession() async throws {
     let locator = DummySimpleLocater(client, solver, dummyConversationCache)
 
     let context = Context()
-    let executor = Executor(locator: locator, context: context)
 
     let node = LLMNode(
         id: "ID",
@@ -63,6 +62,7 @@ func testLLMNodeRunWithGPTSession() async throws {
     context[path: ["inputs", "conversation_id"]] = "fake_id"
     context[path: ["inputs", "msg"]] = "Hello, I'm John"
     do {
+        let executor = Executor(locator: locator, context: context)
         let output = try await node.run(executor: executor)
 
         guard let stream = output?.stream else {
@@ -79,6 +79,7 @@ func testLLMNodeRunWithGPTSession() async throws {
 
     context[path: ["inputs", "msg"]] = "What is my name?"
     do {
+        let executor = Executor(locator: locator, context: context)
         let output = try await node.run(executor: executor)
 
         guard let stream = output?.stream else {
