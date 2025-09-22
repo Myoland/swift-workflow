@@ -124,7 +124,7 @@ func testWorkflowRunWithConditionEdge() async throws {
             )
         }
 
-        let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunResultKey]
+        let nodeResult = states.context[path: "llm_id", ContextStoreKey.WorkflowNodeRunOutputKey]
         let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
         let usage = response.usage
         let content = response.items.first?.message?.content?.first?.text?.content
@@ -148,7 +148,7 @@ func testWorkflowRunWithConditionEdge() async throws {
     }
 
     let nodeResult = states.context[
-        path: "llm_special_id", ContextStoreKey.WorkflowNodeRunResultKey]
+        path: "llm_special_id", ContextStoreKey.WorkflowNodeRunOutputKey]
     let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
     let usage = response.usage
     let content = response.items.first?.message?.content?.first?.text?.content
