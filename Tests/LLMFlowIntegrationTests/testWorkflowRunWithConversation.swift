@@ -108,8 +108,8 @@ func testWorkflowRunWithConversationYAML() async throws {
           type: LLM
           modelName: test_openai
           request:
-            stream: false,
-            "$conversationID": "workflow.inputs.conversation_id",
+            stream: false
+            "$conversationID": "workflow.inputs.conversation_id"
             "#instructions": |
                 You are a translator, translate the following content into {{ workflow.inputs.lang }} directly without explanation.
                 Before any tranlation, say hi [USER NAME] first.
