@@ -147,7 +147,9 @@ func testWorkflowRunWithConversationYAML() async throws {
     )
     
     let dummyConversationCache = DummyConversationCache()
-    dummyConversationCache.update(conversationID: "fake_id", conversation: Conversation(items: [.input(.text(.init(role: .user, content: "I'm John")))]))
+    dummyConversationCache.update(conversationID: "fake_id", conversation: Conversation(items: [
+        .input(.text(.init(role: .user, content: "I'm John")))
+    ]))
     
     let locator = DummySimpleLocater(client, solver, dummyConversationCache)
     let workflow = try Workflow(config: config, locator: locator)
