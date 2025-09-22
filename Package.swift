@@ -21,7 +21,7 @@ let package = Package(
         .package(url: "https://github.com/jpsim/Yams", from: "5.3.0"),
         .package(url: "https://github.com/objecthub/swift-dynamicjson", from: "1.0.2"),
         .package(url: "https://github.com/johnmai-dev/Jinja", from: "1.2.4"),
-        .package(url: "https://github.com/AFutureD/swift-gpt", from: "0.1.0"),
+        .package(url: "https://github.com/AFutureD/swift-gpt", from: "0.1.1"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.8.2"),
         
         // Test
