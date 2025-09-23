@@ -54,11 +54,8 @@ extension LLMNode: Runnable {
 
         if prompt.stream == true {
             let response = try await session.stream(prompt, model: llm)
-            // let output = response.map { response in
-            //     return try AnyEncoder().encode(response)
-            // }.cached().eraseToAnyAsyncSequence()
             
-            // return .stream(output)
+            // TODO: optimize the lifecyele.
             let iter = response.makeAsyncIterator()
             let output = AsyncThrowingStream(unfolding: { [iter] in
                 var iter = iter

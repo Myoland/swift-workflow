@@ -14,12 +14,6 @@ public protocol Runnable: Sendable {
 }
 
 extension Runnable {
-//    public func updateIntoResult(_ context: Context, path: ContextStoreKeyPath, value: Context.Value) throws {
-//        context[path: path] = value
-//    }
-}
-
-extension Runnable {
     public func wait(_ context: Context) async throws -> Context.Value? {
         let output = context.payload.withLock { $0 }
         return output?.value

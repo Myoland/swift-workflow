@@ -25,7 +25,6 @@ extension StartNode: Runnable {
     }
     
     public func update(_ context: Context, value: Context.Value) throws {
-//        try updateIntoResult(context, path: ContextStoreKey.WorkflowInputsKeyPath, value: value)
         context[path: ContextStoreKey.WorkflowInputsKeyPath] = value
     }
     
