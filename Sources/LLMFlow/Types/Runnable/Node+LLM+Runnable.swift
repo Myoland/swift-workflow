@@ -15,8 +15,8 @@ public protocol LLMProviderSolver {
 }
 
 public protocol GPTConversationCache: Sendable {
-    func get(conversationID: String?) -> Conversation?
-    func update(conversationID: String?, conversation: Conversation?)
+    func get(conversationID: String?) async throws -> Conversation?
+    func update(conversationID: String?, conversation: Conversation?) async throws -> String?
 }
 
 extension LLMNode: Runnable {
@@ -49,7 +49,7 @@ extension LLMNode: Runnable {
         executor.logger.info("[*] LLMNode(\(id)) Prompt: \(String(describing: prompt))")
 
         let conversationID = prompt.conversationID
-        let conversation = conversationCache?.get(conversationID: conversationID)
+        let conversation = try await conversationCache?.get(conversationID: conversationID)
         let session = GPTSession(client: client, conversation: conversation, logger: executor.logger)
 
         if prompt.stream == true {
@@ -62,7 +62,7 @@ extension LLMNode: Runnable {
                 if let next = try await iter.next() {
                     return try AnyEncoder().encode(next) as AnySendable
                 } else {
-                    conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
+                    try await conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
                     return nil
                 }
             })
@@ -71,7 +71,7 @@ extension LLMNode: Runnable {
             let response = try await session.generate(prompt, model: llm)
             let output = try AnyEncoder().encode(response)
             
-            conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
+            try await conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
             return .block(output)
         }
     }
