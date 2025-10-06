@@ -119,7 +119,7 @@ public struct ModelDecl: Codable, Sendable, Hashable {
     ///
     /// - Parameter values: The context store containing the data for rendering.
     /// - Returns: A dictionary with rendered values.
-    public func render(_ values: [String: AnySendable]) throws -> [String: Any?] {
+    public func render(_ values: [String: AnySendable]) throws -> Context.Store {
         return try body.render(values)
     }
     

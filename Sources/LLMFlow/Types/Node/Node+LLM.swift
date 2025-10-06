@@ -35,6 +35,11 @@ public struct LLMNode: ResultResaveableNode {
     /// determined by ``ResultResaveableNode/outputKeyPaths``.
     public let output: String?
 
+    /// The Declarative Context.
+    ///
+    /// The payload will passed into ``GPTConversationCache``.
+    public let context: ModelDecl?
+    
     /// Declarative request body for the model call.
     ///
     /// The payload supports references and templates that are rendered with the
@@ -55,6 +60,7 @@ public struct LLMNode: ResultResaveableNode {
         name: String?,
         modelName: String,
         output: String?,
+        context: ModelDecl?,
         request: ModelDecl
     ) {
         self.id = id
@@ -62,6 +68,7 @@ public struct LLMNode: ResultResaveableNode {
         self.type = .LLM
         self.modelName = modelName
         self.output = output
+        self.context = context
         self.request = request
     }
 }

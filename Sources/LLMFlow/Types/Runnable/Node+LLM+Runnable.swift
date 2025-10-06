@@ -15,8 +15,8 @@ public protocol LLMProviderSolver {
 }
 
 public protocol GPTConversationCache: Sendable {
-    func get(conversationID: String?) async throws -> Conversation?
-    func update(conversationID: String?, conversation: Conversation?) async throws -> String?
+    func get(conversationID: String?, context: Context.Store) async throws -> Conversation?
+    func update(conversationID: String?, context: Context.Store, conversation: Conversation?) async throws -> String?
 }
 
 extension LLMNode: Runnable {
@@ -42,14 +42,16 @@ extension LLMNode: Runnable {
         let conversationCache = locator.resolve(shared: GPTConversationCache.self)
 
         let context = executor.context
-        
         let inputs = context.filter(keys: nil) // TODO: only get necessary values
+        
+        let partialContext = (try? self.context?.render(inputs)) ?? [:]
+
         let renderedValues = try request.render(inputs)
         let prompt: Prompt = try AnyDecoder().decode(from: renderedValues)
         executor.logger.info("[*] LLMNode(\(id)) Prompt: \(String(describing: prompt))")
 
         let conversationID = prompt.conversationID
-        let conversation = try await conversationCache?.get(conversationID: conversationID)
+        let conversation = try await conversationCache?.get(conversationID: conversationID, context: partialContext)
         let session = GPTSession(client: client, conversation: conversation, logger: executor.logger)
 
         if prompt.stream == true {
@@ -62,7 +64,7 @@ extension LLMNode: Runnable {
                 if let next = try await iter.next() {
                     return try AnyEncoder().encode(next) as AnySendable
                 } else {
-                    try await conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
+                    try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
                     return nil
                 }
             })
@@ -71,7 +73,7 @@ extension LLMNode: Runnable {
             let response = try await session.generate(prompt, model: llm)
             let output = try AnyEncoder().encode(response)
             
-            try await conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
+            try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
             return .block(output)
         }
     }
