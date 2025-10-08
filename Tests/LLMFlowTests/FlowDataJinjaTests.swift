@@ -87,14 +87,14 @@ func testListInJinja() throws {
             "Charlie",
         ]
     ]
-    let template = """
-        {% for name in names %}
-        - {{ name }}
-        {% endfor %}
-        length: {{ names|length }}
+    let template =
+        """
+        {% for name in names %}- {{ name }}
+        {% endfor %}length: {{ names|length }}
         first: {{ names|first }}
         """
-    let expected = """
+    let expected =
+        """
         - Alice
         - Bob
         - Charlie
