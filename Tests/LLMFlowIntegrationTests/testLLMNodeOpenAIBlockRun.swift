@@ -33,6 +33,7 @@ func testLLMNodeOpenAIBlockRun() async throws {
                        name: nil,
                        modelName: "model_foo",
                        output: nil,
+                       context: nil,
                        request: .init([
                         "#instructions": """
                                     be an echo server.

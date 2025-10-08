@@ -46,8 +46,9 @@ public struct Template: Codable, ExpressibleByStringLiteral, Hashable, Sendable 
     /// - Parameter items: A dictionary of values to be used in rendering the template.
     /// - Throws: An error if rendering fails.
     /// - Returns: The rendered string.
-    public func render(_ items: [String: Any?]) throws -> String {
-        try toJinja().render(items)
+    public func render(_ items: [String: Any]) throws -> String {
+        let context: [String: Jinja.Value] = items.compactMapValues { try? .init(any: $0) }
+        return try toJinja().render(context)
     }
 }
 

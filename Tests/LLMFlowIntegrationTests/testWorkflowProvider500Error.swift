@@ -45,6 +45,7 @@ func testWorkflowProvider500Error() async throws {
         name: nil,
         modelName: "gpt-4o-mini",
         output: nil,
+        context: nil,
         request: .init([
             "stream": true,
             "instructions": """

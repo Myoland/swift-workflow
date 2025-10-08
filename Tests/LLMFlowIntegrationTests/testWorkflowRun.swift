@@ -33,6 +33,7 @@ func testWorkflowRun() async throws {
         name: nil,
         modelName: "gpt-4o-mini",
         output: outputKey,
+        context: nil,
         request: .init([
             "stream": false,
             "instructions": """

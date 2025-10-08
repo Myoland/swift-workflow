@@ -13,7 +13,7 @@ func testRenderSimpleTemplate() throws {
 
     let template = "{{ greeting }}, {{ name }}!"
 
-    let result = try Template(template).render(elements.asAny)
+    let result = try Template(template).render(elements.asAny.compactMapValues {try? .init(any: $0)})
     #expect(result == "Hello, John!")
 }
 
@@ -44,7 +44,7 @@ func testRenderConditionalTemplate() throws {
         {% endif %}
         """
 
-    let result = try Template(template).render(elements.asAny)
+    let result = try Template(template).render(elements.asAny.compactMapValues {try? .init(any: $0)})
     #expect(result.trimmingCharacters(in: .whitespacesAndNewlines) == "John is thirty years old.")
 }
 
@@ -74,7 +74,7 @@ func testRenderNestedTemplate() throws {
             Zipcode: 10001
         """
 
-    let result = try Template(template).render(context.asAny)
+    let result = try Template(template).render(context.asAny.compactMapValues {try? .init(any: $0)})
     #expect(result == expected)
 }
 
@@ -102,6 +102,6 @@ func testListInJinja() throws {
         first: Alice
         """
 
-    let result = try Template(template).render(context.asAny)
+    let result = try Template(template).render(context.asAny.compactMapValues {try? .init(any: $0)})
     #expect(result == expected)
 }

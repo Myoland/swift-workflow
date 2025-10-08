@@ -11,14 +11,15 @@ import Testing
 final class DummyConversationCache: GPTConversationCache {
     private let conversations: LazyLockedValue<[String: Conversation]> = .init([:])
 
-    func get(conversationID: String?) -> Conversation? {
+    func get(conversationID: String?, context: LLMFlow.Context.Store) async throws -> Conversation? {
         guard let conversationID else { return nil }
         return conversations.withLock { $0[conversationID] }
     }
 
-    func update(conversationID: String?, conversation: Conversation?) {
-        guard let conversationID else { return }
+    func update(conversationID: String?, context: LLMFlow.Context.Store, conversation: Conversation?) async throws -> String? {
+        guard let conversationID else { return nil }
         conversations.withLock { $0[conversationID] = conversation }
+        return conversationID
     }
 }
 
@@ -47,6 +48,7 @@ func testLLMNodeRunWithGPTSession() async throws {
         name: nil,
         modelName: "model_foo",
         output: nil,
+        context: nil,
         request: .init([
             "$conversationID": "inputs.conversation_id",
             "stream": true,

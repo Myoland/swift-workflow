@@ -64,7 +64,7 @@ extension LLMNode: Runnable {
                 if let next = try await iter.next() {
                     return try AnyEncoder().encode(next) as AnySendable
                 } else {
-                    try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
+                    _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
                     return nil
                 }
             })
@@ -73,7 +73,7 @@ extension LLMNode: Runnable {
             let response = try await session.generate(prompt, model: llm)
             let output = try AnyEncoder().encode(response)
             
-            try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
+            _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
             return .block(output)
         }
     }
