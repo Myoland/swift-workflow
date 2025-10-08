@@ -41,7 +41,7 @@ func testWorkflowRunWithConfigOpenRouter() async throws {
             inputs:
                 - type: text
                   role: user
-                  '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.result }}"
+                  '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.output }}"
                 - type: text
                   role: assistant
                   '#content': "OK"

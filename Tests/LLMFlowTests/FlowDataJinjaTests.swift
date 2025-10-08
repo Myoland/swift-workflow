@@ -89,8 +89,10 @@ func testListInJinja() throws {
     ]
     let template =
         """
-        {% for name in names %}- {{ name }}
-        {% endfor %}length: {{ names|length }}
+        {% for name in names %}
+        - {{ name }}
+        {% endfor %}
+        length: {{ names|length }}
         first: {{ names|first }}
         """
     let expected =
@@ -102,6 +104,6 @@ func testListInJinja() throws {
         first: Alice
         """
 
-    let result = try Template(template).render(context.asAny.compactMapValues {try? .init(any: $0)})
+    let result = try Template(template, with: .init(trimBlocks: true)).render(context.asAny.compactMapValues {try? .init(any: $0)})
     #expect(result == expected)
 }

@@ -39,7 +39,7 @@ public struct Template: Codable, ExpressibleByStringLiteral, Hashable, Sendable 
     /// Converts the raw content into a `Jinja.Template` object.
     /// - Throws: An error if the template content is invalid.
     public func toJinja() throws -> Jinja.Template {
-        try Jinja.Template(content)
+        try Jinja.Template(content, with: .init(trimBlocks: true))
     }
 
     /// Renders the Jinja template with a given context dictionary.
