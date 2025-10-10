@@ -20,6 +20,12 @@ extension Workflow {
         /// An optional condition that must evaluate to `true` for this edge to be taken.
         /// If `nil`, the edge is considered unconditional.
         public let condition: Condition?
+        
+        public init(from: Node.ID, to: Node.ID, condition: Condition?) {
+            self.from = from
+            self.to = to
+            self.condition = condition
+        }
     }
 }
 
