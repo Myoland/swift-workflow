@@ -16,4 +16,9 @@ public struct EndNode: Node {
         case name
         case type
     }
+    
+    public init(id: ID, name: String?) {
+        self.id = id
+        self.name = name
+    }
 }

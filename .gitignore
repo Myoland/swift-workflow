@@ -9,3 +9,8 @@ DerivedData/
 .env.test
 .index-build
 Tests/LLMFlowTests/Resources/dify_fork.yaml
+.swiftpm
+Examples/simple-cli-with-otel/container
+Examples/simple-cli-with-otel/logs
+Examples/simple-cli-with-otel/.env
+.env
