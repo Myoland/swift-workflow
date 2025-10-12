@@ -60,14 +60,11 @@ extension LLMNode: Runnable {
         let session = GPTSession(client: client, conversation: conversation, logger: executor.logger)
 
         if prompt.stream == true {
-            let response = try await session.stream(prompt, model: llm)
+            let response = try await session.stream(prompt, model: llm, serviceContext: span.context)
             
             // TODO: optimize the lifecyele.
             let iter = response.makeAsyncIterator()
             let output = AsyncThrowingStream(unfolding: { [iter] in
-                let innerSpan = startSpan("LLMNode Generating", context: span.context)
-                defer { innerSpan.end() }
-                
                 var iter = iter
                 if let next = try await iter.next() {
                     return try AnyEncoder().encode(next) as AnySendable
@@ -79,7 +76,7 @@ extension LLMNode: Runnable {
             })
             return .stream(output.cached().eraseToAnyAsyncSequence())
         } else {
-            let response = try await session.generate(prompt, model: llm)
+            let response = try await session.generate(prompt, model: llm, serviceContext: span.context)
             let output = try AnyEncoder().encode(response)
             
             _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)

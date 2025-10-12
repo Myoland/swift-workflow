@@ -1,5 +1,5 @@
 {
-  "originHash" : "8e854cc774fe60b6c9758ab781f0c5d049cc11a739c01992b3d6cd18a2baf3c8",
+  "originHash" : "704e3b588bb234f63f0c45ac4d847f014eb9a8f08caa397f6234590fa23100d1",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -116,15 +116,6 @@
       "state" : {
         "revision" : "9648f32126ade414b00b9551c27870d4ad9b168c",
         "version" : "1.0.2"
-      }
-    },
-    {
-      "identity" : "swift-gpt",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/AFutureD/swift-gpt",
-      "state" : {
-        "revision" : "436e0da20d2258f1bb1799141c0308c6585bc8b8",
-        "version" : "0.4.0"
       }
     },
     {

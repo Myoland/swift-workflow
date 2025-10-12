@@ -1,10 +1,10 @@
 {
-  "originHash" : "8c7a067f2a8541d2eb1d1f87a01d6f118823c9730b55a97bc0779e4307220f0d",
+  "originHash" : "d27f2e07ce79badff958ba8a5c7189bdc37ea3eb942b8fa6ee73d9c32c78cdb6",
   "pins" : [
     {
       "identity" : "async-http-client",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swift-server/async-http-client.git",
+      "location" : "https://github.com/swift-server/async-http-client",
       "state" : {
         "revision" : "8430dd49d4e2b417f472141805c9691ec2923cb8",
         "version" : "1.29.0"
@@ -141,8 +141,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
-        "revision" : "436e0da20d2258f1bb1799141c0308c6585bc8b8",
-        "version" : "0.4.0"
+        "branch" : "feat-tracing",
+        "revision" : "d31df2f94fc3ce22804121b3cd4b2bd79a98d707"
       }
     },
     {

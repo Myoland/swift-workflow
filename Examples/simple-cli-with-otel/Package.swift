@@ -11,12 +11,10 @@ let package = Package(
         .package(url: "https://github.com/swift-otel/swift-otel", from: "1.0.1"),
         .package(url: "https://github.com/apple/swift-log", from: "1.6.4"),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client", from: "1.0.0"),
-        .package(url: "https://github.com/apple/swift-configuration", from: "0.1.1", traits: [.defaults])
-
+        .package(url: "https://github.com/apple/swift-configuration", from: "0.1.1", traits: [.defaults]),
+        .package(url: "https://github.com/apple/swift-distributed-tracing.git", from: "1.3.0"),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .executableTarget(
             name: "app",
             dependencies: [
@@ -24,8 +22,8 @@ let package = Package(
                 .product(name: "OTel", package: "swift-otel"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
-                .product(name: "Configuration", package: "swift-configuration")
-
+                .product(name: "Configuration", package: "swift-configuration"),
+                .product(name: "Instrumentation", package: "swift-distributed-tracing"),
             ]
         ),
     ]

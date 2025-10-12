@@ -20,10 +20,10 @@ let package = Package(
         .package(url: "https://github.com/jpsim/Yams", from: "5.3.0"),
         .package(url: "https://github.com/objecthub/swift-dynamicjson", from: "1.0.2"),
         .package(url: "https://github.com/huggingface/swift-jinja", from: "2.1.0"),
-        .package(url: "https://github.com/AFutureD/swift-gpt", exact: "0.4.0"),
+        .package(url: "https://github.com/AFutureD/swift-gpt", branch: "feat-tracing"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.8.2"),
         .package(url: "https://github.com/apple/swift-distributed-tracing", from: "1.3.1"),
-        
+
         // Test
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client", from: "1.0.0"),
     ],
@@ -39,7 +39,7 @@ let package = Package(
                 .product(name: "Jinja", package: "swift-jinja"),
                 .product(name: "GPT", package: "swift-gpt"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
-                .product(name: "Tracing", package: "swift-distributed-tracing")
+                .product(name: "Tracing", package: "swift-distributed-tracing"),
             ]
         ),
         .testTarget(
@@ -60,7 +60,7 @@ let package = Package(
                 .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
             ],
             resources: [
-                .process("Resources")
+                .process("Resources"),
             ]
         ),
     ]

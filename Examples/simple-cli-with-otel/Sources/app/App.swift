@@ -9,6 +9,7 @@ import Logging // API
 import OpenAPIAsyncHTTPClient
 import OTel // specific Tracing library
 import Tracing // API
+import AsyncHTTPClient
 
 struct APP {
     let logger = Logger(label: "App")
@@ -29,7 +30,10 @@ struct APP {
             let client = AsyncHTTPClientTransport()
             let solver = DummyLLMProviderSolver(
                 "gpt-4o-mini",
-                .init(name: "gpt-4o-mini", models: [.init(model: .init(name: "gpt-4o-mini"), provider: openai)])
+                .init(name: "gpt-4o-mini", models: [
+                    .init(model: .init(name: "gpt-4o-fake"), provider: openai),
+                    .init(model: .init(name: "gpt-4o-mini"), provider: openai)
+                ])
             )
             let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
 
@@ -90,7 +94,7 @@ struct APP {
             for try await state in states {
                 logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
             }
-
+            
             print(context.store.withLock { $0 })
             let response = context["workflow.output.\(outputKey).items.0.content.0.content"] as? String
             print(response ?? "nil")
@@ -113,7 +117,7 @@ struct simple_cli_with_otel {
         config.metrics.enabled = true
         config.metrics.exportInterval = .seconds(1)
         config.traces.batchSpanProcessor.scheduleDelay = .seconds(1)
-        config.traces.otlpExporter.timeout = .seconds(10)
+        config.traces.otlpExporter.timeout = .seconds(2)
         config.traces.otlpExporter.endpoint = "http://localhost:4318/v1/traces"
         let observability = try OTel.bootstrap(configuration: config)
 
@@ -131,7 +135,7 @@ struct simple_cli_with_otel {
             group.addTask { try await app.execute() }
 
             try await group.next()
-            try await Task.sleep(nanoseconds: 2 * 1_000_000_000)
+            try await Task.sleep(nanoseconds: 3 * 1_000_000_000)
 
             group.cancelAll()
             try await group.waitForAll()
