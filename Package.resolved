@@ -1,5 +1,5 @@
 {
-  "originHash" : "6f7bc81ac45a651a79bb0f6a9fa836bcf87d71feea885089e8a5c4cc2e5eefa7",
+  "originHash" : "8e854cc774fe60b6c9758ab781f0c5d049cc11a739c01992b3d6cd18a2baf3c8",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -71,6 +71,15 @@
       "state" : {
         "revision" : "95ba0316a9b733e92bb6b071255ff46263bbe7dc",
         "version" : "3.15.1"
+      }
+    },
+    {
+      "identity" : "swift-distributed-tracing",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-distributed-tracing",
+      "state" : {
+        "revision" : "baa932c1336f7894145cbaafcd34ce2dd0b77c97",
+        "version" : "1.3.1"
       }
     },
     {
@@ -233,6 +242,15 @@
       "state" : {
         "revision" : "7722cf8eac05c1f1b5b05895b04cfcc29576d9be",
         "version" : "1.8.3"
+      }
+    },
+    {
+      "identity" : "swift-service-context",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-service-context.git",
+      "state" : {
+        "revision" : "1983448fefc717a2bc2ebde5490fe99873c5b8a6",
+        "version" : "1.2.1"
       }
     },
     {
