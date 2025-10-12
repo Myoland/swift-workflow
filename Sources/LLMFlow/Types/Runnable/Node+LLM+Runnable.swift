@@ -5,10 +5,12 @@
 //  Created by AFuture on 2025-08-23.
 //
 
+import GPT
 import LazyKit
 import OpenAPIRuntime
-import GPT
 import SynchronizationKit
+
+import Tracing
 
 public protocol LLMProviderSolver {
     func resolve(modelName: String) -> LLMQualifiedModel?
@@ -23,6 +25,9 @@ extension LLMNode: Runnable {
     typealias Err = RuntimeError
     
     public func run(executor: Executor) async throws -> NodeOutput? {
+        let span = startSpan("LLMNode Run \(id)", context: executor.serviceContext)
+        span.attributes.set("node_id", value: .string(id))
+        
         guard let locator = executor.locator else {
             throw Err.locatorNotFound
         }
@@ -60,11 +65,15 @@ extension LLMNode: Runnable {
             // TODO: optimize the lifecyele.
             let iter = response.makeAsyncIterator()
             let output = AsyncThrowingStream(unfolding: { [iter] in
+                let innerSpan = startSpan("LLMNode Generating", context: span.context)
+                defer { innerSpan.end() }
+                
                 var iter = iter
                 if let next = try await iter.next() {
                     return try AnyEncoder().encode(next) as AnySendable
                 } else {
                     _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
+                    span.end()
                     return nil
                 }
             })
@@ -74,13 +83,14 @@ extension LLMNode: Runnable {
             let output = try AnyEncoder().encode(response)
             
             _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
+            span.end()
             return .block(output)
         }
     }
 }
 
-extension LLMNode {
-    public func wait(_ context: Context) async throws -> Context.Value? {
+public extension LLMNode {
+    func wait(_ context: Context) async throws -> Context.Value? {
         let output = context.payload.withLock { $0 }
         
         guard let stream = output?.stream else {
@@ -96,7 +106,7 @@ extension LLMNode {
         return response?["data"]
     }
     
-    public func update(_ context: Context, value: Context.Value) throws {
+    func update(_ context: Context, value: Context.Value) throws {
         context[path: resultKeyPaths] = value
         context[path: outputKeyPaths] = value
     }

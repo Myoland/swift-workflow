@@ -6,8 +6,9 @@
 //
 
 import LazyKit
-import SynchronizationKit
 import Logging
+import ServiceContextModule
+import SynchronizationKit
 
 /// A class responsible for executing the logic of a ``RunnableNode``.
 ///
@@ -20,14 +21,19 @@ import Logging
 public final class Executor: Sendable {
     /// The service locator for resolving dependencies.
     public let locator: ServiceLocator?
+
     private let lockedContext: LazyLockedValue<Context>
+    
     /// The logger for recording execution events.
     public let logger: Logger
 
     /// A decoder for handling `Any` types.
     public let anyDecoder = AnyDecoder()
+    
     /// An encoder for handling `Any` types.
     public let anyEncoder = AnyEncoder()
+
+    public let serviceContext: ServiceContext
 
     /// Initializes a new `Executor`.
     ///
@@ -38,19 +44,19 @@ public final class Executor: Sendable {
     public init(
         locator: ServiceLocator? = nil,
         context: Context = Context(),
+        serviceContext: ServiceContext = .current ?? .topLevel,
         logger: Logger? = nil
     ) {
         self.locator = locator
         self.lockedContext = .init(context)
         self.logger = logger ?? Logger.Internal
+        self.serviceContext = serviceContext
     }
 }
 
 extension Executor {
     /// Provides thread-safe access to the execution ``Context``.
     var context: Context {
-        get {
-            self.lockedContext.withLock { $0 }
-        }
+        self.lockedContext.withLock { $0 }
     }
 }

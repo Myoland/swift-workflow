@@ -5,12 +5,17 @@
 //  Created by AFuture on 2025-08-23.
 //
 
+import Tracing
 
 extension StartNode: Runnable {
     typealias Err = PayloadVerifyErr
     
     public func run(executor: Executor) async throws -> NodeOutput? {
-        let payload = executor.context.payload.withLock({ $0 })
+        let span = startSpan("StartNode Run \(id)", context: executor.serviceContext)
+        span.attributes.set("node_id", value: .string(id))
+        defer { span.end() }
+        
+        let payload = executor.context.payload.withLock { $0 }
         
         guard let value = payload?.value as? [Context.Key: FlowData] else {
             return .none
@@ -31,7 +36,7 @@ extension StartNode: Runnable {
     public func verify(
         data: [ContextStoreKey: FlowData]
     ) throws {
-        try Self.verify(data: data, decls: self.inputs)
+        try Self.verify(data: data, decls: inputs)
     }
     
     public static func verify(
