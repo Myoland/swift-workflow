@@ -12,7 +12,7 @@ extension EndNode: Runnable {
     ///
     /// An `EndNode` does not perform any action and returns `nil`, signaling the end of a workflow path.
     public func run(executor: Executor) async throws -> NodeOutput? {
-        let span = startSpan("End Run \(id)", context: executor.serviceContext)
+        let span = startSpan("Node(\(type))-(\(id)) Running", context: executor.serviceContext)
         span.attributes.set("node_id", value: .string(id))
         defer { span.end() }
 

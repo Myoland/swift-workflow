@@ -5,12 +5,11 @@
 //  Created by AFuture on 2025-08-23.
 //
 
-
 // MARK: Node + Type
 
 public struct NodeType: RawRepresentable, Sendable {
     public let rawValue: String
-    
+
     public init(rawValue: String) {
         self.rawValue = rawValue
     }
@@ -25,3 +24,7 @@ public extension NodeType {
 
 extension NodeType: Codable {}
 extension NodeType: Hashable {}
+
+extension NodeType: CustomStringConvertible {
+    public var description: String { rawValue }
+}

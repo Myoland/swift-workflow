@@ -25,7 +25,7 @@ extension LLMNode: Runnable {
     typealias Err = RuntimeError
     
     public func run(executor: Executor) async throws -> NodeOutput? {
-        return try await nodeOutputWithSpan("LLMNode Run \(id)", context: executor.serviceContext) { span in
+        return try await nodeOutputWithSpan("Node(\(type))-(\(id)) Running", context: executor.serviceContext) { span in
             span.attributes.set("node_id", value: .string(id))
 
             guard let locator = executor.locator else {
