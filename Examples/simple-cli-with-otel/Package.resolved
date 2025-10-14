@@ -1,5 +1,5 @@
 {
-  "originHash" : "d27f2e07ce79badff958ba8a5c7189bdc37ea3eb942b8fa6ee73d9c32c78cdb6",
+  "originHash" : "1d5e76e9fad6b81c285043636837339a529c83cf32ad0ad314019f722b92d3aa",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -142,7 +142,7 @@
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
         "branch" : "feat-tracing",
-        "revision" : "d31df2f94fc3ce22804121b3cd4b2bd79a98d707"
+        "revision" : "2de46451c7f3422a5c6a2bcd7f8cd5ac096c30a6"
       }
     },
     {
@@ -177,8 +177,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Myoland/swift-lazy",
       "state" : {
-        "revision" : "059a3554ea6f73b0a95366d632c148a6d32876c0",
-        "version" : "0.1.0"
+        "revision" : "d2f10fc4228aa3a6f6ca6e49de49d170c8c65e57",
+        "version" : "0.2.1"
       }
     },
     {

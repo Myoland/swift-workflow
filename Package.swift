@@ -16,13 +16,14 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-async-algorithms", from: "1.0.0"),
         .package(url: "https://github.com/AFutureD/swift-synchronization", from: "0.1.0"),
         .package(url: "https://github.com/apple/swift-log", from: "1.6.0"),
-        .package(url: "https://github.com/Myoland/swift-lazy", from: "0.1.0"),
+        .package(url: "https://github.com/Myoland/swift-lazy", from: "0.2.1"),
         .package(url: "https://github.com/jpsim/Yams", from: "5.3.0"),
         .package(url: "https://github.com/objecthub/swift-dynamicjson", from: "1.0.2"),
         .package(url: "https://github.com/huggingface/swift-jinja", from: "2.1.0"),
         .package(url: "https://github.com/AFutureD/swift-gpt", branch: "feat-tracing"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.8.2"),
         .package(url: "https://github.com/apple/swift-distributed-tracing", from: "1.3.1"),
+        
 
         // Test
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client", from: "1.0.0"),
@@ -40,6 +41,7 @@ let package = Package(
                 .product(name: "GPT", package: "swift-gpt"),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "Tracing", package: "swift-distributed-tracing"),
+                .product(name: "TraceKit", package: "swift-lazy"),
             ]
         ),
         .testTarget(

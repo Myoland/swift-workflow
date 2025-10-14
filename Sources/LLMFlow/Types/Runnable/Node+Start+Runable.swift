@@ -11,22 +11,22 @@ extension StartNode: Runnable {
     typealias Err = PayloadVerifyErr
     
     public func run(executor: Executor) async throws -> NodeOutput? {
-        let span = startSpan("StartNode Run \(id)", context: executor.serviceContext)
-        span.attributes.set("node_id", value: .string(id))
-        defer { span.end() }
-        
-        let payload = executor.context.payload.withLock { $0 }
-        
-        guard let value = payload?.value as? [Context.Key: FlowData] else {
-            return .none
+        return try await withSpan("StartNode Run \(id)", context: executor.serviceContext) { span in
+            span.attributes.set("node_id", value: .string(id))
+            
+            let payload = executor.context.payload.withLock { $0 }
+            
+            guard let value = payload?.value as? [Context.Key: FlowData] else {
+                return .none
+            }
+            
+            executor.logger.debug("[*] Start Node. Values: \(value)")
+            
+            try verify(data: value)
+            
+            executor.logger.info("[*] Start Node. Verify Success.")
+            return .block(value.asAny)
         }
-        
-        executor.logger.debug("[*] Start Node. Values: \(value)")
-        
-        try verify(data: value)
-        
-        executor.logger.info("[*] Start Node. Verify Success.")
-        return .block(value.asAny)
     }
     
     public func update(_ context: Context, value: Context.Value) throws {

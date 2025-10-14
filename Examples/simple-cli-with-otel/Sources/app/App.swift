@@ -1,5 +1,6 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
+import AsyncHTTPClient
 import Configuration
 import Foundation
 import GPT
@@ -9,20 +10,17 @@ import Logging // API
 import OpenAPIAsyncHTTPClient
 import OTel // specific Tracing library
 import Tracing // API
-import AsyncHTTPClient
 
 struct APP {
     let logger = Logger(label: "App")
 
     func execute() async throws {
-        let span = startSpan("App App")
-
-        try await withSpan("App Execute", context: span.context) { span in
+        try await withSpan("App Execute", context: .topLevel) { span in
             let config = try ConfigReader(providers: [
                 await EnvironmentVariablesProvider(environmentFilePath: ".env"),
             ])
 
-            let openai = LLMProviderConfiguration(type: .OpenAI,
+            let openai = LLMProviderConfiguration(type: .OpenAICompatible,
                                                   name: "openai",
                                                   apiKey: config.string(forKey: "OPENAI_API_KEY")!,
                                                   apiURL: "https://api.openai.com/v1")
@@ -32,7 +30,7 @@ struct APP {
                 "gpt-4o-mini",
                 .init(name: "gpt-4o-mini", models: [
                     .init(model: .init(name: "gpt-4o-fake"), provider: openai),
-                    .init(model: .init(name: "gpt-4o-mini"), provider: openai)
+                    .init(model: .init(name: "gpt-4o-mini"), provider: openai),
                 ])
             )
             let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
@@ -56,7 +54,7 @@ struct APP {
                 output: outputKey,
                 context: nil,
                 request: .init([
-                    "stream": true,
+                    "stream": false,
                     "#instructions": .init(stringLiteral: "\(templateID).output"),
                     "inputs": [[
                         "type": "text",
@@ -94,13 +92,11 @@ struct APP {
             for try await state in states {
                 logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
             }
-            
+
             print(context.store.withLock { $0 })
             let response = context["workflow.output.\(outputKey).items.0.content.0.content"] as? String
             print(response ?? "nil")
         }
-
-        span.end()
     }
 }
 
@@ -132,7 +128,13 @@ struct simple_cli_with_otel {
                     print("\(error)")
                 }
             }
-            group.addTask { try await app.execute() }
+            group.addTask {
+                do {
+                    try await app.execute()
+                } catch {
+                    print("\(error)")
+                }
+            }
 
             try await group.next()
             try await Task.sleep(nanoseconds: 3 * 1_000_000_000)

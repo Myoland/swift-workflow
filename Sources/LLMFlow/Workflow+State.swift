@@ -263,12 +263,12 @@ public extension Workflow.RunningUpdates {
             case .running(current: let node, previous: _) where node is EndNode:
                 let output = try await node.run(executor: executor)
                 cxtRef.payload.withLock { $0 = output }
-                
+
                 if let value = output?.value {
                     try node.update(cxtRef, value: value)
                     executor.logger.info("[*] Node(\(node.id)). Update Success. Value: \(String(describing: value))")
                 }
-                
+
                 self.state = .end
                 return Workflow.PipeState(type: .end, node: node, context: cxtRef, value: "TODO: Object Used for summrize")
 

@@ -9,7 +9,7 @@ import GPT
 import LazyKit
 import OpenAPIRuntime
 import SynchronizationKit
-
+import TraceKit
 import Tracing
 
 public protocol LLMProviderSolver {
@@ -25,63 +25,61 @@ extension LLMNode: Runnable {
     typealias Err = RuntimeError
     
     public func run(executor: Executor) async throws -> NodeOutput? {
-        let span = startSpan("LLMNode Run \(id)", context: executor.serviceContext)
-        span.attributes.set("node_id", value: .string(id))
-        
-        guard let locator = executor.locator else {
-            throw Err.locatorNotFound
-        }
-        
-        guard let client = locator.resolve(shared: ClientTransport.self) else {
-            throw Err.serviceNotFound(name: "ClientTransport")
-        }
-        
-        guard let llmSolver = locator.resolve(shared: LLMProviderSolver.self) else {
-            throw Err.serviceNotFound(name: "LLMProviderSolver")
-        }
-        
-        guard let llm = llmSolver.resolve(modelName: modelName) else {
-            throw Err.unknow(message: "Throw error for miss LLMModel name '\(modelName)'")
-        }
-        
-        let conversationCache = locator.resolve(shared: GPTConversationCache.self)
+        return try await nodeOutputWithSpan("LLMNode Run \(id)", context: executor.serviceContext) { span in
+            span.attributes.set("node_id", value: .string(id))
 
-        let context = executor.context
-        let inputs = context.filter(keys: nil) // TODO: only get necessary values
-        
-        let partialContext = (try? self.context?.render(inputs)) ?? [:]
-
-        let renderedValues = try request.render(inputs)
-        let prompt: Prompt = try AnyDecoder().decode(from: renderedValues)
-        executor.logger.info("[*] LLMNode(\(id)) Prompt: \(String(describing: prompt))")
-
-        let conversationID = prompt.conversationID
-        let conversation = try await conversationCache?.get(conversationID: conversationID, context: partialContext)
-        let session = GPTSession(client: client, conversation: conversation, logger: executor.logger)
-
-        if prompt.stream == true {
-            let response = try await session.stream(prompt, model: llm, serviceContext: span.context)
+            guard let locator = executor.locator else {
+                throw Err.locatorNotFound
+            }
             
-            // TODO: optimize the lifecyele.
-            let iter = response.makeAsyncIterator()
-            let output = AsyncThrowingStream(unfolding: { [iter] in
-                var iter = iter
-                if let next = try await iter.next() {
-                    return try AnyEncoder().encode(next) as AnySendable
-                } else {
-                    _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
-                    span.end()
-                    return nil
-                }
-            })
-            return .stream(output.cached().eraseToAnyAsyncSequence())
-        } else {
-            let response = try await session.generate(prompt, model: llm, serviceContext: span.context)
-            let output = try AnyEncoder().encode(response)
+            guard let client = locator.resolve(shared: ClientTransport.self) else {
+                throw Err.serviceNotFound(name: "ClientTransport")
+            }
             
-            _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
-            span.end()
-            return .block(output)
+            guard let llmSolver = locator.resolve(shared: LLMProviderSolver.self) else {
+                throw Err.serviceNotFound(name: "LLMProviderSolver")
+            }
+            
+            guard let llm = llmSolver.resolve(modelName: modelName) else {
+                throw Err.unknow(message: "Throw error for miss LLMModel name '\(modelName)'")
+            }
+            
+            let context = executor.context
+            let inputs = context.filter(keys: nil) // TODO: only get necessary values
+            let partialContext = (try? self.context?.render(inputs)) ?? [:]
+            
+            let renderedValues = try request.render(inputs)
+            let prompt: Prompt = try AnyDecoder().decode(from: renderedValues)
+            executor.logger.info("[*] LLMNode(\(id)) Prompt: \(String(describing: prompt))")
+            
+            let conversationID = prompt.conversationID
+            let conversationCache = locator.resolve(shared: GPTConversationCache.self)
+            let conversation = try await conversationCache?.get(conversationID: conversationID, context: partialContext)
+            
+            let session = GPTSession(client: client, conversation: conversation, logger: executor.logger)
+            
+            if prompt.stream == true {
+                let response = try await session.stream(prompt, model: llm, serviceContext: span.context)
+                
+                // TODO: optimize the lifecyele.
+                let iter = response.makeAsyncIterator()
+                let output = AsyncThrowingStream(unfolding: { [iter] in
+                    var iter = iter
+                    if let next = try await iter.next() {
+                        return try AnyEncoder().encode(next) as AnySendable
+                    } else {
+                        _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
+                        return nil
+                    }
+                })
+                return .stream(output.cached().eraseToAnyAsyncSequence())
+            } else {
+                let response = try await session.generate(prompt, model: llm, serviceContext: span.context)
+                let output = try AnyEncoder().encode(response)
+                
+                _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
+                return .block(output)
+            }
         }
     }
 }
