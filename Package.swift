@@ -20,7 +20,7 @@ let package = Package(
         .package(url: "https://github.com/jpsim/Yams", from: "5.3.0"),
         .package(url: "https://github.com/objecthub/swift-dynamicjson", from: "1.0.2"),
         .package(url: "https://github.com/huggingface/swift-jinja", from: "2.1.0"),
-        .package(url: "https://github.com/AFutureD/swift-gpt", branch: "feat-tracing"),
+        .package(url: "https://github.com/AFutureD/swift-gpt", exact: "0.5.0"),
         .package(url: "https://github.com/apple/swift-openapi-runtime", from: "1.8.2"),
         .package(url: "https://github.com/apple/swift-distributed-tracing", from: "1.3.1"),
         

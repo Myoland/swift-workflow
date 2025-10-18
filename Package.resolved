@@ -1,5 +1,5 @@
 {
-  "originHash" : "704e3b588bb234f63f0c45ac4d847f014eb9a8f08caa397f6234590fa23100d1",
+  "originHash" : "333f0566fdeb77c3e47433ea258f13bccfe9f73fc646c05b2c972aa939eeafb3",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -119,6 +119,15 @@
       }
     },
     {
+      "identity" : "swift-gpt",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AFutureD/swift-gpt",
+      "state" : {
+        "revision" : "d5f4bd084f67e4335180363407d05be2e5092ac9",
+        "version" : "0.5.0"
+      }
+    },
+    {
       "identity" : "swift-http-structured-headers",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-http-structured-headers.git",
@@ -150,8 +159,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Myoland/swift-lazy",
       "state" : {
-        "revision" : "059a3554ea6f73b0a95366d632c148a6d32876c0",
-        "version" : "0.1.0"
+        "revision" : "d2f10fc4228aa3a6f6ca6e49de49d170c8c65e57",
+        "version" : "0.2.1"
       }
     },
     {
