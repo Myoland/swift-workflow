@@ -134,7 +134,7 @@ public extension Workflow {
         /// Creates an asynchronous iterator to begin the workflow execution.
         public func makeAsyncIterator() -> Iterator {
             Iterator(delegate: workflow,
-                     executor: Executor(locator: workflow.locator, context: context, logger: workflow.logger),
+                     executor: Executor(locator: workflow.locator, context: context, serviceContext: serviceContext, logger: workflow.logger),
                      node: startNode)
         }
     }
