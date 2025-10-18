@@ -29,10 +29,10 @@ public func nodeOutputWithSpan(
             span.end()
             return .block(value)
         case .stream(let sequence):
-            let iter = sequence.makeAsyncIterator()
-            let stream = AsyncThrowingStream(unfolding: { [iter]
-                var iter = iter
-                if let elem = try await iter.next() {
+            let iterator = sequence.makeAsyncIterator()
+            let stream = AsyncThrowingStream(unfolding: { [iterator] in
+                var iterator = iterator
+                if let elem = try await iterator.next() {
                     return elem
                 } else {
                     span.end()

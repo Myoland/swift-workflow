@@ -11,7 +11,7 @@ extension StartNode: Runnable {
     typealias Err = PayloadVerifyErr
     
     public func run(executor: Executor) async throws -> NodeOutput? {
-        return try await withSpan("Node(\(type))-(\(id)) Running", context: executor.serviceContext) { span in
+        return try withSpan("Node(\(type))-(\(id)) Running", context: executor.serviceContext) { span in
             span.attributes.set("node_id", value: .string(id))
             
             let payload = executor.context.payload.withLock { $0 }

@@ -196,13 +196,13 @@ public extension Workflow.RunningUpdates {
 extension Workflow.RunningUpdates.RunningState: CustomStringConvertible {
     public var description: String {
         switch self {
-        case .initial(let startNode):
+        case .initial(_):
             "initial"
         case .modifying:
             "modifying"
-        case .running(let current, let previous):
+        case .running(_, _):
             "running"
-        case .generating(let current, let asyncIterator):
+        case .generating(_, _):
             "generating"
         case .end:
             "end"
