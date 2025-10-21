@@ -85,7 +85,7 @@ func testWorkflowRunWithConversation() async throws {
     }
 
     let response = context["workflow.output.\(outputKey)"]
-    print(response)
+    print(response as Any)
     #expect(response.debugDescription.contains("John") == true)
 }
 

@@ -15,7 +15,7 @@ func testEncodeConfig() throws {
     )
 
     let encoder = YAMLEncoder()
-    let encoded = try encoder.encode(config)
+    _ = try encoder.encode(config)
 }
 
 @Test("Decode config")
