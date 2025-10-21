@@ -12,20 +12,20 @@ extension String {
 }
 
 extension String.Log {
-    internal static let subsystem = "me.afuture.workflow"
+    static let subsystem = "me.afuture.workflow"
 }
 
 extension Logger {
     /// A disabled logger that performs no operations.
-    internal static let disabled = Self(label: .Log.subsystem, factory: { _ in SwiftLogNoOpLogHandler() })
+    static let disabled = Self(label: .Log.subsystem, factory: { _ in SwiftLogNoOpLogHandler() })
 
     /// The internal logger for the workflow system.
     ///
     /// This logger is active only in `DEBUG` builds. In `RELEASE` builds, it is replaced by a `disabled` logger
     /// to avoid logging overhead.
     #if DEBUG
-    static let Internal = Self(label: .Log.subsystem)
+        static let Internal = Self(label: .Log.subsystem)
     #else
-    static let Internal = disabled
+        static let Internal = disabled
     #endif
 }

@@ -14,7 +14,7 @@ public protocol ServiceLocator: AnyStorageValue {
     /// Resolves a service of a given type.
     func resolve<T>(shared type: T.Type) -> T?
     /// Resolves a service for a given key and type.
-    func resolve<K, T>(for key: K.Type, as type: T.Type) -> T?
+    func resolve<T>(for key: (some Any).Type, as type: T.Type) -> T?
 }
 
 /// A key path for accessing nested values within a ``Context/Store``.
@@ -61,8 +61,8 @@ public final class Context: Sendable {
 
 // MARK: Context + Store Access
 
-extension Context {
-    public subscript(key: Key?) -> Value? {
+public extension Context {
+    subscript(key: Key?) -> Value? {
         get {
             store.withLock { store in
                 store[path: key]
@@ -76,15 +76,13 @@ extension Context {
         }
     }
 
-    public subscript<T>(safe key: Key?, as type: T.Type = T.self) -> T? {
-        get {
-            store.withLock { store in
-                store[path: key] as? T
-            }
+    subscript<T>(safe key: Key?, as _: T.Type = T.self) -> T? {
+        store.withLock { store in
+            store[path: key] as? T
         }
     }
 
-    public subscript(path keys: Key...) -> Value? {
+    subscript(path keys: Key...) -> Value? {
         get {
             self[path: keys]
         }
@@ -94,7 +92,7 @@ extension Context {
         }
     }
 
-    public subscript(path keys: [Key]?) -> Value? {
+    subscript(path keys: [Key]?) -> Value? {
         get {
             store.withLock { store in
                 store[path: keys]
@@ -109,8 +107,8 @@ extension Context {
     }
 }
 
-extension Context {
-    public func filter(keys: [Key]?) -> [Key: Value] {
+public extension Context {
+    func filter(keys: [Key]?) -> [Key: Value] {
         guard let keys else {
             return store.withLock { $0 }
         }
@@ -120,7 +118,7 @@ extension Context {
         }
     }
 
-    public func filter<T>(keys: [Key]?, as type: T.Type) ->  [Key: T]  {
+    func filter<T>(keys: [Key]?, as _: T.Type) -> [Key: T] {
         guard let keys else {
             return store.withLock { $0.compactMapValues { $0 as? T } }
         }

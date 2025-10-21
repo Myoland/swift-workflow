@@ -11,12 +11,12 @@ import Testing
 final class DummyConversationCache: GPTConversationCache {
     private let conversations: LazyLockedValue<[String: Conversation]> = .init([:])
 
-    func get(conversationID: String?, context: LLMFlow.Context.Store) async throws -> Conversation? {
+    func get(conversationID: String?, context _: LLMFlow.Context.Store) async throws -> Conversation? {
         guard let conversationID else { return nil }
         return conversations.withLock { $0[conversationID] }
     }
 
-    func update(conversationID: String?, context: LLMFlow.Context.Store, conversation: Conversation?) async throws -> String? {
+    func update(conversationID: String?, context _: LLMFlow.Context.Store, conversation: Conversation?) async throws -> String? {
         guard let conversationID else { return nil }
         conversations.withLock { $0[conversationID] = conversation }
         return conversationID
@@ -30,12 +30,13 @@ func testLLMNodeRunWithGPTSession() async throws {
 
     let openai = LLMProviderConfiguration(
         type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue,
-        apiURL: "https://api.openai.com/v1")
+        apiURL: "https://api.openai.com/v1"
+    )
 
     let client = AsyncHTTPClientTransport()
     let solver = DummyLLMProviderSolver(
         .init(name: "model_foo", models: [
-            .init(model: .init(name: "gpt-4o-mini"), provider: openai)
+            .init(model: .init(name: "gpt-4o-mini"), provider: openai),
         ])
     )
     let dummyConversationCache = DummyConversationCache()
@@ -57,9 +58,10 @@ func testLLMNodeRunWithGPTSession() async throws {
                     "type": "text",
                     "role": "user",
                     "$content": "inputs.msg",
-                ]
+                ],
             ],
-        ]))
+        ])
+    )
 
     context[path: ["inputs", "conversation_id"]] = "fake_id"
     context[path: ["inputs", "msg"]] = "Hello, I'm John"
@@ -77,7 +79,6 @@ func testLLMNodeRunWithGPTSession() async throws {
             logger.info("[*] \(String(describing: event))")
         }
     }
-
 
     context[path: ["inputs", "msg"]] = "What is my name?"
     do {

@@ -8,31 +8,30 @@
 // MARK: ConditionNode.OP.StringEval + Hashable & Codable
 
 extension Condition.StringEval: Codable {
-    
     private enum CodingKeys: String, CodingKey {
         case equal
         case empty
         case contains
     }
-    
+
     private enum NestedCodingKeys: CodingKey {
         case variable
         case value
         case position
     }
-    
+
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let keys = container.allKeys
-        
+
         guard !keys.isEmpty else {
             throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "No Key Found"))
         }
-        
+
         guard keys.count == 1 else {
             throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Too Many Keys"))
         }
-        
+
         let key = keys.first!
         switch key {
         case .empty:
@@ -59,7 +58,7 @@ extension Condition.StringEval: Codable {
             }
         }
     }
-    
+
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
@@ -82,7 +81,6 @@ extension Condition.StringEval: Codable {
 // MARK: ConditionNode.OP.IntEval + Hashable & Codable
 
 extension Condition.IntEval: Codable {
-    
     private enum CodingKeys: String, CodingKey {
         case equal
         case greater
@@ -90,24 +88,24 @@ extension Condition.IntEval: Codable {
         case smaller
         case smaller_or_equal
     }
-    
+
     private enum NestedCodingKeys: CodingKey {
         case variable
         case value
     }
-    
+
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let keys = container.allKeys
-        
+
         guard !keys.isEmpty else {
             throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "No Key Found"))
         }
-        
+
         guard keys.count == 1 else {
             throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Too Many Keys"))
         }
-        
+
         let key = keys.first!
         switch key {
         case .equal:
@@ -137,7 +135,7 @@ extension Condition.IntEval: Codable {
             self = .smaller_or_equal(variable: variable, value: value)
         }
     }
-    
+
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
@@ -168,21 +166,20 @@ extension Condition.IntEval: Codable {
 // MARK: ConditionNode.OP + Hashable & Codable
 
 extension Condition: Codable {
-    
     private enum CodingKeys: String, CodingKey {
         case and
         case or
         case not
     }
-    
+
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let keys = container.allKeys
-        
+
         guard keys.count <= 1 else {
             throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Too Many Keys"))
         }
-        
+
         if keys.isEmpty {
             let container = try decoder.singleValueContainer()
             if let evel = try? container.decode(IntEval.self) {
@@ -215,22 +212,22 @@ extension Condition: Codable {
             }
         }
     }
-    
+
     public func encode(to encoder: any Encoder) throws {
         switch self {
-        case let .and(ops):
+        case .and(let ops):
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(ops, forKey: .and)
-        case let .or(ops):
+        case .or(let ops):
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(ops, forKey: .or)
-        case let .not(op):
+        case .not(let op):
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(op, forKey: .not)
-        case let .string(eval):
+        case .string(let eval):
             var container = encoder.singleValueContainer()
             try container.encode(eval)
-        case let .int(eval):
+        case .int(let eval):
             var container = encoder.singleValueContainer()
             try container.encode(eval)
         }

@@ -22,5 +22,5 @@ extension EndNode: Runnable {
     /// The update implementation for `EndNode`.
     ///
     /// This method does nothing as the `EndNode` does not process any output.
-    public func update(_ context: Context, value: Context.Value) throws {}
+    public func update(_: Context, value _: Context.Value) throws {}
 }

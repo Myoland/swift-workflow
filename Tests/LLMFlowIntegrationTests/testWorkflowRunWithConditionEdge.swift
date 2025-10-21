@@ -1,92 +1,91 @@
 import AsyncHTTPClient
-import OpenAPIAsyncHTTPClient
+import Foundation
 import GPT
 import LazyKit
-import Foundation
+import Logging
+import OpenAPIAsyncHTTPClient
 import SwiftDotenv
 import Testing
 import TestKit
 import Yams
-import Logging
 
 @testable import LLMFlow
-
 
 @Test("testWorkflowRunWithConditionEdge")
 func testWorkflowRunWithConditionEdge() async throws {
     let logger = Logger.testing
 
     let str = """
-        nodes:
-        - id: start_id
-          type: START
-          inputs:
-            message: String
-            name: String
-            langauge: String
-            model: String
-        - id: template_id
-          type: TEMPLATE
-          template: >
-            {% if workflow.inputs.langauge == "zh-Hans" %}简体中文{% elif workflow.inputs.langauge == "zh-Hant" or workflow.inputs.langauge == "zh" %}繁體中文{% elif  workflow.inputs.langauge == "ja"%}日本語{% elif  workflow.inputs.langauge == "vi"%}Tiếng Việt{% elif  workflow.inputs.langauge == "ko"%}한국어{% else %}English{% endif %}
+    nodes:
+    - id: start_id
+      type: START
+      inputs:
+        message: String
+        name: String
+        langauge: String
+        model: String
+    - id: template_id
+      type: TEMPLATE
+      template: >
+        {% if workflow.inputs.langauge == "zh-Hans" %}简体中文{% elif workflow.inputs.langauge == "zh-Hant" or workflow.inputs.langauge == "zh" %}繁體中文{% elif  workflow.inputs.langauge == "ja"%}日本語{% elif  workflow.inputs.langauge == "vi"%}Tiếng Việt{% elif  workflow.inputs.langauge == "ko"%}한국어{% else %}English{% endif %}
 
-        - id: llm_id
-          type: LLM
-          modelName: test_openai
-          request:
-            stream: true
-            instructions: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"pong\\"\n2. send \\"ding\\", back \\"dang\\""
-            inputs:
-                - type: text
-                  role: user
-                  '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.output }}"
-                - type: text
-                  role: assistant
-                  '#content': "OK"
-                - type: text
-                  role: user
-                  $content:
-                      - workflow
-                      - inputs
-                      - message
+    - id: llm_id
+      type: LLM
+      modelName: test_openai
+      request:
+        stream: true
+        instructions: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"pong\\"\n2. send \\"ding\\", back \\"dang\\""
+        inputs:
+            - type: text
+              role: user
+              '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.output }}"
+            - type: text
+              role: assistant
+              '#content': "OK"
+            - type: text
+              role: user
+              $content:
+                  - workflow
+                  - inputs
+                  - message
 
-        - id: llm_special_id
-          type: LLM
-          modelName: test_openai
-          request:
-            stream: true
-            instructions: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"special pong\\"\n2. send \\"ding\\", back \\"special dang\\""
-            inputs:
-                - type: text
-                  role: user
-                  '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.output }}"
-                - type: text
-                  role: assistant
-                  '#content': "OK"
-                - type: text
-                  role: user
-                  $content: workflow.inputs.message
+    - id: llm_special_id
+      type: LLM
+      modelName: test_openai
+      request:
+        stream: true
+        instructions: "be an echo server.\nbefore response, say 'hi [USER NAME]' first.\nwhat I send to you, you send back.\n\nthe exceptions:\n1. send \\"ping\\", back \\"special pong\\"\n2. send \\"ding\\", back \\"special dang\\""
+        inputs:
+            - type: text
+              role: user
+              '#content': "you are talking to {{workflow.inputs.name}} in {{ template_id.output }}"
+            - type: text
+              role: assistant
+              '#content': "OK"
+            - type: text
+              role: user
+              $content: workflow.inputs.message
 
 
-        - id: end_id
-          type: END
+    - id: end_id
+      type: END
 
-        edges:
-        - from: start_id
-          to: template_id
-        - from: template_id
-          to: llm_special_id
-          condition:
-            equal:
-              variable: workflow.inputs.model
-              value: special
-        - from: template_id
-          to: llm_id
-        - from: llm_id
-          to: end_id
-        - from: llm_special_id
-          to: end_id
-        """
+    edges:
+    - from: start_id
+      to: template_id
+    - from: template_id
+      to: llm_special_id
+      condition:
+        equal:
+          variable: workflow.inputs.model
+          value: special
+    - from: template_id
+      to: llm_id
+    - from: llm_id
+      to: end_id
+    - from: llm_special_id
+      to: end_id
+    """
 
     let decoder = YAMLDecoder()
     let config = try decoder.decode(Workflow.Config.self, from: str.data(using: .utf8)!)
@@ -97,13 +96,15 @@ func testWorkflowRunWithConditionEdge() async throws {
 
     let openai = LLMProviderConfiguration(
         type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue,
-        apiURL: "https://api.openai.com/v1")
+        apiURL: "https://api.openai.com/v1"
+    )
 
     let solver = DummyLLMProviderSolver(
         "test_openai",
         .init(
             name: "test_openai",
-            models: [.init(model: .init(name: "gpt-4o-mini"), provider: openai)])
+            models: [.init(model: .init(name: "gpt-4o-mini"), provider: openai)]
+        )
     )
 
     let locator = DummySimpleLocater(client, solver)
@@ -148,7 +149,8 @@ func testWorkflowRunWithConditionEdge() async throws {
     }
 
     let nodeResult = states.context[
-        path: "llm_special_id", ContextStoreKey.WorkflowNodeRunOutputKey]
+        path: "llm_special_id", ContextStoreKey.WorkflowNodeRunOutputKey
+    ]
     let response = try AnyDecoder().decode(ModelResponse.self, from: nodeResult as AnySendable)
     let usage = response.usage
     let content = response.items.first?.message?.content?.first?.text?.content

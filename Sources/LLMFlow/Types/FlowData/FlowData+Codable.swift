@@ -16,7 +16,9 @@ extension FlowData.Single: Codable {
                 FlowData.Single.self,
                 .init(
                     codingPath: container.codingPath,
-                    debugDescription: "Only Support String, Int, and Bool."))
+                    debugDescription: "Only Support String, Int, and Bool."
+                )
+            )
         }
     }
 
@@ -69,7 +71,6 @@ extension FlowData.Map: Codable {
 }
 
 extension FlowData: Codable {
-
     /// Decodes a `FlowData` instance by attempting to decode it as a single value, a list, or a map.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -101,5 +102,4 @@ extension FlowData: Codable {
             try container.encode(map)
         }
     }
-
 }

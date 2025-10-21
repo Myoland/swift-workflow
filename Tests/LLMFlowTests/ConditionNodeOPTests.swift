@@ -6,8 +6,8 @@
 //
 @testable import LLMFlow
 
-import Testing
 import Foundation
+import Testing
 import Yams
 
 @Test("testEncodeCondition", arguments: [
@@ -86,7 +86,7 @@ import Yams
     ), (
         Condition.and([
             .string(.empty(variable: "var 11")),
-            .string(.equal(variable: "var 12", value: "12"))
+            .string(.equal(variable: "var 12", value: "12")),
         ]),
         """
         and:
@@ -100,7 +100,7 @@ import Yams
         Condition.or([
             .int(.equal(variable: "var 13", value: 13)),
             .string(.equal(variable: "var 14", value: "14")),
-            .not(.string(.empty(variable: "var 15")))
+            .not(.string(.empty(variable: "var 15"))),
         ]),
         """
         or:
@@ -114,15 +114,13 @@ import Yams
             empty:
               variable: var 15
         """
-    )
+    ),
 ])
 func testEncodeConditionOP(_ op: Condition, expect: String) throws {
     let encoder = YAMLEncoder()
     let encoded = try encoder.encode(op)
     #expect(encoded.trimmingCharacters(in: .whitespacesAndNewlines) == expect)
 }
-
-
 
 @Test("testDecodeCondition", arguments: [
     Condition.string(.empty(variable: "var 1")),
@@ -137,18 +135,18 @@ func testEncodeConditionOP(_ op: Condition, expect: String) throws {
     Condition.not(.string(.empty(variable: "var 10"))),
     Condition.and([
         .string(.empty(variable: "var 11")),
-        .string(.equal(variable: "var 12", value: "12"))
+        .string(.equal(variable: "var 12", value: "12")),
     ]),
     Condition.or([
         .int(.equal(variable: "var 13", value: 13)),
         .string(.equal(variable: "var 14", value: "14")),
-        .not(.string(.empty(variable: "var 15")))
+        .not(.string(.empty(variable: "var 15"))),
     ]),
 ])
 func testDecodeConditionOP(_ op: Condition) throws {
     let encoder = YAMLEncoder()
     let decoder = YAMLDecoder()
-    
+
     let encoded = try encoder.encode(op)
     let decoded = try decoder.decode(Condition.self, from: encoded)
     #expect(op == decoded)
@@ -167,12 +165,12 @@ func testDecodeConditionOP(_ op: Condition) throws {
     (Condition.not(.string(.empty(variable: "var 10"))), true),
     (Condition.and([
         .string(.empty(variable: "var 11")),
-        .string(.equal(variable: "var 12", value: "12"))
+        .string(.equal(variable: "var 12", value: "12")),
     ]), true),
     (Condition.or([
         .int(.equal(variable: "var 13", value: 13)),
         .string(.equal(variable: "var 14", value: "14")),
-        .not(.string(.empty(variable: "var 15")))
+        .not(.string(.empty(variable: "var 15"))),
     ]), true),
 ])
 func testConditionTrue(_ op: Condition, expect: Bool) {
@@ -193,8 +191,7 @@ func testConditionTrue(_ op: Condition, expect: Bool) {
         "var 14": "14",
         "var 15": "15",
     ]
-    
-    
+
     let result = op.eval(inputs)
     #expect(result == expect)
 }

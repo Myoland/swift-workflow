@@ -5,7 +5,6 @@
 //  Created by AFuture on 2025-08-18.
 //
 
-
 /// A type-safe path for accessing nested data within a ``Context/Store``.
 ///
 /// `ContextStorePath` allows you to specify a dot-separated path to a value within a nested structure
@@ -21,7 +20,7 @@ public struct ContextStorePath: Hashable, Sendable {
     public struct Key: Hashable, Sendable {
         let strValue: String
         let intValue: Int?
-        
+
         /// Initializes a key from a string. If the string can be parsed as an integer, it will be.
         public init(strValue: String) {
             if let intValue = Int(strValue) {
@@ -30,20 +29,20 @@ public struct ContextStorePath: Hashable, Sendable {
                 self.init(strValue: strValue, intValue: nil)
             }
         }
-        
+
         /// Initializes a key from an integer.
         public init(intValue: Int) {
             self.init(strValue: "\(intValue)", intValue: intValue)
         }
-        
+
         init(strValue: String, intValue: Int?) {
             self.strValue = strValue
             self.intValue = intValue
         }
     }
-    
+
     let keys: [Key]
-    
+
     /// Initializes a path with an array of keys.
     public init(keys: [Key]) {
         self.keys = keys
@@ -52,7 +51,7 @@ public struct ContextStorePath: Hashable, Sendable {
 
 extension ContextStorePath: CustomStringConvertible {
     public var description: String {
-        self.keys.map(\.strValue).joined(separator: ".")
+        keys.map(\.strValue).joined(separator: ".")
     }
 }
 
@@ -69,13 +68,12 @@ extension ContextStorePath: Codable {
         let raw = try container.decode(String.self)
         self.init(raw)
     }
-    
+
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
-        try container.encode(self.description)
+        try container.encode(description)
     }
 }
-
 
 extension ContextStorePath: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
@@ -88,6 +86,7 @@ extension ContextStorePath: ExpressibleByIntegerLiteral {
         self.init(keys: [.init(intValue: value)])
     }
 }
+
 extension ContextStorePath.Key: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
         self.init(strValue: value)
@@ -106,36 +105,35 @@ extension ContextStorePath: ExpressibleByArrayLiteral {
     }
 }
 
-
 // MARK: Collection
 
-extension Collection where Element == AnySendable, Index == Int {
+extension Collection<AnySendable> where Index == Int {
     subscript(key position: ContextStorePath.Key?) -> Element? {
         guard let idx = position?.intValue else {
             return nil
         }
         return self[idx]
     }
-    
+
     subscript(path path: ContextStorePath?) -> Element? {
         guard let keys = path?.keys else { return nil }
-        
+
         let (key, rest) = keys.separateFirst()
-        
+
         guard let value = self[key: key] else {
             return nil
         }
-        
+
         guard let rest, !rest.isEmpty else {
             return value
         }
-        
+
         if let dic = value as? [String: Element] {
             return dic[path: .init(keys: rest)]
         } else if let list = value as? [Element] {
             return list[path: .init(keys: rest)]
         }
-        
+
         return nil
     }
 }
@@ -155,40 +153,40 @@ extension MutableCollection where Element == AnySendable, Index == Int {
             return self[idx] = newValue
         }
     }
-    
+
     subscript(keys keys: [ContextStorePath.Key]?) -> Element? {
         get {
             guard let keys else { return nil }
-            
+
             let (key, rest) = keys.separateFirst()
-            
+
             guard let value = self[key: key] else {
                 return nil
             }
-            
+
             guard let rest, !rest.isEmpty else {
                 return value
             }
-            
+
             if let dic = value as? [String: Element] {
                 return dic[keys: rest]
             } else if let list = value as? [Element] {
                 return list[keys: rest]
             }
-            
+
             return nil
         }
 
         set {
             guard let keys else { return }
-            
+
             let (key, rest) = keys.separateFirst()
-            
+
             guard let rest, !rest.isEmpty else {
                 self[key: key] = newValue
                 return
             }
-            
+
             if rest.first?.intValue == nil {
                 var dict = self[key: key] as? [String: Element] ?? [:]
                 dict[keys: rest] = newValue
@@ -200,23 +198,21 @@ extension MutableCollection where Element == AnySendable, Index == Int {
             }
         }
     }
-    
+
     subscript(path path: ContextStorePath?) -> Element? {
         get {
             self[keys: path?.keys]
         }
-        
+
         set {
             self[keys: path?.keys] = newValue
         }
     }
-    
 }
 
 // MARK: Dictionary
 
-extension Dictionary where Value == AnySendable, Key == String {
-
+extension [String: AnySendable] {
     // Designated Accesser
     subscript(key key: ContextStorePath.Key?) -> Value? {
         get {
@@ -276,12 +272,12 @@ extension Dictionary where Value == AnySendable, Key == String {
     }
 }
 
-extension Dictionary where Value == AnySendable, Key == String {
+extension [String: AnySendable] {
     subscript(path path: ContextStorePath?) -> Value? {
         get {
             self[keys: path?.keys]
         }
-        
+
         set {
             self[keys: path?.keys] = newValue
         }
@@ -299,22 +295,21 @@ extension Dictionary where Value == AnySendable, Key == String {
         }
     }
 
-
     subscript(path keys: Key...) -> Value? {
         get {
-            self[keys: keys.map {ContextStorePath.Key(strValue: $0)} ]
+            self[keys: keys.map { ContextStorePath.Key(strValue: $0) }]
         }
-        
+
         set {
-            self[keys: keys.map {ContextStorePath.Key(strValue: $0)} ] = newValue
+            self[keys: keys.map { ContextStorePath.Key(strValue: $0) }] = newValue
         }
     }
-    
+
     subscript(path keys: [Key]?) -> Value? {
         get {
             self[keys: keys?.map { ContextStorePath.Key(strValue: $0, intValue: nil) }]
         }
-        
+
         set {
             self[keys: keys?.map { ContextStorePath.Key(strValue: $0, intValue: nil) }] = newValue
         }
@@ -335,8 +330,8 @@ extension Dictionary {
     }
 }
 
-extension Collection {
-    fileprivate func separateFirst() -> (Element?, [Element]?) {
-        (self.first, Array(self.dropFirst()))
+private extension Collection {
+    func separateFirst() -> (Element?, [Element]?) {
+        (first, Array(dropFirst()))
     }
 }

@@ -16,8 +16,8 @@ struct APP {
 
     func execute() async throws {
         try await withSpan("App Execute", context: .topLevel) { span in
-            let config = try ConfigReader(providers: [
-                await EnvironmentVariablesProvider(environmentFilePath: ".env"),
+            let config = try await ConfigReader(providers: [
+                EnvironmentVariablesProvider(environmentFilePath: ".env"),
             ])
 
             let openai = LLMProviderConfiguration(type: .OpenAICompatible,

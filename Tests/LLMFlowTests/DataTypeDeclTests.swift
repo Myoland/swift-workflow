@@ -1,8 +1,8 @@
 import Testing
 import Yams
 
-@testable import LLMFlow
 import Foundation
+@testable import LLMFlow
 
 @Test("testDataTypeDeclsLCA", arguments: [
     (
@@ -45,7 +45,6 @@ func testDataTypeDeclsLCA(_ value: [FlowData.TypeDecl], expect: FlowData.TypeDec
     #expect(result == expect)
 }
 
-
 @Test("testDataTypeConvertTo", arguments: [
     (
         .single(.int) as FlowData.TypeDecl,
@@ -74,7 +73,7 @@ func testDataTypeDeclsLCA(_ value: [FlowData.TypeDecl], expect: FlowData.TypeDec
     ), (
         .map(.single(.any)),
         "[String: Any]"
-    )
+    ),
 ])
 func testDataTypeConvertTo(_ value: FlowData.TypeDecl, expect: String) throws {
     #expect(value.description == expect)
@@ -108,14 +107,12 @@ func testDataTypeConvertTo(_ value: FlowData.TypeDecl, expect: String) throws {
     ), (
         "[String: Any]",
         .map(.single(.any))
-    )
+    ),
 ])
 func testDataTypeConvertFrom(_ description: String, expect: FlowData.TypeDecl) throws {
     let value = FlowData.TypeDecl(description)
     #expect(value == expect)
 }
-
-
 
 @Test("testDataTypeEncode", arguments: [
     (
@@ -145,12 +142,12 @@ func testDataTypeConvertFrom(_ description: String, expect: FlowData.TypeDecl) t
     ), (
         .map(.single(.any)),
         "'[String: Any]'"
-    )
+    ),
 ])
 func testDataTypeEncode(_ value: FlowData.TypeDecl, expect: String) throws {
     let encoder = YAMLEncoder()
     let encoded = try encoder.encode(value)
-    
+
     #expect(encoded.trimmingCharacters(in: .whitespacesAndNewlines) == expect)
 }
 
@@ -182,7 +179,7 @@ func testDataTypeEncode(_ value: FlowData.TypeDecl, expect: String) throws {
     ), (
         "'[String: Any]'",
         .map(.single(.any))
-    )
+    ),
 ])
 func testDataTypeDecode(_ description: String, expect: FlowData.TypeDecl) throws {
     let decoder = YAMLDecoder()

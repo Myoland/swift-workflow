@@ -6,9 +6,8 @@
 //
 
 import DynamicJSON
-import Testing
 import Foundation
-
+import Testing
 
 @Test("testDynamicJsonEncode")
 func testDynamicJsonEncode() throws {
@@ -32,7 +31,7 @@ func testDynamicJsonEncode() throws {
     }
     """)
     let json = schema.jsonValue
-    
+
     let encoder = JSONEncoder()
     let data = try encoder.encode(schema)
     print(String(data: data, encoding: .utf8)!)

@@ -1,18 +1,17 @@
 import Foundation
-import Logging
 import LazyKit
-
+import Logging
 
 // MARK: Workflow + Edge
 
-extension Workflow {
+public extension Workflow {
     /// A collection of `Edge` instances that define the connections between nodes in a ``Workflow``.
-    public typealias Edges = [Edge]
+    typealias Edges = [Edge]
 
     /// Represents a directed connection from one ``Node`` to another within a ``Workflow``.
     ///
     /// An edge may include an optional ``Condition`` that must be met for the workflow to traverse this path.
-    public struct Edge : Sendable {
+    struct Edge: Sendable {
         /// The identifier of the node where the edge originates.
         public let from: Node.ID
         /// The identifier of the node where the edge terminates.
@@ -20,7 +19,7 @@ extension Workflow {
         /// An optional condition that must evaluate to `true` for this edge to be taken.
         /// If `nil`, the edge is considered unconditional.
         public let condition: Condition?
-        
+
         public init(from: Node.ID, to: Node.ID, condition: Condition?) {
             self.from = from
             self.to = to
@@ -85,8 +84,7 @@ extension Workflow.Edge: Hashable {}
 /// }
 /// ```
 ///
-public struct Workflow : Sendable {
-
+public struct Workflow: Sendable {
     /// A dictionary of all nodes in the workflow, keyed by their unique identifiers.
     public let nodes: [Node.ID: any RunnableNode]
     /// A dictionary mapping each node ID to its outgoing edges.
@@ -97,7 +95,7 @@ public struct Workflow : Sendable {
 
     /// The service locator used to resolve dependencies, such as API providers for LLM nodes.
     public let locator: ServiceLocator
-    
+
     /// The logger used for logging workflow execution details.
     public let logger: Logger
 
@@ -110,8 +108,8 @@ public struct Workflow : Sendable {
     ///   - locator: A service locator for dependency resolution.
     ///   - logger: An optional logger. If `nil`, a default internal logger is used.
     public init(
-        nodes: [Node.ID : any RunnableNode],
-        flows: [Node.ID : Edges],
+        nodes: [Node.ID: any RunnableNode],
+        flows: [Node.ID: Edges],
         startNodeID: Node.ID,
         locator: ServiceLocator,
         logger: Logger? = nil
@@ -124,12 +122,12 @@ public struct Workflow : Sendable {
     }
 }
 
-extension Workflow {
+public extension Workflow {
     /// Retrieves the ``StartNode`` of the workflow.
     ///
     /// - Throws: ``RuntimeError/StartNodeNotFound`` if the node corresponding to `startNodeID` is not found or is not a `StartNode`.
     /// - Returns: The ``StartNode`` instance.
-    public func requireStartNode() throws -> StartNode  {
+    func requireStartNode() throws -> StartNode {
         guard let node = nodes[startNodeID] as? StartNode else {
             throw RuntimeError.StartNodeNotFound
         }

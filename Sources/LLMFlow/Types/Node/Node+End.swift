@@ -6,7 +6,6 @@
 //
 
 public struct EndNode: Node {
-
     public let id: ID
     public let name: String?
     public let type: NodeType = .END
@@ -16,7 +15,7 @@ public struct EndNode: Node {
         case name
         case type
     }
-    
+
     public init(id: ID, name: String?) {
         self.id = id
         self.name = name

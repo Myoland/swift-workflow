@@ -1,5 +1,5 @@
-extension FlowData {
-    public struct Map: Sendable {
+public extension FlowData {
+    struct Map: Sendable {
         // Can not using `Single` as Dictionary Key for now.
         //
         // See [SE-0320: Allow coding of non String / Int keyed Dictionary into a KeyedContainer]
@@ -19,19 +19,16 @@ extension FlowData {
         }
 
         subscript(key: Key) -> Value? {
-            get {
-                elememts[key]
-            }
+            elememts[key]
         }
     }
 
-    public var map: Map? {
-        if case let .map(list) = self {
+    var map: Map? {
+        if case .map(let list) = self {
             return list
         }
         return nil
     }
-
 }
 
 extension FlowData.Map: Hashable {}

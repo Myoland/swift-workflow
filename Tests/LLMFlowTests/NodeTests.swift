@@ -27,7 +27,7 @@ import Yams
         type: TEMPLATE
         template: fake template
         """
-    ), 
+    ),
     // (
     //     LLMNode(id: "5", name: "55", request: "fake template", response: "var 5"),
     //     """
@@ -39,26 +39,24 @@ import Yams
     //     """
     // )
 ])
-func testEncodeNode(_ node: any LLMFlow.Node, expect: String) throws {
+func encodeNode(_ node: any LLMFlow.Node, expect: String) throws {
     let encoder = YAMLEncoder()
     let encoded = try encoder.encode(node)
     #expect(encoded.trimmingCharacters(in: .whitespacesAndNewlines) == expect)
 }
 
-
 @Test("testDecodeNode", arguments: [
     StartNode(id: "1", name: "11", inputs: [:]) as any LLMFlow.Node,
     EndNode(id: "2", name: "22"),
     TemplateNode(id: "3", name: "33", template: "fake template"),
-    // LLMNode(id: "5", name: "55", request: "fake template", response: "var 5"),
+    LLMNode(id: "5", name: "55", modelName: "model", output: nil, context: nil, request: .init([:])),
 ])
-func testDecodeNode(_ node: any LLMFlow.Node) throws {
-    
+func decodeNode(_ node: any LLMFlow.Node) throws {
     let encoder = YAMLEncoder()
     let decoder = YAMLDecoder()
-    
+
     let encoded = try encoder.encode(node)
-    
+
     switch node {
     case let node as StartNode:
         let decoded = try decoder.decode(StartNode.self, from: encoded)

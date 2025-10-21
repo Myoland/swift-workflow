@@ -1,6 +1,5 @@
 import LazyKit
 
-
 /// Defines the type of a key in a ``ModelDecl`` body, allowing for constants, references, and templates.
 ///
 /// A `ModelDeclKey` interprets special prefixes on string keys to determine their behavior:
@@ -14,7 +13,7 @@ public enum ModelDeclKey: Sendable {
     case ref(String)
     /// A key whose value is a Jinja template to be rendered.
     case template(String)
-    
+
     /// Initializes a `ModelDeclKey` from a raw string, parsing prefixes.
     public init(_ rawValue: String) {
         if rawValue.starts(with: "$") {
@@ -38,6 +37,7 @@ extension ModelDeclKey: RawRepresentable {
             "#\(string)"
         }
     }
+
     public init?(rawValue: String) {
         self.init(rawValue)
     }
@@ -49,16 +49,15 @@ extension ModelDeclKey: ExpressibleByStringLiteral {
     }
 }
 
-
 extension ModelDeclKey: CodingKeyRepresentable {}
 
 extension ModelDeclKey: CustomStringConvertible {
-    public var description: String { self.rawValue }
+    public var description: String { rawValue }
 }
 
 extension ModelDeclKey: Encodable {
     public func encode(to encoder: any Encoder) throws {
-        try self.rawValue.encode(to: encoder)
+        try rawValue.encode(to: encoder)
     }
 }
 
@@ -120,46 +119,47 @@ public struct ModelDecl: Codable, Sendable, Hashable {
     /// - Parameter values: The context store containing the data for rendering.
     /// - Returns: A dictionary with rendered values.
     public func render(_ values: [String: AnySendable]) throws -> Context.Store {
-        return try body.render(values)
+        try body.render(values)
     }
-    
+
     /// Initializes a `ModelDecl` with a body dictionary.
     public init(_ body: [String: FlowData]) {
         self.body = body
     }
-    
+
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
-        self.body = try container.decode([String : FlowData].self)
+        self.body = try container.decode([String: FlowData].self)
     }
-    
+
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.singleValueContainer()
-        try container.encode(self.body)
+        try container.encode(body)
     }
 }
 
 // MARK: Context Render
 
-extension Dictionary where Key == String, Value == FlowData {
-    fileprivate func render(_ values: Context.Store) throws -> Context.Store {
+private extension [String: FlowData] {
+    func render(_ values: Context.Store) throws -> Context.Store {
         var result: Context.Store = [:]
-        
+
         for (key, value) in self {
             let modelDeclKey = ModelDeclKey(key)
-            
+
             switch modelDeclKey {
             case .constant(let contant):
                 result[contant] = try value.render(values)
+
             case .ref(let ref):
                 let value = value.asAny
-                
+
                 if let key = value as? String {
                     result[ref] = values[path: ContextStorePath(key)]
                 } else if let keys = value as? [String] {
                     result[ref] = values[path: keys]
                 }
-                
+
             case .template(let key):
                 if let templateStr = value.stringValue {
                     let template = Template(content: templateStr)
@@ -167,32 +167,32 @@ extension Dictionary where Key == String, Value == FlowData {
                 }
             }
         }
-        
+
         return result
     }
 }
 
-extension FlowData {
-    fileprivate func render(_ values: Context.Store) throws -> AnySendable {
+private extension FlowData {
+    func render(_ values: Context.Store) throws -> AnySendable {
         switch self {
         case .single(let single):
-            return single.asAny
+            single.asAny
         case .list(let list):
-            return try list.render(values)
+            try list.render(values)
         case .map(let map):
-            return try map.render(values)
+            try map.render(values)
         }
     }
 }
 
-extension FlowData.Map {
-    fileprivate func render(_ values: Context.Store) throws -> [String: AnySendable] {
-        return try elememts.render(values)
+private extension FlowData.Map {
+    func render(_ values: Context.Store) throws -> [String: AnySendable] {
+        try elememts.render(values)
     }
 }
 
-extension FlowData.List {
-    fileprivate func render(_ values: Context.Store) throws -> [AnySendable] {
-        return try self.elements.map { try $0.render(values) }
+private extension FlowData.List {
+    func render(_ values: Context.Store) throws -> [AnySendable] {
+        try elements.map { try $0.render(values) }
     }
 }

@@ -2,37 +2,36 @@ extension FlowData: CustomStringConvertible {
     public var description: String {
         switch self {
         case .single(let single):
-            return single.description
+            single.description
         case .list(let list):
-            return list.description
+            list.description
         case .map(let map):
-            return map.description
+            map.description
         }
     }
 }
-
 
 extension FlowData.Single: CustomStringConvertible {
     public var description: String {
         switch self {
         case .bool(let value):
-            return value ? "true" : "false"
+            value ? "true" : "false"
         case .int(let value):
-            return "\(value)"
+            "\(value)"
         case .string(let value):
-            return value
+            value
         }
     }
 }
 
 extension FlowData.List: CustomStringConvertible {
     public var description: String {
-        return elements.description
+        elements.description
     }
 }
 
 extension FlowData.Map: CustomStringConvertible {
     public var description: String {
-        return elememts.description
+        elememts.description
     }
 }

@@ -14,15 +14,17 @@ func testStartNodeVerify() async throws {
     #expect(throws: Never.self) {
         try StartNode.verify(
             data: [
-                "foo": 1
-            ], decls: ["foo": .single(.int)])
+                "foo": 1,
+            ], decls: ["foo": .single(.int)]
+        )
     }
 
     #expect(throws: Never.self) {
         try StartNode.verify(
             data: [
-                "foo": "a"
-            ], decls: ["foo": .single(.string)])
+                "foo": "a",
+            ], decls: ["foo": .single(.string)]
+        )
     }
 
     #expect(throws: Never.self) {
@@ -34,7 +36,8 @@ func testStartNodeVerify() async throws {
             decls: [
                 "foo": .single(.int),
                 "bar": .single(.string),
-            ])
+            ]
+        )
     }
 
     #expect(throws: Never.self) {
@@ -54,7 +57,8 @@ func testStartNodeVerify() async throws {
                 "bazz": .list(.single(.any)),
                 "qux": .map(.single(.string)),
                 "quxx": .map(.single(.any)),
-            ])
+            ]
+        )
     }
 
     #expect(throws: PayloadVerifyErr.inputDataNotFound(key: "foo")) {

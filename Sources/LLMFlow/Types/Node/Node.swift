@@ -5,9 +5,9 @@
 //  Created by Huanan on 2025/2/24.
 //
 
-import LazyKit
 import AsyncAlgorithms
 import Foundation
+import LazyKit
 
 // MARK: Node + Output
 
@@ -18,12 +18,12 @@ public enum NodeOutput: Sendable {
 
 extension NodeOutput {
     var value: Context.Value? {
-        guard case let .block(value) = self else { return nil }
+        guard case .block(let value) = self else { return nil }
         return value
     }
 
     var stream: AnyAsyncSequence<Context.Value>? {
-        guard case let .stream(stream) = self else { return nil }
+        guard case .stream(let stream) = self else { return nil }
         return stream
     }
 }
@@ -37,12 +37,12 @@ public protocol Node: Sendable, Hashable, Codable {
     var type: NodeType { get }
 }
 
-extension Node {
-    public var resultKeyPaths: ContextStoreKeyPath { [id, ContextStoreKey.WorkflowNodeRunOutputKey] }
+public extension Node {
+    var resultKeyPaths: ContextStoreKeyPath { [id, ContextStoreKey.WorkflowNodeRunOutputKey] }
 }
 
-extension Node {
-    public func getResult(_ context: Context) -> AnySendable {
+public extension Node {
+    func getResult(_ context: Context) -> AnySendable {
         context[path: resultKeyPaths]
     }
 }

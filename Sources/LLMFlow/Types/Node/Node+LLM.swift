@@ -39,7 +39,7 @@ public struct LLMNode: ResultResaveableNode {
     ///
     /// The payload will passed into ``GPTConversationCache``.
     public let context: ModelDecl?
-    
+
     /// Declarative request body for the model call.
     ///
     /// The payload supports references and templates that are rendered with the

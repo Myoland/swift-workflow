@@ -1,5 +1,5 @@
 //
-//  FlowData+Jinja.swift
+//  FlowData+Any.swift
 //  dify-forward
 //
 //  Created on 2025/3/27.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension FlowData {
+public extension FlowData {
     /// Converts the `FlowData` instance to a native Swift type (`AnySendable`).
     ///
     /// This property recursively unwraps the `FlowData` enum into its corresponding Swift type:
@@ -17,81 +17,79 @@ extension FlowData {
     ///
     /// This is useful for when you need to interact with the underlying data in a type-safe manner
     /// after retrieving it from the ``Context``.
-    public var asAny: Context.Value {
+    var asAny: Context.Value {
         switch self {
         case .single(let single):
-            return single.asAny
+            single.asAny
         case .list(let list):
-            return list.asAny
+            list.asAny
         case .map(let map):
-            return map.asAny
+            map.asAny
         }
     }
 }
 
-extension FlowData.Single {
+public extension FlowData.Single {
     /// Converts the `Single` value to its native Swift type.
-    public var asAny: Context.Value {
+    var asAny: Context.Value {
         switch self {
         case .bool(let value):
-            return value
+            value
         case .int(let value):
-            return value
+            value
         case .string(let value):
-            return value
+            value
         }
     }
 }
 
-extension FlowData.List {
+public extension FlowData.List {
     /// Converts the `List` to an array of native Swift types.
-    public var asAny: [Context.Value] {
-        self.elements.map { $0.asAny }
+    var asAny: [Context.Value] {
+        elements.map(\.asAny)
     }
 }
 
-extension FlowData.Map {
+public extension FlowData.Map {
     /// Converts the `Map` to a dictionary of native Swift types.
-    public var asAny: [String: Context.Value] {
-        self.elememts.mapValues { $0.asAny }
+    var asAny: [String: Context.Value] {
+        elememts.mapValues { $0.asAny }
     }
 }
 
-extension Collection where Element == FlowData {
+public extension Collection<FlowData> {
     /// Converts a collection of `FlowData` to an array of native Swift types.
-    public var asAny: [Any] {
-        return self.compactMap { $0.asAny }
+    var asAny: [Any] {
+        compactMap(\.asAny)
     }
 }
 
-extension Dictionary where Value == FlowData {
-    subscript(key: Key?) -> Value? {
-        get {
-            guard let key else {
-                return nil
-            }
-            return self[key]
+public extension Dictionary where Value == FlowData {
+    internal subscript(key: Key?) -> Value? {
+        guard let key else {
+            return nil
         }
+        return self[key]
     }
-    
+
     /// Converts a dictionary with `FlowData` values to a dictionary with native Swift types.
-    public var asAny: [Key: Context.Value] {
-        return self.compactMapValues { $0.asAny }
+    var asAny: [Key: Context.Value] {
+        compactMapValues { $0.asAny }
     }
-    
+
     /// Converts the dictionary's values to `String`, filtering out any that are not strings.
-    public func compactMapValuesAsString() -> [Key : String] {
+    func compactMapValuesAsString() -> [Key: String] {
         compactMapValuesAs()
     }
-    
+
     /// Converts the dictionary's values to a specific type `T`, filtering out any that do not match.
-    public func compactMapValuesAs<T>(type: T.Type = T.self) -> [Key : T] {
+    func compactMapValuesAs<T>(type _: T.Type = T.self) -> [Key: T] {
         compactMapValues { $0.asAny as? T }
     }
 }
 
 extension Dictionary where Key: Equatable {
-    func extract(_ keys: [Key]?) -> Dictionary<Key, Value> {
+    func extract(_ keys: [Key]?) -> [Key: Value] {
         filter { key, _ in
             keys?.contains(key) ?? false
         }
@@ -99,8 +97,8 @@ extension Dictionary where Key: Equatable {
 }
 
 extension Dictionary {
-    func convertKeys<T>(tansfomer: (Key) -> T) -> Dictionary<T, Value> {
-        self.reduce(into: .init()) { (partialResult, pair) -> () in
+    func convertKeys<T>(tansfomer: (Key) -> T) -> [T: Value] {
+        reduce(into: .init()) { partialResult, pair in
             partialResult.updateValue(pair.value, forKey: tansfomer(pair.key))
         }
     }

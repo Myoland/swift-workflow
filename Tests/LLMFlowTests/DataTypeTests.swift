@@ -22,7 +22,8 @@ import Yams
             "foo",
             "foo\n"
         ),
-    ])
+    ]
+)
 func testEnecodeDataTypeSingle(_ value: FlowData.Single, expect: String) throws {
     let encoder = YAMLEncoder()
     let encoded = try encoder.encode(value)
@@ -34,7 +35,8 @@ func testEnecodeDataTypeSingle(_ value: FlowData.Single, expect: String) throws 
     arguments: [
         1 as FlowData.Single,
         "foo",
-    ])
+    ]
+)
 func testDecodeDataTypeSingle(_ value: FlowData.Single) async throws {
     let encoder = YAMLEncoder()
     let decoder = YAMLDecoder()
@@ -83,7 +85,8 @@ func testDecodeDataTypeSingle(_ value: FlowData.Single) async throws {
               foo: 1
             """
         ),
-    ])
+    ]
+)
 func testEnecodeDataTypeList(_ value: FlowData.List, expect: String) throws {
     let encoder = YAMLEncoder()
     encoder.options.sortKeys = true
@@ -132,7 +135,8 @@ func testEnecodeDataTypeList(_ value: FlowData.List, expect: String) throws {
             foo: {}
             """
         ),
-    ])
+    ]
+)
 func testEncodeDataTypeMap(_ value: FlowData.Map, expect: String) throws {
     let encoder = YAMLEncoder()
     encoder.options.sortKeys = true
@@ -159,7 +163,8 @@ func testEncodeDataTypeMap(_ value: FlowData.Map, expect: String) throws {
                 "qux": "2",
             ],
         ] as FlowData.Map,
-    ])
+    ]
+)
 func testDecodeDataTypeMap(_ value: FlowData.Map) async throws {
     let encoder = YAMLEncoder()
     let decoder = YAMLDecoder()

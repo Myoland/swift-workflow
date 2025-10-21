@@ -9,7 +9,7 @@ import Tracing
 
 extension TemplateNode: Runnable {
     public func run(executor: Executor) async throws -> NodeOutput? {
-        return try withSpan("Node(\(type))-(\(id)) Running", context: executor.serviceContext) { span in
+        try withSpan("Node(\(type))-(\(id)) Running", context: executor.serviceContext) { span in
             span.attributes.set("node_id", value: .string(id))
 
             let context = executor.context

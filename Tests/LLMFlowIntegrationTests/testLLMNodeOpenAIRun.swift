@@ -1,12 +1,12 @@
 import AsyncHTTPClient
-import OpenAPIAsyncHTTPClient
-import LazyKit
 import Foundation
+import GPT
+import LazyKit
+import Logging
+import OpenAPIAsyncHTTPClient
 import SwiftDotenv
 import Testing
 import TestKit
-import GPT
-import Logging
 
 @testable import LLMFlow
 
@@ -20,7 +20,7 @@ func testLLMNodeOpenAIRun() async throws {
     let client = AsyncHTTPClientTransport()
     let solver = DummyLLMProviderSolver(
         "model_foo",
-        .init(name: "model_foo", models: [.init(model: .init(name: "gpt-4o-mini") , provider: openai)])
+        .init(name: "model_foo", models: [.init(model: .init(name: "gpt-4o-mini"), provider: openai)])
     )
 
     let locator = DummySimpleLocater(client, solver)
@@ -47,7 +47,7 @@ func testLLMNodeOpenAIRun() async throws {
                                "type": "text",
                                "role": "user",
                                "content": "Ping",
-                           ]]
+                           ]],
                        ]))
 
     let output = try await node.run(executor: executor)

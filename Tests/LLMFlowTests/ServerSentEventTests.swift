@@ -5,10 +5,10 @@
 //  Created by AFuture on 2025/4/23.
 //
 
-import Testing
-@testable import LLMFlow
 import AsyncAlgorithms
+@testable import LLMFlow
 import NetworkKit
+import Testing
 
 @Test("testAsyncServerSentEventsInterpreter")
 func testAsyncServerSentEventsInterpreter() async throws {
@@ -32,11 +32,10 @@ func testAsyncServerSentEventsInterpreter() async throws {
     ]
 
     let testData = lines.async.map { $0.data(using: .utf8)! }
-    
+
     let interpreter = testData.mapToServerSentEvert()
 
     for try await event in interpreter {
         print("[*] \(event)")
     }
-
 }

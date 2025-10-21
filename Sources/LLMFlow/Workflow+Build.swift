@@ -8,8 +8,7 @@
 import Algorithms
 import Logging
 
-extension Workflow {
-
+public extension Workflow {
     /// Initializes a ``Workflow`` from a configuration object.
     ///
     /// This initializer provides a convenient way to construct a workflow from a ``Workflow/Config``,
@@ -21,7 +20,7 @@ extension Workflow {
     ///   - locator: A service locator for dependency resolution.
     ///   - logger: An optional logger.
     /// - Throws: An error if the configuration is invalid (e.g., no start node, contains cycles).
-    public init(config: Workflow.Config, locator: ServiceLocator, logger: Logger? = nil) throws {
+    init(config: Workflow.Config, locator: ServiceLocator, logger: Logger? = nil) throws {
         try config.validate()
 
         let startNode = try config.requireStartNode()
@@ -34,13 +33,12 @@ extension Workflow {
 }
 
 extension Workflow.Config {
-
     /// Finds all nodes of a specific type within the configuration.
     ///
     /// - Parameter type: The ``NodeType`` to search for.
     /// - Returns: An array of nodes matching the specified type.
     public func findNodes(of type: NodeType) -> [any Node] {
-        return nodes.filter { $0.type == type }
+        nodes.filter { $0.type == type }
     }
 
     /// Retrieves the single ``StartNode`` from the configuration.
@@ -77,20 +75,13 @@ extension Workflow.Config {
 
     // TODO: Implement DAG check.
     /// Checks for cycles in the workflow graph.
-    private func checkDAG() throws {
-
-    }
+    private func checkDAG() throws {}
 
     // TODO: Implement unused nodes check.
     /// Checks for nodes that are not reachable from the start node.
-    private func checkUnusedNodes() throws {
-
-    }
+    private func checkUnusedNodes() throws {}
 
     // TODO: Implement end-to-start path check.
     /// Ensures all paths terminate at an ``EndNode``.
-    private func checkEndToStartPath() throws {
-
-    }
-
+    private func checkEndToStartPath() throws {}
 }

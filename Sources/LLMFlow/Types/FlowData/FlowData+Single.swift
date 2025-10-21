@@ -1,34 +1,34 @@
-extension FlowData {
+public extension FlowData {
     // Be simple in the first version.
-    public enum Single: Sendable {
+    enum Single: Sendable {
         case bool(Bool)
-        case int(Int)  // TODO: Replace by `SignedNumeric` later
+        case int(Int) // TODO: Replace by `SignedNumeric` later
         case string(String)
     }
 
-    public var single: Single? {
-        if case let .single(single) = self {
+    var single: Single? {
+        if case .single(let single) = self {
             return single
         }
         return nil
     }
 
-    public var boolValue: Bool? {
-        if let single, case let .bool(value) = single {
-            return value
-        }
-        return nil
-    }
-    
-    public var intValue: Int? {
-        if let single, case let .int(value) = single {
+    var boolValue: Bool? {
+        if let single, case .bool(let value) = single {
             return value
         }
         return nil
     }
 
-    public var stringValue: String? {
-        if let single, case let .string(value) = single {
+    var intValue: Int? {
+        if let single, case .int(let value) = single {
+            return value
+        }
+        return nil
+    }
+
+    var stringValue: String? {
+        if let single, case .string(let value) = single {
             return value
         }
         return nil

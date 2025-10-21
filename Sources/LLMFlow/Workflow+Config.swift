@@ -5,7 +5,7 @@
 //  Created by AFuture on 2025/6/3.
 //
 
-extension Workflow {
+public extension Workflow {
     /// A serializable configuration for a ``Workflow``.
     ///
     /// This structure is used to define a workflow's nodes and edges in a way that can be easily
@@ -35,8 +35,7 @@ extension Workflow {
     /// ```
     ///
     /// - SeeAlso: ``Workflow/init(config:locator:logger:)``
-    public struct Config {
-
+    struct Config {
         /// An array of all nodes in the workflow.
         public let nodes: [any RunnableNode]
 

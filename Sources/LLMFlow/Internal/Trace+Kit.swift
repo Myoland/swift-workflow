@@ -18,7 +18,7 @@ public func nodeOutputWithSpan(
     _ operation: (any Span) async throws -> NodeOutput?
 ) async rethrows -> NodeOutput? {
     let span = startSpan(operationName, context: context(), ofKind: kind, function: function, file: fileID, line: line)
-    
+
     do {
         let output = try await operation(span)
         switch output {

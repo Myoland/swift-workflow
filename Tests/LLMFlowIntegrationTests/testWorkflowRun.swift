@@ -1,16 +1,15 @@
 import AsyncHTTPClient
-import OpenAPIAsyncHTTPClient
+import Foundation
 import GPT
 import LazyKit
-import Foundation
+import Logging
+import OpenAPIAsyncHTTPClient
 import SwiftDotenv
 import Testing
 import TestKit
 import Yams
-import Logging
 
 @testable import LLMFlow
-
 
 @Test("testWorkflowRun")
 func testWorkflowRun() async throws {
@@ -28,7 +27,7 @@ func testWorkflowRun() async throws {
     let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
 
     let outputKey = "ultimate"
-    let llmNode  = LLMNode(
+    let llmNode = LLMNode(
         id: UUID().uuidString,
         name: nil,
         modelName: "gpt-4o-mini",
@@ -48,30 +47,30 @@ func testWorkflowRun() async throws {
             "inputs": [[
                 "type": "text",
                 "role": "system",
-                "#content": "you are talking to {{workflow.inputs.name}}"
+                "#content": "you are talking to {{workflow.inputs.name}}",
             ], [
                 "type": "text",
                 "role": "user",
                 "$content": ["workflow", "inputs", "message"],
-            ]]
-        ]))
+            ]],
+        ])
+    )
 
     let endNode = EndNode(id: UUID().uuidString, name: nil)
     let locator = DummySimpleLocater(client, solver)
 
     let workflow = Workflow(nodes: [
-        startNode.id : startNode,
-        llmNode.id : llmNode,
-        endNode.id : endNode
+        startNode.id: startNode,
+        llmNode.id: llmNode,
+        endNode.id: endNode,
     ], flows: [
-        startNode.id : [.init(from: startNode.id, to: llmNode.id, condition: nil)],
-        llmNode.id : [.init(from: llmNode.id, to: endNode.id, condition: nil)],
+        startNode.id: [.init(from: startNode.id, to: llmNode.id, condition: nil)],
+        llmNode.id: [.init(from: llmNode.id, to: endNode.id, condition: nil)],
     ], startNodeID: startNode.id, locator: locator)
-
 
     let inputs: [String: FlowData] = [
         "name": "John",
-        "message": "ping"
+        "message": "ping",
     ]
 
     let context = Context()
@@ -80,7 +79,7 @@ func testWorkflowRun() async throws {
         logger.info("[*] State: \(state.type) -> \(String(describing: state.value))")
     }
 
-    print(context.store.withLock({ $0 }))
+    print(context.store.withLock { $0 })
     let response = context["workflow.output.\(outputKey).items.0.content.0.content"] as? String
     #expect(response?.contains("pong") ?? false)
 }

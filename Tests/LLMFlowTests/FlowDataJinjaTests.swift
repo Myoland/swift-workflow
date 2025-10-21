@@ -4,7 +4,7 @@ import Testing
 @testable import LLMFlow
 
 @Test("testRenderSimpleTemplate")
-func testRenderSimpleTemplate() throws {
+func renderSimpleTemplate() throws {
     // Create a map with string values
     let elements: [String: FlowData] = [
         "name": "John",
@@ -13,43 +13,43 @@ func testRenderSimpleTemplate() throws {
 
     let template = "{{ greeting }}, {{ name }}!"
 
-    let result = try Template(template).render(elements.asAny.compactMapValues {try? .init(any: $0)})
+    let result = try Template(template).render(elements.asAny.compactMapValues { try? .init(any: $0) })
     #expect(result == "Hello, John!")
 }
 
 @Test("testRenderSimpleTemplate")
-func testRenderSimpleTemplat222e() throws {
+func renderSimpleTemplat222e() throws {
     // Create a map with string values
     let elements: [String: FlowData] = [
         "name": ["John", "Tom"],
     ]
-    
+
     let value = elements["name"]?.asAny
     let pp = value as? [String: [String]]
-    print(pp)
+    print(pp as Any)
 }
 
 @Test("testRenderConditionalTemplate")
-func testRenderConditionalTemplate() throws {
+func renderConditionalTemplate() throws {
     let elements: [String: FlowData] = [
         "name": "John",
         "age": 30,
     ]
 
     let template = """
-        {% if age == 30 %}
-        {{ name }} is thirty years old.
-        {% else %}
-        {{ name }} is not thirty years old.
-        {% endif %}
-        """
+    {% if age == 30 %}
+    {{ name }} is thirty years old.
+    {% else %}
+    {{ name }} is not thirty years old.
+    {% endif %}
+    """
 
-    let result = try Template(template).render(elements.asAny.compactMapValues {try? .init(any: $0)})
+    let result = try Template(template).render(elements.asAny.compactMapValues { try? .init(any: $0) })
     #expect(result.trimmingCharacters(in: .whitespacesAndNewlines) == "John is thirty years old.")
 }
 
 @Test("testRenderNestedTemplate")
-func testRenderNestedTemplate() throws {
+func renderNestedTemplate() throws {
     // Create a nested structure with a map inside a map
     let context: [String: FlowData] = [
         "name": "John",
@@ -60,32 +60,32 @@ func testRenderNestedTemplate() throws {
         ],
     ]
     let template = """
-        Name: {{ name }}
-        Address:
-            Street: {{ address.street }}
-            City: {{ address.city }}
-            Zipcode: {{ address.zipcode }}
-        """
+    Name: {{ name }}
+    Address:
+        Street: {{ address.street }}
+        City: {{ address.city }}
+        Zipcode: {{ address.zipcode }}
+    """
     let expected = """
-        Name: John
-        Address:
-            Street: 123 Main St
-            City: New York
-            Zipcode: 10001
-        """
+    Name: John
+    Address:
+        Street: 123 Main St
+        City: New York
+        Zipcode: 10001
+    """
 
-    let result = try Template(template).render(context.asAny.compactMapValues {try? .init(any: $0)})
+    let result = try Template(template).render(context.asAny.compactMapValues { try? .init(any: $0) })
     #expect(result == expected)
 }
 
 @Test("testListInJinja")
-func testListInJinja() throws {
+func listInJinja() throws {
     let context: [String: FlowData] = [
         "names": [
             "Alice",
             "Bob",
             "Charlie",
-        ]
+        ],
     ]
     let template =
         """
@@ -104,6 +104,6 @@ func testListInJinja() throws {
         first: Alice
         """
 
-    let result = try Template(template, with: .init(trimBlocks: true)).render(context.asAny.compactMapValues {try? .init(any: $0)})
+    let result = try Template(template, with: .init(trimBlocks: true)).render(context.asAny.compactMapValues { try? .init(any: $0) })
     #expect(result == expected)
 }

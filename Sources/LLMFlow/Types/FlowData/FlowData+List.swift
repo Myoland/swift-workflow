@@ -1,5 +1,5 @@
-extension FlowData {
-    public struct List: Sendable {
+public extension FlowData {
+    struct List: Sendable {
         public typealias Element = FlowData
 
         let elemDecl: FlowData.TypeDecl
@@ -11,14 +11,12 @@ extension FlowData {
         }
     }
 
-    public var list: List? {
-        if case let .list(list) = self {
+    var list: List? {
+        if case .list(let list) = self {
             return list
         }
         return nil
     }
-
 }
 
-extension FlowData.List: Hashable {
-}
+extension FlowData.List: Hashable {}

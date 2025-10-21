@@ -1,5 +1,5 @@
-extension FlowData {
-    public indirect enum TypeDecl: Hashable, Sendable {
+public extension FlowData {
+    indirect enum TypeDecl: Hashable, Sendable {
         public typealias Single = FlowData.Single.TypeDecl
 
         case single(Single)
@@ -9,8 +9,8 @@ extension FlowData {
     }
 }
 
-extension FlowData.Single {
-    public enum TypeDecl: Hashable, Sendable {
+public extension FlowData.Single {
+    enum TypeDecl: Hashable, Sendable {
         case bool
         case int
         case string
@@ -51,11 +51,11 @@ extension FlowData.TypeDecl: LosslessStringConvertible {
     //  - map(single(int)) -> [String:Int]
     public var description: String {
         switch self {
-        case let .single(decl):
+        case .single(let decl):
             "\(decl.description)"
-        case let .list(decl):
+        case .list(let decl):
             "[\(decl.description)]"
-        case let .map(decl):
+        case .map(let decl):
             "[String: \(decl.description)]"
         case .any:
             "Any"
@@ -118,6 +118,7 @@ extension FlowData.TypeDecl: Codable {
 }
 
 // MARK: FlowData + TypeDecl
+
 extension FlowData {
     var decl: TypeDecl {
         switch self {
@@ -146,19 +147,19 @@ extension FlowData.Single {
 
 extension FlowData.List {
     var decl: Element.TypeDecl {
-        .list(self.elemDecl)
+        .list(elemDecl)
     }
 }
 
 extension FlowData.Map {
     var decl: Value.TypeDecl {
-        .map(self.elemDecl)
+        .map(elemDecl)
     }
 }
 
-extension Collection where Element == FlowData {
+extension Collection<FlowData> {
     var decl: Element.TypeDecl {
-        .LCA(decls: self.map(\.decl))
+        .LCA(decls: map(\.decl))
     }
 }
 
@@ -181,6 +182,7 @@ extension FlowData.TypeDecl {
         }
     }
 }
+
 extension FlowData.TypeDecl {
     var isList: Bool {
         switch self {
@@ -200,6 +202,7 @@ extension FlowData.TypeDecl {
         }
     }
 }
+
 extension FlowData.TypeDecl {
     var isMap: Bool {
         switch self {
@@ -243,18 +246,18 @@ extension FlowData.TypeDecl {
         }
 
         // Check if all declarations are of the same category (single, list, or map)
-        let allSingles = decls.allSatisfy { $0.isSingle }
-        let allLists = decls.allSatisfy { $0.isList }
-        let allMaps = decls.allSatisfy { $0.isMap }
+        let allSingles = decls.allSatisfy(\.isSingle)
+        let allLists = decls.allSatisfy(\.isList)
+        let allMaps = decls.allSatisfy(\.isMap)
 
         if allSingles {
-            let singleDecls = decls.compactMap { $0.single }
+            let singleDecls = decls.compactMap(\.single)
             return .single(FlowData.Single.TypeDecl.LCA(singleDecls))
         } else if allLists {
-            let elementDecls = decls.compactMap { $0.list }
+            let elementDecls = decls.compactMap(\.list)
             return .list(FlowData.TypeDecl.LCA(decls: elementDecls))
         } else if allMaps {
-            let elementDecls = decls.compactMap { $0.map }
+            let elementDecls = decls.compactMap(\.map)
             return .map(FlowData.TypeDecl.LCA(decls: elementDecls))
         }
 

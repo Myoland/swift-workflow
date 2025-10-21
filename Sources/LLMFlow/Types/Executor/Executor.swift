@@ -23,13 +23,13 @@ public final class Executor: Sendable {
     public let locator: ServiceLocator?
 
     private let lockedContext: LazyLockedValue<Context>
-    
+
     /// The logger for recording execution events.
     public let logger: Logger
 
     /// A decoder for handling `Any` types.
     public let anyDecoder = AnyDecoder()
-    
+
     /// An encoder for handling `Any` types.
     public let anyEncoder = AnyEncoder()
 
@@ -57,6 +57,6 @@ public final class Executor: Sendable {
 extension Executor {
     /// Provides thread-safe access to the execution ``Context``.
     var context: Context {
-        self.lockedContext.withLock { $0 }
+        lockedContext.withLock { $0 }
     }
 }

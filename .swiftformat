@@ -1,0 +1,5 @@
+--swift-version 6.0
+--disable redundantRawValues,swiftTestingTestCaseNames
+--self init-only
+--blank-line-after-switch-case multiline-only
+--pattern-let inline

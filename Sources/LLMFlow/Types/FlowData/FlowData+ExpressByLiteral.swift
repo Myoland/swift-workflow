@@ -12,7 +12,7 @@ extension FlowData.Single: ExpressibleByIntegerLiteral {
 
 extension FlowData.List: ExpressibleByArrayLiteral {
     public init(arrayLiteral elements: FlowData...) {
-        self.init(elements: elements.map({ $0 }))
+        self.init(elements: elements.map(\.self))
     }
 }
 

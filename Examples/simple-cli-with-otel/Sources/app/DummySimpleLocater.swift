@@ -1,5 +1,5 @@
-@testable import LLMFlow
 import GPT
+@testable import LLMFlow
 
 public final class DummySimpleLocater: ServiceLocator {
     public typealias Store = AnySendable
@@ -14,7 +14,7 @@ public final class DummySimpleLocater: ServiceLocator {
         (stores.first { $0 is T }) as? T
     }
 
-    public func resolve<K, T>(for _: K.Type, as _: T.Type) -> T? {
+    public func resolve<T>(for _: (some Any).Type, as _: T.Type) -> T? {
         (stores.first { $0 is T }) as? T
     }
 }
@@ -22,7 +22,7 @@ public final class DummySimpleLocater: ServiceLocator {
 public struct DummyLLMProviderSolver: LLMProviderSolver, Sendable {
     let store: [String: LLMQualifiedModel]
 
-    public init( _ models: LLMQualifiedModel...) {
+    public init(_ models: LLMQualifiedModel...) {
         self.store = Dictionary(uniqueKeysWithValues: models.map { ($0.name, $0) })
     }
 
@@ -31,7 +31,7 @@ public struct DummyLLMProviderSolver: LLMProviderSolver, Sendable {
     }
 
     public init(_ name: String, _ provider: LLMQualifiedModel) {
-        store = [name: provider]
+        self.store = [name: provider]
     }
 
     public func resolve(modelName: String) -> LLMQualifiedModel? {

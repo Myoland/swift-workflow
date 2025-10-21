@@ -10,7 +10,7 @@
 /// `StartNode` declares the keys and types that must exist in the ``Context``
 /// before execution begins. It is a schema/contract-only node and is not executed.
 /// Its ``NodeType`` is expected to be `.START`.
-/// 
+///
 /// The verified values will be store in path `workflow.inputs`
 public struct StartNode: Node {
     /// Stable node identifier used for graph wiring and result addressing.

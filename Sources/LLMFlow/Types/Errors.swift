@@ -1,5 +1,5 @@
 //
-//  Workflow+Error.swift
+//  Errors.swift
 //  swift-workflow
 //
 //  Created by AFuture on 2025/6/3.
@@ -36,14 +36,14 @@ enum PayloadVerifyErr: Error, Hashable {
 }
 
 extension PayloadVerifyErr: CustomStringConvertible {
-    public var description: String {
+    var description: String {
         switch self {
         case .inputDataNotFound(let key):
-            return "Key Not Found For Key: '\(key)'."
+            "Key Not Found For Key: '\(key)'."
         case .inputDataTypeMissMatch(let key, let expect, let actual):
-            return "Data Type Miss Match For Key: '\(key)'. Expected: \(expect), Actual: \(actual ?? "nil")"
+            "Data Type Miss Match For Key: '\(key)'. Expected: \(expect), Actual: \(actual ?? "nil")"
         case .other(let message):
-            return "Unknown Error: \(message)."
+            "Unknown Error: \(message)."
         }
     }
 }

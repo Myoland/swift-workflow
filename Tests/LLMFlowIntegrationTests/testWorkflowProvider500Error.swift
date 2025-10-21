@@ -1,13 +1,13 @@
 import AsyncHTTPClient
-import OpenAPIAsyncHTTPClient
+import Foundation
 import GPT
 import LazyKit
-import Foundation
+import Logging
+import OpenAPIAsyncHTTPClient
 import SwiftDotenv
 import Testing
 import TestKit
 import Yams
-import Logging
 
 @testable import LLMFlow
 
@@ -21,12 +21,13 @@ func testWorkflowProvider500Error() async throws {
     let openai = LLMProviderConfiguration(
         type: .OpenAICompatible, name: "openai", apiKey: Dotenv["OPENROUTER_API_KEY"]!.stringValue,
         apiURL:
-            "https://gateway.ai.cloudflare.com/v1/3450ee851bc2d21db2c2c0de5656343e/openai/openrouter"
+        "https://gateway.ai.cloudflare.com/v1/3450ee851bc2d21db2c2c0de5656343e/openai/openrouter"
     )
 
     let openaiLocal = LLMProviderConfiguration(
         type: .OpenAICompatible, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue,
-        apiURL: "http://localhost:5002/v1")
+        apiURL: "http://localhost:5002/v1"
+    )
 
     let client = AsyncHTTPClientTransport(configuration: .init(timeout: .seconds(4)))
     let solver = DummyLLMProviderSolver(
@@ -36,7 +37,8 @@ func testWorkflowProvider500Error() async throws {
             models: [
                 .init(model: .init(name: "gpt-4o-mini-error"), provider: openaiLocal),
                 .init(model: .init(name: "gpt-4o-mini"), provider: openai),
-            ])
+            ]
+        )
     )
     let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
 
@@ -69,7 +71,8 @@ func testWorkflowProvider500Error() async throws {
                     "$content": ["workflow", "inputs", "message"],
                 ],
             ],
-        ]))
+        ])
+    )
 
     let endNode = EndNode(id: UUID().uuidString, name: nil)
     let locator = DummySimpleLocater(client, solver)

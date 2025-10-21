@@ -1,16 +1,15 @@
 import AsyncHTTPClient
-import OpenAPIAsyncHTTPClient
+import Foundation
 import GPT
 import LazyKit
-import Foundation
+import Logging
+import OpenAPIAsyncHTTPClient
 import SwiftDotenv
 import Testing
 import TestKit
 import Yams
-import Logging
 
 @testable import LLMFlow
-
 
 @Test("testWorkflowRunWithYaml")
 func testWorkflowRunWithYaml() async throws {
@@ -21,7 +20,7 @@ func testWorkflowRunWithYaml() async throws {
         return
     }
     let data = try Data(contentsOf: url)
-    
+
     let decoder = YAMLDecoder()
     let config = try decoder.decode(Workflow.Config.self, from: data)
 
@@ -31,13 +30,15 @@ func testWorkflowRunWithYaml() async throws {
 
     let openai = LLMProviderConfiguration(
         type: .OpenAI, name: "openai", apiKey: Dotenv["OPENAI_API_KEY"]!.stringValue,
-        apiURL: "https://api.openai.com/v1")
+        apiURL: "https://api.openai.com/v1"
+    )
 
     let solver = DummyLLMProviderSolver(
         "test_openai",
         .init(
             name: "test_openai",
-            models: [.init(model: .init(name: "gpt-4o-mini"), provider: openai)])
+            models: [.init(model: .init(name: "gpt-4o-mini"), provider: openai)]
+        )
     )
 
     let locator = DummySimpleLocater(client, solver)

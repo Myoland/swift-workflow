@@ -34,7 +34,7 @@ public indirect enum Condition: Sendable {
     case or([Condition])
     /// A logical NOT operation. The sub-condition must be false.
     case not(Condition)
-    
+
     /// A condition that evaluates a string value.
     case string(StringEval)
     /// A condition that evaluates an integer value.
@@ -43,9 +43,9 @@ public indirect enum Condition: Sendable {
 
 // MARK: ConditionNode.OP + Eval
 
-extension Condition {
+public extension Condition {
     /// A set of evaluation operations for string values.
-    public enum StringEval: Sendable {
+    enum StringEval: Sendable {
         /// Checks if the string variable is equal to a given value.
         case equal(variable: ContextStorePath, value: String)
         /// Checks if the string variable is empty.
@@ -53,9 +53,9 @@ extension Condition {
         /// Checks if the string variable contains, starts with, or ends with a given substring.
         case contains(variable: ContextStorePath, value: String, position: StringContainingPosition)
     }
-    
+
     /// A set of evaluation operations for integer values.
-    public enum IntEval: Sendable {
+    enum IntEval: Sendable {
         /// Checks if the integer variable is equal to a given value.
         case equal(variable: ContextStorePath, value: Int)
         /// Checks if the integer variable is greater than a given value.
@@ -71,9 +71,9 @@ extension Condition {
 
 // MARK: ConditionNode.OP.StringEval + Postion
 
-extension Condition.StringEval {
+public extension Condition.StringEval {
     /// Specifies the position for a substring match in a `contains` evaluation.
-    public enum StringContainingPosition: String, Sendable {
+    enum StringContainingPosition: String, Sendable {
         /// The string must start with the substring.
         case prefix
         /// The string must end with the substring.
@@ -89,9 +89,6 @@ extension Condition.IntEval: Hashable {}
 
 extension Condition: Hashable {}
 
-
-
-
 protocol Evaluatable {
     /// Evaluates the condition against a given context.
     /// - Parameter context: The workflow context store.
@@ -106,15 +103,15 @@ extension Condition: Evaluatable {
     public func eval(_ context: [String: AnySendable]) -> Bool {
         switch self {
         case .and(let andCondition):
-            return andCondition.allSatisfy { $0.eval(context) }
+            andCondition.allSatisfy { $0.eval(context) }
         case .or(let orCondition):
-            return orCondition.contains { $0.eval(context) }
+            orCondition.contains { $0.eval(context) }
         case .not(let notCondition):
-            return !notCondition.eval(context)
+            !notCondition.eval(context)
         case .string(let stringEval):
-            return stringEval.eval(context)
+            stringEval.eval(context)
         case .int(let intEval):
-            return intEval.eval(context)
+            intEval.eval(context)
         }
     }
 }
@@ -126,7 +123,7 @@ extension Condition.IntEval: Evaluatable {
             guard let variable = inputs[path: variableKey] else {
                 return false
             }
-            
+
             guard let intValue: Int = if let variable = variable as? Int {
                 variable
             } else if let variable = (variable as? FlowData)?.intValue {
@@ -136,13 +133,13 @@ extension Condition.IntEval: Evaluatable {
             } else {
                 return false
             }
-            
+
             return intValue == value
         case .greater(let variableKey, let value):
             guard let variable = inputs[path: variableKey] else {
                 return false
             }
-            
+
             guard let intValue: Int = if let variable = variable as? Int {
                 variable
             } else if let variable = (variable as? FlowData)?.intValue {
@@ -152,13 +149,13 @@ extension Condition.IntEval: Evaluatable {
             } else {
                 return false
             }
-            
+
             return intValue > value
         case .greater_or_equal(let variableKey, let value):
             guard let variable = inputs[path: variableKey] else {
                 return false
             }
-            
+
             guard let intValue = if let variable = variable as? Int {
                 variable
             } else if let variable = (variable as? FlowData)?.intValue {
@@ -168,14 +165,13 @@ extension Condition.IntEval: Evaluatable {
             } else {
                 return false
             }
-            
-            
+
             return intValue >= value
         case .smaller(let variableKey, let value):
             guard let variable = inputs[path: variableKey] else {
                 return false
             }
-            
+
             guard let intValue = if let variable = variable as? Int {
                 variable
             } else if let variable = (variable as? FlowData)?.intValue {
@@ -185,14 +181,13 @@ extension Condition.IntEval: Evaluatable {
             } else {
                 return false
             }
-            
-            
+
             return intValue < value
         case .smaller_or_equal(let variableKey, let value):
             guard let variable = inputs[path: variableKey] else {
                 return false
             }
-            
+
             guard let intValue = if let variable = variable as? Int {
                 variable
             } else if let variable = (variable as? FlowData)?.intValue {
@@ -202,13 +197,11 @@ extension Condition.IntEval: Evaluatable {
             } else {
                 return false
             }
-            
-            
+
             return intValue <= value
         }
     }
 }
-
 
 extension Condition.StringEval: Evaluatable {
     func eval(_ inputs: [String: AnySendable]) -> Bool {
@@ -217,7 +210,7 @@ extension Condition.StringEval: Evaluatable {
             guard let variable = inputs[path: variableKey] else {
                 return false
             }
-            
+
             guard let stringValue = if let variable = variable as? String {
                 variable
             } else if let variable = (variable as? FlowData)?.stringValue {
@@ -227,13 +220,13 @@ extension Condition.StringEval: Evaluatable {
             } else {
                 return false
             }
-            
+
             return stringValue == value
         case .empty(let variableKey):
             guard let variable = inputs[path: variableKey] else {
                 return false
             }
-            
+
             guard let stringValue = if let variable = variable as? String {
                 variable
             } else if let variable = (variable as? FlowData)?.stringValue {
@@ -243,13 +236,13 @@ extension Condition.StringEval: Evaluatable {
             } else {
                 return false
             }
-            
+
             return stringValue.isEmpty
         case .contains(let variableKey, let value, let position):
             guard let variable = inputs[path: variableKey] else {
                 return false
             }
-            
+
             guard let stringValue = if let variable = variable as? String {
                 variable
             } else if let variable = (variable as? FlowData)?.stringValue {
@@ -259,7 +252,7 @@ extension Condition.StringEval: Evaluatable {
             } else {
                 return false
             }
-            
+
             switch position {
             case .default:
                 return stringValue.contains(value)

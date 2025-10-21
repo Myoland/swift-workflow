@@ -9,36 +9,36 @@ import Tracing
 
 extension StartNode: Runnable {
     typealias Err = PayloadVerifyErr
-    
+
     public func run(executor: Executor) async throws -> NodeOutput? {
-        return try withSpan("Node(\(type))-(\(id)) Running", context: executor.serviceContext) { span in
+        try withSpan("Node(\(type))-(\(id)) Running", context: executor.serviceContext) { span in
             span.attributes.set("node_id", value: .string(id))
-            
+
             let payload = executor.context.payload.withLock { $0 }
-            
+
             guard let value = payload?.value as? [Context.Key: FlowData] else {
                 return .none
             }
-            
+
             executor.logger.debug("[*] Start Node. Values: \(value)")
-            
+
             try verify(data: value)
-            
+
             executor.logger.info("[*] Start Node. Verify Success.")
             return .block(value.asAny)
         }
     }
-    
+
     public func update(_ context: Context, value: Context.Value) throws {
         context[path: ContextStoreKey.WorkflowInputsKeyPath] = value
     }
-    
+
     public func verify(
         data: [ContextStoreKey: FlowData]
     ) throws {
         try Self.verify(data: data, decls: inputs)
     }
-    
+
     public static func verify(
         data: [ContextStoreKey: FlowData],
         decls: [ContextStoreKey: FlowData.TypeDecl]
@@ -47,7 +47,7 @@ extension StartNode: Runnable {
             guard let data = data[key] else {
                 throw Err.inputDataNotFound(key: key)
             }
-            
+
             guard data.decl == decl else {
                 throw Err.inputDataTypeMissMatch(key: key, expect: decl, actual: data)
             }
