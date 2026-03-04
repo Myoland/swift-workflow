@@ -1,5 +1,5 @@
 {
-  "originHash" : "d0952c040b794ba21746e89bd8a33572be6bde311a5a294874830458ff4aae67",
+  "originHash" : "785548b57c28d4fb237edcbd0468e2665f6cf94b78357cbed4a0654ddfa91563",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -11,12 +11,30 @@
       }
     },
     {
+      "identity" : "openapikit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mattpolzin/OpenAPIKit",
+      "state" : {
+        "revision" : "343b2c1793058fcc53c1bd7e2907f8e3a4d640fb",
+        "version" : "3.9.0"
+      }
+    },
+    {
       "identity" : "swift-algorithms",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-algorithms",
       "state" : {
         "revision" : "87e50f483c54e6efd60e885f7f5aa946cee68023",
         "version" : "1.2.1"
+      }
+    },
+    {
+      "identity" : "swift-argument-parser",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-argument-parser",
+      "state" : {
+        "revision" : "c5d11a805e765f52ba34ec7284bd4fcd6ba68615",
+        "version" : "1.7.0"
       }
     },
     {
@@ -123,8 +141,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
-        "revision" : "cea02be19733d85e6418cea11336228ca187263c",
-        "version" : "0.6.0"
+        "revision" : "efff7eb0d7151202a212ea831cc96aaadec57e0c",
+        "version" : "0.7.0"
       }
     },
     {
@@ -236,6 +254,15 @@
       }
     },
     {
+      "identity" : "swift-openapi-generator",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-openapi-generator",
+      "state" : {
+        "revision" : "ecf21fdf08d4cf30ca506bb822f5fe580e090efb",
+        "version" : "1.10.4"
+      }
+    },
+    {
       "identity" : "swift-openapi-runtime",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-openapi-runtime",
@@ -278,6 +305,15 @@
       "state" : {
         "revision" : "395a77f0aa927f0ff73941d7ac35f2b46d47c9db",
         "version" : "1.6.3"
+      }
+    },
+    {
+      "identity" : "swiftic",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AFutureD/Swiftic",
+      "state" : {
+        "revision" : "1857f809d67829a834e3935abda2c3eafac7d8de",
+        "version" : "0.5.0"
       }
     },
     {

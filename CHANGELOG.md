@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.0 (2026-03-04)
+
+Feature enhancements:
+
+- Add Gemini suppoet via `swift-gpt` 0.7.0
+
 ## 0.6.0 (2025-11-04)
 
 Feature enhancements:
