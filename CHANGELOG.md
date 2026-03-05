@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.1 (2026-03-05)
+
+Bug Fix:
+
+- LLM Node will generate duplicate delta text. Fixed via `swift-gpt` 0.7.2
+
 ## 0.7.0 (2026-03-04)
 
 Feature enhancements:
