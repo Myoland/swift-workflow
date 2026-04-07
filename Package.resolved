@@ -1,5 +1,5 @@
 {
-  "originHash" : "86bcaba3456c8b1130bd23baa04cdc3885ca1dac601ec73d35f012ae77f5ae25",
+  "originHash" : "073a7a3d90f7cf96929b6f29d1c5351df0434b9cbd0d3ea87cb5ed44932ff145",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -33,8 +33,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-argument-parser",
       "state" : {
-        "revision" : "c5d11a805e765f52ba34ec7284bd4fcd6ba68615",
-        "version" : "1.7.0"
+        "revision" : "626b5b7b2f45e1b0b1c6f4a309296d1d21d7311b",
+        "version" : "1.7.1"
       }
     },
     {
@@ -141,8 +141,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
-        "revision" : "deeb0b85c280800f14edb5e7c2a5fbd465c41c6f",
-        "version" : "0.7.2"
+        "revision" : "3ec1c9f36148e27ef577f11ddf9d00a9a4e33ca2",
+        "version" : "0.8.0"
       }
     },
     {
@@ -258,8 +258,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-openapi-generator",
       "state" : {
-        "revision" : "ecf21fdf08d4cf30ca506bb822f5fe580e090efb",
-        "version" : "1.10.4"
+        "revision" : "73997cc62c2193d5046e431c9d546119dda14502",
+        "version" : "1.11.1"
       }
     },
     {
@@ -312,8 +312,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AFutureD/Swiftic",
       "state" : {
-        "revision" : "1857f809d67829a834e3935abda2c3eafac7d8de",
-        "version" : "0.5.0"
+        "revision" : "1afac318033b5bc44a1dbd5e6c3ff2d8860dcdaa",
+        "version" : "0.6.0"
       }
     },
     {

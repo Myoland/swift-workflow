@@ -49,7 +49,7 @@ func encodeNode(_ node: any LLMFlow.Node, expect: String) throws {
     StartNode(id: "1", name: "11", inputs: [:]) as any LLMFlow.Node,
     EndNode(id: "2", name: "22"),
     TemplateNode(id: "3", name: "33", template: "fake template"),
-    LLMNode(id: "5", name: "55", modelName: "model", output: nil, context: nil, request: .init([:])),
+    LLMNode(id: "5", name: "55", modelName: "model", timeout: nil, output: nil, context: nil, request: .init([:])),
 ])
 func decodeNode(_ node: any LLMFlow.Node) throws {
     let encoder = YAMLEncoder()

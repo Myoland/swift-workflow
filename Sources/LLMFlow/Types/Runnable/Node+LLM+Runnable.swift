@@ -74,7 +74,7 @@ extension LLMNode: Runnable {
                 })
                 return .stream(output.cached().eraseToAnyAsyncSequence())
             } else {
-                let response = try await session.generate(prompt, model: llm, serviceContext: span.context)
+                let response = try await session.generate(prompt, model: llm, timeout: timeout, serviceContext: span.context)
                 let output = try AnyEncoder().encode(response)
 
                 _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)

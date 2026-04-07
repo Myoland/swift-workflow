@@ -48,6 +48,7 @@ func testWorkflowProviderTimeout() async throws {
         id: "llm_id",
         name: nil,
         modelName: "gpt-4o-mini",
+        timeout: nil,
         output: nil,
         context: nil,
         request: .init([

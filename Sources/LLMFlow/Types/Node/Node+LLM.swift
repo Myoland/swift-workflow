@@ -34,12 +34,17 @@ public struct LLMNode: ResultResaveableNode {
     /// ``Node/resultKeyPaths``). When set, the value is stored using the output path
     /// determined by ``ResultResaveableNode/outputKeyPaths``.
     public let output: String?
-
+    
+    /// Optional timeout, in seconds, for the model request.
+    ///
+    /// Applies only when generate block response. includes the HTTP fetch body time.
+    public let timeout: Double?
+    
     /// The Declarative Context.
     ///
     /// The payload will passed into ``GPTConversationCache``.
     public let context: ModelDecl?
-
+    
     /// Declarative request body for the model call.
     ///
     /// The payload supports references and templates that are rendered with the
@@ -59,6 +64,7 @@ public struct LLMNode: ResultResaveableNode {
         id: ID,
         name: String?,
         modelName: String,
+        timeout: Double?,
         output: String?,
         context: ModelDecl?,
         request: ModelDecl
@@ -67,6 +73,7 @@ public struct LLMNode: ResultResaveableNode {
         self.name = name
         self.type = .LLM
         self.modelName = modelName
+        self.timeout = timeout
         self.output = output
         self.context = context
         self.request = request

@@ -48,6 +48,7 @@ func testLLMNodeRunWithGPTSession() async throws {
         id: "ID",
         name: nil,
         modelName: "model_foo",
+        timeout: nil,
         output: nil,
         context: nil,
         request: .init([

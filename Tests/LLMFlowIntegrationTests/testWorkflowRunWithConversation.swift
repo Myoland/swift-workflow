@@ -41,6 +41,7 @@ func testWorkflowRunWithConversation() async throws {
         id: UUID().uuidString,
         name: nil,
         modelName: "gpt-4o-mini",
+        timeout: nil,
         output: outputKey,
         context: nil,
         request: .init([

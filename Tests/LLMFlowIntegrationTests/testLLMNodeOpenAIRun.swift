@@ -31,6 +31,7 @@ func testLLMNodeOpenAIRun() async throws {
     let node = LLMNode(id: "ID",
                        name: nil,
                        modelName: "model_foo",
+                       timeout: nil,
                        output: nil,
                        context: nil,
                        request: .init([

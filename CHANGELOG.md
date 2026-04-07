@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 [WIP]
+
+Feature enhancements:
+
+- Add `timeout` support for generating block response on LLM Node via `swift-gpt` 0.8.0
+
 ## 0.7.1 (2026-03-05)
 
 Bug Fix:
