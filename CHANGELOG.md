@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 (2026-04-15)
+
+Feature enhancements:
+
+- Bump swift-gpt to 0.9.0  
+
 ## 0.8.0 (2026-04-08)
 
 Feature enhancements:

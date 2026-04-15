@@ -1,5 +1,5 @@
 {
-  "originHash" : "073a7a3d90f7cf96929b6f29d1c5351df0434b9cbd0d3ea87cb5ed44932ff145",
+  "originHash" : "e3b3b092988144de45432010199d9dac23e33b6531def8398cdca3c211069072",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -22,7 +22,7 @@
     {
       "identity" : "swift-algorithms",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/apple/swift-algorithms",
+      "location" : "https://github.com/apple/swift-algorithms.git",
       "state" : {
         "revision" : "87e50f483c54e6efd60e885f7f5aa946cee68023",
         "version" : "1.2.1"
@@ -141,8 +141,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/AFutureD/swift-gpt",
       "state" : {
-        "revision" : "3ec1c9f36148e27ef577f11ddf9d00a9a4e33ca2",
-        "version" : "0.8.0"
+        "revision" : "0513a34ae1e2c05f8575c68e4f80cb0227caeba5",
+        "version" : "0.9.0"
       }
     },
     {
