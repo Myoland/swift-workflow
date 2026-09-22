@@ -5,7 +5,6 @@ import LLMFlow
 import Logging
 import OpenAPIAsyncHTTPClient
 import SynchronizationKit
-import SwiftDotenv
 
 struct APP {
     let logger = Logger(label: "App")
@@ -86,11 +85,8 @@ struct APP {
                 "context": [
                     "cachingPrefixLength" : 1
                 ],
+                "#instructions": "{{ template_id.output }}\n",
                 "inputs": [[
-                    "type": "text",
-                    "role": "system",
-                    "#content": "{{ template_id.output }}\n",
-                ], [
                     "type": "text",
                     "role": "user",
                     "#content": "{{ summary_id.output }}\n",
@@ -135,14 +131,12 @@ struct APP {
     }
 
     func execute() async throws {
-        try Dotenv.configure()
-        
         let model = LLMModelReference(
             model: .init(name: "seed-2-0-mini-260428"),
             provider: .init(
                 type: .OpenAI,
                 name: "Ark",
-                apiKey: Dotenv["ARK_API_KEY"]!.stringValue,
+                apiKey: "ARK_API_KEY",
                 apiURL: "https://ark.ap-southeast.bytepluses.com/api/v3"
             )
         )
