@@ -8,7 +8,7 @@ let package = Package(
     platforms: [.macOS(.v15)],
     dependencies: [
         .package(path: "../.."),
-        .package(path: "../../../swift-gpt"),
+        .package(url: "https://github.com/AFutureD/swift-gpt", branch: "ark-context-cache"),
         .package(url: "https://github.com/apple/swift-log", from: "1.6.4"),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client", from: "1.0.0"),
     ],

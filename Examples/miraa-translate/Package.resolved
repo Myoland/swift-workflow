@@ -1,5 +1,5 @@
 {
-  "originHash" : "162e31b105895558171e386566934d8fbd15d52d629b66118a98f8e8c65a155d",
+  "originHash" : "ce779cf928ef0313fcb911b5083e81bb2142fd4808fbeaef8e24f61b83c7ff79",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -125,6 +125,15 @@
       "state" : {
         "revision" : "9648f32126ade414b00b9551c27870d4ad9b168c",
         "version" : "1.0.2"
+      }
+    },
+    {
+      "identity" : "swift-gpt",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/AFutureD/swift-gpt",
+      "state" : {
+        "branch" : "ark-context-cache",
+        "revision" : "bd2f2f5ad90c71b1bec582968363e5f338c157fd"
       }
     },
     {
@@ -303,8 +312,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/jpsim/Yams",
       "state" : {
-        "revision" : "3d6871d5b4a5cd519adf233fbb576e0a2af71c17",
-        "version" : "5.4.0"
+        "revision" : "a27b21e0c81c5bf42049b897a62aaf387e80f279",
+        "version" : "6.2.2"
       }
     }
   ],
