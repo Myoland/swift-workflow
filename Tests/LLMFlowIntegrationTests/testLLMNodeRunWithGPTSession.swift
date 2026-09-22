@@ -11,12 +11,12 @@ import Testing
 final class DummyConversationCache: GPTConversationCache {
     private let conversations: LazyLockedValue<[String: Conversation]> = .init([:])
 
-    func get(conversationID: String?, context _: LLMFlow.Context.Store) async throws -> Conversation? {
+    func get(conversationID: String?, prompt _: Prompt) async throws -> Conversation? {
         guard let conversationID else { return nil }
         return conversations.withLock { $0[conversationID] }
     }
 
-    func update(conversationID: String?, context _: LLMFlow.Context.Store, conversation: Conversation?) async throws -> String? {
+    func update(conversationID: String?, conversation: Conversation?) async throws -> String? {
         guard let conversationID else { return nil }
         conversations.withLock { $0[conversationID] = conversation }
         return conversationID

@@ -16,9 +16,13 @@ public protocol LLMProviderSolver {
     func resolve(modelName: String) -> LLMQualifiedModel?
 }
 
+/// Loads and stores the ``swift-gpt/GPT/Conversation`` that an ``LLMNode`` continues from.
+///
+/// For prefix caching, key by ``swift-gpt/GPT/Prompt/prefixCacheHashValue``,
+/// so that prompts sharing the same prefix share the stored prefix even without a conversation ID.
 public protocol GPTConversationCache: Sendable {
-    func get(conversationID: String?, context: Context.Store) async throws -> Conversation?
-    func update(conversationID: String?, context: Context.Store, conversation: Conversation?) async throws -> String?
+    func get(conversationID: String?, prompt: Prompt) async throws -> Conversation?
+    func update(conversationID: String?, conversation: Conversation?) async throws -> String?
 }
 
 extension LLMNode: Runnable {
@@ -46,15 +50,35 @@ extension LLMNode: Runnable {
 
             let context = executor.context
             let inputs = context.filter(keys: nil) // TODO: only get necessary values
-            let partialContext = (try? self.context?.render(inputs)) ?? [:]
+
+            // Build prompt
 
             let renderedValues = try request.render(inputs)
             let prompt: Prompt = try AnyDecoder().decode(from: renderedValues)
             executor.logger.info("[*] LLMNode(\(id)) Prompt: \(String(describing: prompt))")
 
+            // Get History
+
             let conversationID = prompt.conversationID
             let conversationCache = locator.resolve(shared: GPTConversationCache.self)
-            let conversation = try await conversationCache?.get(conversationID: conversationID, context: partialContext)
+            var conversation = try await conversationCache?.get(conversationID: conversationID, prompt: prompt)
+
+            // Prepare Prefix Cache
+            //
+            // Persisted right away, so that concurrent runs can reuse it before this run ends.
+
+            if let hash = prompt.prefixCacheHashValue, conversation?.prefixCacheReference?.prefixHashValue != hash {
+                let session = GPTSession(client: client, conversation: nil, logger: executor.logger)
+                if let reference = try await session.prepareCache(for: prompt, model: llm, timeout: timeout, serviceContext: span.context) {
+                    executor.logger.info("[*] LLMNode(\(id)) Prefix cache prepared: \(reference)")
+                    var prepared = conversation ?? Conversation(id: conversationID)
+                    prepared.prefixCacheReference = reference
+                    conversation = prepared
+                    _ = try await conversationCache?.update(conversationID: conversationID, conversation: prepared)
+                }
+            }
+
+            // Perform Request
 
             let session = GPTSession(client: client, conversation: conversation, logger: executor.logger)
 
@@ -68,7 +92,7 @@ extension LLMNode: Runnable {
                     if let next = try await iter.next() {
                         return try AnyEncoder().encode(next) as AnySendable
                     } else {
-                        _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
+                        _ = try await conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
                         return nil
                     }
                 })
@@ -77,7 +101,7 @@ extension LLMNode: Runnable {
                 let response = try await session.generate(prompt, model: llm, timeout: timeout, serviceContext: span.context)
                 let output = try AnyEncoder().encode(response)
 
-                _ = try await conversationCache?.update(conversationID: conversationID, context: partialContext, conversation: session.conversation)
+                _ = try await conversationCache?.update(conversationID: conversationID, conversation: session.conversation)
                 return .block(output)
             }
         }

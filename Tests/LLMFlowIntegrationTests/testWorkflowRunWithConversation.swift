@@ -32,7 +32,7 @@ func testWorkflowRunWithConversation() async throws {
         .init(name: "gpt-4o-mini", models: [.init(model: .init(name: "gpt-4o-mini"), provider: openai)])
     )
     let dummyConversationCache = DummyConversationCache()
-    _ = try await dummyConversationCache.update(conversationID: "fake_id", context: [:], conversation: Conversation(items: [.input(.text(.init(role: .user, content: "I'm John")))]))
+    _ = try await dummyConversationCache.update(conversationID: "fake_id", conversation: Conversation(items: [.input(.text(.init(role: .user, content: "I'm John")))]))
 
     let startNode = StartNode(id: UUID().uuidString, name: nil, inputs: [:])
 
@@ -148,7 +148,7 @@ func testWorkflowRunWithConversationYAML() async throws {
     )
 
     let dummyConversationCache = DummyConversationCache()
-    _ = try await dummyConversationCache.update(conversationID: "fake_id", context: [:], conversation: Conversation(items: [
+    _ = try await dummyConversationCache.update(conversationID: "fake_id", conversation: Conversation(items: [
         .input(.text(.init(role: .user, content: "I'm John"))),
     ]))
 
