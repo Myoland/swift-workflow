@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.0 (2026-10-13)
+
+Feature enhancements:
+
+- Bump swift-gpt to 0.11.0
+- LLM Node stores the prefix cache via `GPTSession.prepareCache` when the cached reference is missing or stale.
+- Add the `miraa-translate` example.
+
+Behavior changes:
+
+- `GPTConversationCache.get` receives the prompt, so that the prefix can be keyed by `Prompt.prefixCacheHashValue`.
+
 ## 0.9.0 (2026-04-15)
 
 Feature enhancements:
