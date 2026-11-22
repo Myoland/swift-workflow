@@ -1,0 +1,29 @@
+name: Workflow Schema
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "schema/**"
+      - "Tests/Fixtures/WorkflowSchema/**"
+      - ".github/workflows/workflow-schema.yml"
+  pull_request:
+    paths:
+      - "schema/**"
+      - "Tests/Fixtures/WorkflowSchema/**"
+      - ".github/workflows/workflow-schema.yml"
+
+jobs:
+  check-jsonschema:
+    name: Schema fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install check-jsonschema
+        run: pip install check-jsonschema==0.39.0
+      - name: Valid fixtures pass, invalid fixtures fail
+        run: schema/check-fixtures.sh

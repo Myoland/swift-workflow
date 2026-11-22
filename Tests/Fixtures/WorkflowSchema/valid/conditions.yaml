@@ -1,0 +1,59 @@
+# Every condition operator, nested.
+nodes:
+  - id: start_id
+    type: START
+    inputs:
+      model: String
+      count: Int
+  - id: a_id
+    type: TEMPLATE
+    template: a
+  - id: b_id
+    type: TEMPLATE
+    template: b
+  - id: end_id
+    type: END
+edges:
+  - from: start_id
+    to: a_id
+    condition:
+      or:
+        - equal:
+            variable: workflow.inputs.model
+            value: special
+        - equal:
+            variable: workflow.inputs.count
+            value: 0
+        - and:
+            - not:
+                empty:
+                  variable: workflow.inputs.model
+            - contains:
+                variable: workflow.inputs.model
+                value: gpt
+                position: prefix
+            - contains:
+                variable: workflow.inputs.model
+                value: mini
+  - from: start_id
+    to: b_id
+    condition:
+      and:
+        - greater:
+            variable: workflow.inputs.count
+            value: 1
+        - greater_or_equal:
+            variable: workflow.inputs.count
+            value: 2
+        - smaller:
+            variable: workflow.inputs.count
+            value: 10
+        - smaller_or_equal:
+            variable: workflow.inputs.count
+            value: 9
+  - from: start_id
+    to: end_id
+  - from: a_id
+    to: end_id
+  - from: b_id
+    to: end_id

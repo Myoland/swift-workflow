@@ -1,0 +1,9 @@
+nodes:
+  - id: start_id
+    type: START
+    inputs: {}
+  - id: end_id
+    type: END
+edges:
+  - from: start_id
+    to: end_id

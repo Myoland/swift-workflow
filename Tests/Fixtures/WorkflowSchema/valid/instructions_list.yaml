@@ -1,0 +1,35 @@
+# instructions as a list of inputs, generation block, streaming.
+nodes:
+  - id: start_id
+    type: START
+    inputs:
+      message: String
+  - id: llm_id
+    type: LLM
+    modelName: explain-model
+    request:
+      stream: true
+      generation:
+        temperature: 0.3
+        maxTokens: 2048
+        thinking:
+          level: low
+      instructions:
+        - type: text
+          role: system
+          content: You are a helpful teacher.
+        - type: text
+          role: developer
+          "#content": "Explain: {{ workflow.inputs.message }}"
+      inputs:
+        - type: file
+          role: user
+          filename: notes.txt
+          $content: workflow.inputs.message
+  - id: end_id
+    type: END
+edges:
+  - from: start_id
+    to: llm_id
+  - from: llm_id
+    to: end_id

@@ -1,0 +1,22 @@
+# Invalid: type names are case-sensitive: `string`.
+nodes:
+  - id: start_id
+    type: START
+    inputs:
+      query: string
+  - id: llm_id
+    type: LLM
+    modelName: test-model
+    request:
+      stream: false
+      inputs:
+        - type: text
+          role: user
+          "#content": "{{ workflow.inputs.query }}"
+  - id: end_id
+    type: END
+edges:
+  - from: start_id
+    to: llm_id
+  - from: llm_id
+    to: end_id
