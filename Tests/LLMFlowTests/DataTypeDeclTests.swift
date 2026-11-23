@@ -186,3 +186,47 @@ func testDataTypeDecode(_ description: String, expect: FlowData.TypeDecl) throws
     let decoded = try decoder.decode(FlowData.TypeDecl.self, from: description)
     #expect(decoded == expect)
 }
+
+@Test("testDataTypeDecodeInvalidThrows", arguments: [
+    "Bool",
+    "string",
+    "'[Bool]'",
+    "'[[String]]'",
+    "'[Int: String]'",
+    "''",
+])
+func testDataTypeDecodeInvalidThrows(_ description: String) throws {
+    let decoder = YAMLDecoder()
+    #expect(throws: DecodingError.self) {
+        try decoder.decode(FlowData.TypeDecl.self, from: description)
+    }
+}
+
+@Test("testSingleDataTypeDecodeInvalidThrows", arguments: ["Bool", "string", "'[Int]'"])
+func testSingleDataTypeDecodeInvalidThrows(_ description: String) throws {
+    let decoder = YAMLDecoder()
+    #expect(throws: DecodingError.self) {
+        try decoder.decode(FlowData.Single.TypeDecl.self, from: description)
+    }
+}
+
+@Test("testConfigWithInvalidStartInputTypeThrows")
+func testConfigWithInvalidStartInputTypeThrows() throws {
+    let yaml = """
+    nodes:
+      - id: start_id
+        type: START
+        inputs:
+          flag: Bool
+      - id: end_id
+        type: END
+    edges:
+      - from: start_id
+        to: end_id
+    """
+
+    let decoder = YAMLDecoder()
+    #expect(throws: DecodingError.self) {
+        try decoder.decode(Workflow.Config.self, from: yaml)
+    }
+}

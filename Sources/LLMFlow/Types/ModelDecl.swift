@@ -118,6 +118,9 @@ public struct ModelDecl: Codable, Sendable, Hashable {
     ///
     /// - Parameter values: The context store containing the data for rendering.
     /// - Returns: A dictionary with rendered values.
+    /// - Throws: `DecodingError.dataCorrupted` when a `$` reference indexes past the end of a list (or before its start);
+    ///   its coding path is the field holding the reference and its underlying error a
+    ///   ``ContextStorePath/IndexOutOfRangeError``. Errors from rendering `#` templates.
     public func render(_ values: [String: AnySendable]) throws -> Context.Store {
         try body.render(values)
     }
@@ -140,22 +143,48 @@ public struct ModelDecl: Codable, Sendable, Hashable {
 
 // MARK: Context Render
 
+/// A coding key of a request field, for errors thrown while rendering.
+private struct RenderCodingKey: CodingKey {
+    let stringValue: String
+    let intValue: Int?
+
+    init(stringValue: String) {
+        self.stringValue = stringValue
+        self.intValue = nil
+    }
+
+    init(intValue: Int) {
+        self.stringValue = "\(intValue)"
+        self.intValue = intValue
+    }
+}
+
 private extension [String: FlowData] {
-    func render(_ values: Context.Store) throws -> Context.Store {
+    func render(_ values: Context.Store, codingPath: [any CodingKey] = []) throws -> Context.Store {
         var result: Context.Store = [:]
 
         for (key, value) in self {
             let modelDeclKey = ModelDeclKey(key)
+            let fieldPath = codingPath + [RenderCodingKey(stringValue: key)]
 
             switch modelDeclKey {
             case .constant(let contant):
-                result[contant] = try value.render(values)
+                result[contant] = try value.render(values, codingPath: fieldPath)
 
             case .ref(let ref):
                 let value = value.asAny
 
                 if let key = value as? String {
-                    result[ref] = values[path: ContextStorePath(key)]
+                    let path = ContextStorePath(key)
+                    do {
+                        result[ref] = try path.lookup(in: values)
+                    } catch {
+                        throw DecodingError.dataCorrupted(.init(
+                            codingPath: fieldPath,
+                            debugDescription: "Reference \(error)",
+                            underlyingError: error
+                        ))
+                    }
                 } else if let keys = value as? [String] {
                     result[ref] = values[path: keys]
                 }
@@ -173,26 +202,28 @@ private extension [String: FlowData] {
 }
 
 private extension FlowData {
-    func render(_ values: Context.Store) throws -> AnySendable {
+    func render(_ values: Context.Store, codingPath: [any CodingKey]) throws -> AnySendable {
         switch self {
         case .single(let single):
             single.asAny
         case .list(let list):
-            try list.render(values)
+            try list.render(values, codingPath: codingPath)
         case .map(let map):
-            try map.render(values)
+            try map.render(values, codingPath: codingPath)
         }
     }
 }
 
 private extension FlowData.Map {
-    func render(_ values: Context.Store) throws -> [String: AnySendable] {
-        try elememts.render(values)
+    func render(_ values: Context.Store, codingPath: [any CodingKey]) throws -> [String: AnySendable] {
+        try elememts.render(values, codingPath: codingPath)
     }
 }
 
 private extension FlowData.List {
-    func render(_ values: Context.Store) throws -> [AnySendable] {
-        try elements.map { try $0.render(values) }
+    func render(_ values: Context.Store, codingPath: [any CodingKey]) throws -> [AnySendable] {
+        try elements.enumerated().map { index, element in
+            try element.render(values, codingPath: codingPath + [RenderCodingKey(intValue: index)])
+        }
     }
 }

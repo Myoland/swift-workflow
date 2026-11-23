@@ -105,43 +105,80 @@ extension ContextStorePath: ExpressibleByArrayLiteral {
     }
 }
 
+// MARK: Lookup
+
+public extension ContextStorePath {
+    /// Thrown when a path indexes past the end of a list, or before its start (a negative index).
+    ///
+    /// ``Condition/evaluate(_:)`` throws it directly; ``ModelDecl/render(_:)`` wraps it in a
+    /// `DecodingError.dataCorrupted` whose coding path is the request field holding the reference.
+    struct IndexOutOfRangeError: Error, Hashable, Sendable, CustomStringConvertible {
+        /// The whole path that was looked up.
+        public let path: ContextStorePath
+        /// The index that is out of range.
+        public let index: Int
+        /// The number of elements in the list.
+        public let count: Int
+
+        public init(path: ContextStorePath, index: Int, count: Int) {
+            self.path = path
+            self.index = index
+            self.count = count
+        }
+
+        public var description: String {
+            "`\(path)` reads index \(index) of a list with \(count) element(s)."
+        }
+    }
+}
+
+extension ContextStorePath {
+    /// Looks the path up in `root`: an integer key indexes a list, any other key a map.
+    ///
+    /// - Returns: The value, or `nil` when the path is empty, a key is missing, or a value has another shape.
+    /// - Throws: ``IndexOutOfRangeError`` when an integer key is outside a list's bounds.
+    func lookup(in root: AnySendable) throws -> AnySendable? {
+        guard !keys.isEmpty else { return nil }
+
+        var current = root
+        for key in keys {
+            if let map = current as? [String: AnySendable] {
+                guard key.intValue == nil, let next = map[key.strValue] else { return nil }
+                current = next
+            } else if let list = current as? [AnySendable] {
+                guard let index = key.intValue else { return nil }
+                guard list.indices.contains(index) else {
+                    throw IndexOutOfRangeError(path: self, index: index, count: list.count)
+                }
+                current = list[index]
+            } else {
+                return nil
+            }
+        }
+        return current
+    }
+}
+
 // MARK: Collection
 
 extension Collection<AnySendable> where Index == Int {
     subscript(key position: ContextStorePath.Key?) -> Element? {
-        guard let idx = position?.intValue else {
+        guard let idx = position?.intValue, indices.contains(idx) else {
             return nil
         }
         return self[idx]
     }
 
     subscript(path path: ContextStorePath?) -> Element? {
-        guard let keys = path?.keys else { return nil }
-
-        let (key, rest) = keys.separateFirst()
-
-        guard let value = self[key: key] else {
-            return nil
-        }
-
-        guard let rest, !rest.isEmpty else {
-            return value
-        }
-
-        if let dic = value as? [String: Element] {
-            return dic[path: .init(keys: rest)]
-        } else if let list = value as? [Element] {
-            return list[path: .init(keys: rest)]
-        }
-
-        return nil
+        guard let path else { return nil }
+        return (try? path.lookup(in: Array(self))) ?? nil
     }
 }
 
 extension MutableCollection where Element == AnySendable, Index == Int {
     subscript(key position: ContextStorePath.Key?) -> Element? {
         get {
-            guard let idx = position?.intValue else {
+            guard let idx = position?.intValue, indices.contains(idx) else {
                 return nil
             }
             return self[idx]
@@ -157,24 +194,7 @@ extension MutableCollection where Element == AnySendable, Index == Int {
     subscript(keys keys: [ContextStorePath.Key]?) -> Element? {
         get {
             guard let keys else { return nil }
-
-            let (key, rest) = keys.separateFirst()
-
-            guard let value = self[key: key] else {
-                return nil
-            }
-
-            guard let rest, !rest.isEmpty else {
-                return value
-            }
-
-            if let dic = value as? [String: Element] {
-                return dic[keys: rest]
-            } else if let list = value as? [Element] {
-                return list[keys: rest]
-            }
-
-            return nil
+            return (try? ContextStorePath(keys: keys).lookup(in: Array(self))) ?? nil
         }
 
         set {
@@ -229,24 +249,7 @@ extension [String: AnySendable] {
     subscript(keys keys: [ContextStorePath.Key]?) -> Value? {
         get {
             guard let keys else { return nil }
-
-            let (key, rest) = keys.separateFirst()
-
-            guard let value = self[key: key] else {
-                return nil
-            }
-
-            guard let rest, !rest.isEmpty else {
-                return value
-            }
-
-            if let dic = value as? [Key: Value] {
-                return dic[path: .init(keys: rest)]
-            } else if let list = value as? [Value] {
-                return list[path: .init(keys: rest)]
-            }
-
-            return nil
+            return (try? ContextStorePath(keys: keys).lookup(in: self)) ?? nil
         }
 
         set {
