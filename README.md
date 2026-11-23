@@ -167,6 +167,16 @@ for try await state in updates {
 print("Workflow finished.")
 ```
 
+### Validate YAML with the JSON Schema
+
+`schema/workflow.schema.json` (JSON Schema draft 2020-12) describes the YAML that `Workflow.Config` decodes: node types and their fields, START input types, LLM request keys (`$` references, `#` templates), and `extraBody` key names that look like credentials (rejected). Check a workflow before shipping it:
+
+```bash
+check-jsonschema --schemafile schema/workflow.schema.json path/to/workflow.yaml
+```
+
+The schema checks structure only. Graph rules (unique node ids, one START, edges point to existing nodes, no cycles, every node reachable) and Jinja template compilation must be checked by the application. Fixtures live in `Tests/Fixtures/WorkflowSchema`; `schema/check-fixtures.sh` runs them.
+
 ### Why Perfer YAML ?
 
 - **Configuration-Driven Evolution**: Update workflows without changing or redeploying code. You can roll out new prompts, templates, or conditional paths simply by shipping a new YAML file.

@@ -1,0 +1,23 @@
+# Invalid: LLM has no `model` key (typo of modelName).
+nodes:
+  - id: start_id
+    type: START
+    inputs:
+      query: String
+  - id: llm_id
+    type: LLM
+    modelName: test-model
+    model: gpt-4o
+    request:
+      stream: false
+      inputs:
+        - type: text
+          role: user
+          "#content": "{{ workflow.inputs.query }}"
+  - id: end_id
+    type: END
+edges:
+  - from: start_id
+    to: llm_id
+  - from: llm_id
+    to: end_id

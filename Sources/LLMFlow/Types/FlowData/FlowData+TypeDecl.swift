@@ -95,7 +95,13 @@ extension FlowData.Single.TypeDecl: Codable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let description = try container.decode(String.self)
-        self.init(description)!
+        guard let decl = Self(description) else {
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Invalid type declaration '\(description)'. Expected one of: String, Int, Any."
+            )
+        }
+        self = decl
     }
 
     public func encode(to encoder: any Encoder) throws {
@@ -108,7 +114,13 @@ extension FlowData.TypeDecl: Codable {
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
         let description = try container.decode(String.self)
-        self.init(description)!
+        guard let decl = Self(description) else {
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Invalid type declaration '\(description)'. Expected String, Int, Any, [T] or [String: T] where T is String, Int or Any (see schema/workflow.schema.json)."
+            )
+        }
+        self = decl
     }
 
     public func encode(to encoder: any Encoder) throws {

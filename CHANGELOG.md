@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.1 (2026-11-23)
+
+Bug Fix:
+
+- Decoding a START input type that is not supported (for example `Bool` or `string`) throws `DecodingError` instead of crashing the process.
+
+Feature enhancements:
+
+- Add `schema/workflow.schema.json`, a JSON Schema (draft 2020-12) for workflow YAML, with valid and invalid fixtures in `Tests/Fixtures/WorkflowSchema` and a CI check (`check-jsonschema`).
+
 ## 0.10.0 (2026-10-13)
 
 Feature enhancements:

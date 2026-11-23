@@ -1,0 +1,7 @@
+# Invalid: `edges` is required.
+nodes:
+  - id: start_id
+    type: START
+    inputs: {}
+  - id: end_id
+    type: END

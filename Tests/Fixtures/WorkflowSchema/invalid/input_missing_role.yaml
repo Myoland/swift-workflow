@@ -1,0 +1,21 @@
+# Invalid: inputs need a role.
+nodes:
+  - id: start_id
+    type: START
+    inputs:
+      query: String
+  - id: llm_id
+    type: LLM
+    modelName: test-model
+    request:
+      stream: false
+      inputs:
+        - type: text
+          content: hi
+  - id: end_id
+    type: END
+edges:
+  - from: start_id
+    to: llm_id
+  - from: llm_id
+    to: end_id

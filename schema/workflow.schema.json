@@ -1,0 +1,384 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Myoland/swift-workflow/blob/main/schema/workflow.schema.json",
+  "title": "swift-workflow Workflow.Config",
+  "description": "Structure of a workflow YAML decoded by Workflow.Config. Graph rules (unique ids, one START, edges point to existing nodes, no cycles, reachability) and template compilation are not expressible here and are checked by the consumer's linter.",
+  "type": "object",
+  "required": ["nodes", "edges"],
+  "additionalProperties": false,
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    }
+  },
+  "$defs": {
+    "nodeId": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "typeDecl": {
+      "description": "FlowData.TypeDecl. Bool and nested containers are not accepted by the decoder.",
+      "type": "string",
+      "pattern": "^(String|Int|Any|\\[(String|Int|Any)\\]|\\[String: ?(String|Int|Any)\\])$"
+    },
+    "node": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/nodeId" },
+        "type": { "enum": ["START", "END", "TEMPLATE", "LLM"] },
+        "name": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "START" } } },
+          "then": {
+            "required": ["inputs"],
+            "properties": {
+              "id": true,
+              "type": true,
+              "name": true,
+              "inputs": {
+                "type": "object",
+                "additionalProperties": { "$ref": "#/$defs/typeDecl" }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "END" } } },
+          "then": {
+            "properties": {
+              "id": true,
+              "type": true,
+              "name": true
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "TEMPLATE" } } },
+          "then": {
+            "required": ["template"],
+            "properties": {
+              "id": true,
+              "type": true,
+              "name": true,
+              "template": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "LLM" } } },
+          "then": {
+            "required": ["modelName", "request"],
+            "properties": {
+              "id": true,
+              "type": true,
+              "name": true,
+              "modelName": { "type": "string", "minLength": 1 },
+              "timeout": { "type": "number", "minimum": 1, "maximum": 600 },
+              "output": { "type": "string", "minLength": 1 },
+              "context": { "$ref": "#/$defs/modelDecl" },
+              "request": { "$ref": "#/$defs/request" }
+            },
+            "additionalProperties": false
+          }
+        }
+      ]
+    },
+    "refValue": {
+      "description": "Value of a `$` key: a context path, dotted or as a list of components.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "templateValue": {
+      "description": "Value of a `#` key: a Jinja template.",
+      "type": "string"
+    },
+    "modelDecl": {
+      "description": "ModelDecl body: any map; `$` keys are context references, `#` keys are Jinja templates.",
+      "type": "object",
+      "patternProperties": {
+        "^\\$": { "$ref": "#/$defs/refValue" },
+        "^#": { "$ref": "#/$defs/templateValue" }
+      }
+    },
+    "request": {
+      "description": "LLM request, rendered and decoded as swift-gpt Prompt.",
+      "type": "object",
+      "properties": {
+        "stream": { "type": "boolean" },
+        "conversationID": { "type": "string" },
+        "instructions": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "$ref": "#/$defs/input" } }
+          ]
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/input" }
+        },
+        "maxTokens": { "type": "integer", "minimum": 1, "maximum": 32768 },
+        "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+        "topP": { "type": "number", "minimum": 0, "maximum": 1 },
+        "store": { "type": "boolean" },
+        "context": {
+          "type": "object",
+          "properties": {
+            "maxItemCount": { "type": "integer", "minimum": 0 },
+            "cachingPrefixLength": { "type": "integer", "minimum": 0 }
+          },
+          "patternProperties": {
+            "^\\$": { "$ref": "#/$defs/refValue" },
+            "^#": { "$ref": "#/$defs/templateValue" }
+          },
+          "additionalProperties": false
+        },
+        "generation": {
+          "type": "object",
+          "properties": {
+            "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+            "topP": { "type": "number", "minimum": 0, "maximum": 1 },
+            "maxTokens": { "type": "integer", "minimum": 1, "maximum": 32768 },
+            "store": { "type": "boolean" },
+            "thinking": {
+              "type": "object",
+              "properties": {
+                "includeInResponse": { "type": "boolean" },
+                "level": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "patternProperties": {
+            "^\\$": { "$ref": "#/$defs/refValue" },
+            "^#": { "$ref": "#/$defs/templateValue" }
+          },
+          "additionalProperties": false
+        },
+        "extraBody": { "$ref": "#/$defs/extraBodyObject" }
+      },
+      "patternProperties": {
+        "^\\$": { "$ref": "#/$defs/refValue" },
+        "^#": { "$ref": "#/$defs/templateValue" }
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "description": "Prompt.Input. Each field may also be given as `$field` (reference) or `#field` (template).",
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["text", "image", "file"] },
+        "role": { "enum": ["system", "developer", "user", "assistant"] }
+      },
+      "patternProperties": {
+        "^\\$": { "$ref": "#/$defs/refValue" },
+        "^#": { "$ref": "#/$defs/templateValue" }
+      },
+      "anyOf": [
+        { "required": ["role"] },
+        { "required": ["$role"] },
+        { "required": ["#role"] }
+      ],
+      "allOf": [
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "text" } } },
+          "then": {
+            "properties": {
+              "type": true,
+              "role": true,
+              "content": { "type": "string" }
+            },
+            "patternProperties": { "^[$#]": true },
+            "additionalProperties": false,
+            "anyOf": [
+              { "required": ["content"] },
+              { "required": ["$content"] },
+              { "required": ["#content"] }
+            ]
+          }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "file" } } },
+          "then": {
+            "properties": {
+              "type": true,
+              "role": true,
+              "id": { "type": "string" },
+              "filename": { "type": "string" },
+              "content": { "type": "string" }
+            },
+            "patternProperties": { "^[$#]": true },
+            "additionalProperties": false,
+            "anyOf": [
+              { "required": ["content"] },
+              { "required": ["$content"] },
+              { "required": ["#content"] }
+            ]
+          }
+        },
+        {
+          "if": { "required": ["type"], "properties": { "type": { "const": "image" } } },
+          "then": {
+            "properties": {
+              "type": true,
+              "role": true,
+              "url": { "type": "string" },
+              "base64": { "type": "string" },
+              "external_id": { "type": "string" },
+              "detail": { "type": "string" }
+            },
+            "patternProperties": { "^[$#]": true },
+            "additionalProperties": false,
+            "anyOf": [
+              { "required": ["url"] },
+              { "required": ["$url"] },
+              { "required": ["#url"] },
+              { "required": ["base64"] },
+              { "required": ["$base64"] },
+              { "required": ["#base64"] },
+              { "required": ["external_id"] },
+              { "required": ["$external_id"] },
+              { "required": ["#external_id"] }
+            ]
+          }
+        }
+      ]
+    },
+    "secretLikeName": {
+      "description": "Key names that look like credentials. Case-insensitive; `tokens` (max_tokens, budget_tokens) is allowed. Written without inline flags so ECMA-262, Python and NSRegularExpression read it the same way.",
+      "pattern": "([Aa][Pp][Ii][_-]?[Kk][Ee][Yy]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Tt][Oo][Kk][Ee][Nn](?![Ss])|[Aa][Uu][Tt][Hh][Oo][Rr][Ii][Zz][Aa][Tt][Ii][Oo][Nn]|[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd])"
+    },
+    "extraBodyObject": {
+      "description": "Passed through to the provider. Key names at any depth must not look like credentials.",
+      "type": "object",
+      "propertyNames": { "not": { "$ref": "#/$defs/secretLikeName" } },
+      "additionalProperties": { "$ref": "#/$defs/extraBodyValue" }
+    },
+    "extraBodyValue": {
+      "if": { "type": "object" },
+      "then": { "$ref": "#/$defs/extraBodyObject" },
+      "else": {
+        "if": { "type": "array" },
+        "then": { "items": { "$ref": "#/$defs/extraBodyValue" } }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "$ref": "#/$defs/nodeId" },
+        "to": { "$ref": "#/$defs/nodeId" },
+        "condition": { "$ref": "#/$defs/condition" }
+      },
+      "additionalProperties": false
+    },
+    "contextPath": {
+      "description": "Dotted context path, e.g. workflow.inputs.model or llm_id.output.usage.output.",
+      "type": "string",
+      "minLength": 1
+    },
+    "condition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["and"],
+          "properties": { "and": { "type": "array", "items": { "$ref": "#/$defs/condition" } } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["or"],
+          "properties": { "or": { "type": "array", "items": { "$ref": "#/$defs/condition" } } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["not"],
+          "properties": { "not": { "$ref": "#/$defs/condition" } },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["equal"],
+          "properties": {
+            "equal": {
+              "type": "object",
+              "required": ["variable", "value"],
+              "properties": {
+                "variable": { "$ref": "#/$defs/contextPath" },
+                "value": { "type": ["string", "integer"] }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["empty"],
+          "properties": {
+            "empty": {
+              "type": "object",
+              "required": ["variable"],
+              "properties": { "variable": { "$ref": "#/$defs/contextPath" } },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["contains"],
+          "properties": {
+            "contains": {
+              "type": "object",
+              "required": ["variable", "value"],
+              "properties": {
+                "variable": { "$ref": "#/$defs/contextPath" },
+                "value": { "type": "string" },
+                "position": { "enum": ["prefix", "suffix", "default"] }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        { "$ref": "#/$defs/intCondition" }
+      ]
+    },
+    "intCompare": {
+      "type": "object",
+      "required": ["variable", "value"],
+      "properties": {
+        "variable": { "$ref": "#/$defs/contextPath" },
+        "value": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "intCondition": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "greater": { "$ref": "#/$defs/intCompare" },
+        "greater_or_equal": { "$ref": "#/$defs/intCompare" },
+        "smaller": { "$ref": "#/$defs/intCompare" },
+        "smaller_or_equal": { "$ref": "#/$defs/intCompare" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,23 @@
+# Invalid: temperature is 0-2.
+nodes:
+  - id: start_id
+    type: START
+    inputs:
+      query: String
+  - id: llm_id
+    type: LLM
+    modelName: test-model
+    request:
+      stream: false
+      inputs:
+        - type: text
+          role: user
+          "#content": "{{ workflow.inputs.query }}"
+      temperature: 2.5
+  - id: end_id
+    type: END
+edges:
+  - from: start_id
+    to: llm_id
+  - from: llm_id
+    to: end_id

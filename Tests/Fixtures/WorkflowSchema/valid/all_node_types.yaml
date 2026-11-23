@@ -1,0 +1,75 @@
+# Every node type and every field the decoder reads.
+nodes:
+  - id: start_id
+    name: Start
+    type: START
+    inputs:
+      query: String
+      count: Int
+      extra: Any
+      tags: '[String]'
+      scores: '[String: Int]'
+      meta: '[String:Any]'
+      conversation_id: String
+      image_url: String
+
+  - id: template_id
+    type: TEMPLATE
+    template: >
+      {% if workflow.inputs.count > 1 %}many{% else %}one{% endif %}
+
+  - id: llm_id
+    name: Translate
+    type: LLM
+    modelName: translate-model
+    timeout: 15
+    output: tranlsation_result
+    context:
+      "$conversationID": workflow.inputs.conversation_id
+    request:
+      stream: false
+      temperature: 0.0
+      topP: 1.0
+      maxTokens: 1024
+      store: false
+      "$conversationID": workflow.inputs.conversation_id
+      "#instructions": "Translate into {{ template_id.output }}."
+      context:
+        cachingPrefixLength: 1
+      extraBody:
+        thinking:
+          type: enabled
+          budget_tokens: 512
+        translation_options:
+          source_lang: auto
+          "$target_lang": template_id.output
+        stop:
+          - "\n\n"
+      inputs:
+        - type: text
+          role: user
+          content: Hello
+        - type: text
+          role: assistant
+          "#content": "{{ workflow.inputs.query }}"
+        - type: text
+          role: user
+          $content:
+            - workflow
+            - inputs
+            - query
+        - type: image
+          role: user
+          $url: workflow.inputs.image_url
+
+  - id: end_id
+    name: End
+    type: END
+
+edges:
+  - from: start_id
+    to: template_id
+  - from: template_id
+    to: llm_id
+  - from: llm_id
+    to: end_id
