@@ -12,7 +12,7 @@ Bug Fix:
 Feature enhancements:
 
 - Add `Workflow.Config.validate() -> [WorkflowProblem]`: START input types, unique ids, one START, at least one END, edges between existing nodes, no cycles, every node reachable from START, no node without exit, no dead end (only conditional edges, none sure to hold), no edges out of END. Each problem has a stable rule id (`lint.*`), a message and a path such as `nodes[2]` or `edges[3].to`.
-- Add `Workflow.Config.runPaths(context:limit:)` (default limit 256) and `Workflow.Config.evaluatedEdges(from:)`: the paths the engine can take, following its first-matching-edge rule, for dry runs. Conditions on values in `context` (sample inputs) and conditions already evaluated on the path are followed exactly; conditions on unknown values branch.
+- Add `Workflow.Config.runPaths(context:limit:)` (default limit 256) and `Workflow.Config.evaluatedEdges(from:)`: the paths the engine can take, following its first-matching-edge rule, for dry runs. Conditions are evaluated in the engine's order (short-circuiting `and` / `or`); comparisons on values in `context` (sample inputs) or already evaluated on the path are followed exactly, and only comparisons the evaluation reaches on unknown values branch. Each path says how it ends (`RunPath.termination`: END, no matching edge, evaluation error, missing node, cycle).
 - Add `Condition.evaluate(_:) throws`, `Condition.constantValue` and `Condition.isExhaustive(_:)`.
 
 Behavior changes:
