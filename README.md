@@ -193,11 +193,12 @@ for problem in config.validate() {
 
 `Workflow(config:locator:)` does not call `validate()`, so existing configurations keep building.
 
-For dry runs, `runPaths(limit:)` lists the paths the engine can take, as node and edge indices. The engine takes the first outgoing edge (in file order) whose condition holds, so edges after an edge without a condition (or after `C` and `not: C`) are never taken, and an edge whose condition never holds (`or: []`) is skipped. A path ends at END. Run each path in its own `Context` to find values that only another branch produces:
+For dry runs, `runPaths(context:limit:)` lists the paths the engine can take, as node and edge indices. The engine takes the first outgoing edge (in file order) whose condition holds, so edges after an edge without a condition (or after `C` and `not: C`) are never taken, and an edge whose condition never holds (`or: []`) is skipped. A condition evaluated again on the same path, on values no node has written since, gives the same result, and conditions on values in `context` (for example the caller's sample inputs) are evaluated: those follow the one edge the engine takes. Conditions on unknown values (for example an LLM answer) branch both ways, a conservative over-approximation. A path ends at END. Run each path in its own `Context` to find values that only another branch produces:
 
 ```swift
-let result = config.runPaths()           // at most Workflow.Config.defaultRunPathLimit (256) paths
-if !result.isComplete { /* more paths than the limit */ }
+let sample: Context.Store = ["workflow": ["inputs": ["query": "hello"]]]
+let result = config.runPaths(context: sample) // at most Workflow.Config.defaultRunPathLimit (256) paths
+if !result.isComplete { /* truncated: more paths than the limit */ }
 for path in result.paths {
     let nodes = path.nodeIndices.map { config.nodes[$0] }
     // path.edgeIndices[k] leads from nodes[k] to nodes[k + 1]
