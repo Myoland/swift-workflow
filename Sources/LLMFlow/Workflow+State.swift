@@ -322,10 +322,11 @@ public extension Workflow.RunningUpdates {
         ///   - context: The current workflow context, used for evaluating conditions.
         /// - Throws: ``RuntimeError/CanNotMatchAnEdge`` if no outgoing edge's condition is met.
         /// - Throws: ``RuntimeError/NextNodeNotFound`` if the target node of the matched edge does not exist.
+        /// - Throws: ``ContextStorePath/IndexOutOfRangeError`` if an evaluated condition indexes past the end of a list.
         /// - Returns: The next ``RunnableNode`` to be executed.
         public func requireNextNode(from nodeID: Node.ID, context: [Context.Key: Context.Value]) throws -> any RunnableNode {
             let edges = delegate.edges(from: nodeID)
-            let edge = edges.first { $0.condition?.eval(context) ?? true }
+            let edge = try edges.first { try $0.condition?.evaluate(context) ?? true }
 
             guard let edge else { throw Err.CanNotMatchAnEdge }
             guard let next = delegate.node(id: edge.to) else { throw Err.NextNodeNotFound }

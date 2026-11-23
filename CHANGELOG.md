@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.10.2 (2026-11-23)
+
+Bug Fix:
+
+- A `$` reference in an LLM request, or an edge condition variable, that indexes past the end of a list (or uses a negative index) crashed the process. Rendering the request now throws `DecodingError.dataCorrupted` (coding path = the field, underlying error `ContextStorePath.IndexOutOfRangeError`); the engine throws `ContextStorePath.IndexOutOfRangeError` when it evaluates such a condition. Out-of-range lookups through `Context` subscripts return `nil`.
+
+Feature enhancements:
+
+- Add `Workflow.Config.validate() -> [WorkflowProblem]`: START input types, unique ids, one START, at least one END, edges between existing nodes, no cycles, every node reachable from START, no node without exit, no dead end (only conditional edges, none sure to hold), no edges out of END. Each problem has a stable rule id (`lint.*`), a message and a path such as `nodes[2]` or `edges[3].to`.
+- Add `Workflow.Config.runPaths(context:limit:)` (default limit 256) and `Workflow.Config.evaluatedEdges(from:)`: the paths the engine can take, following its first-matching-edge rule, for dry runs. Conditions are evaluated in the engine's order (short-circuiting `and` / `or`); comparisons on values in `context` (sample inputs) or already evaluated on the path are followed exactly, and only comparisons the evaluation reaches on unknown values branch. Each path says how it ends (`RunPath.termination`: END, no matching edge, evaluation error, missing node, cycle).
+- Add `Condition.evaluate(_:) throws`, `Condition.constantValue` and `Condition.isExhaustive(_:)`.
+
+Behavior changes:
+
+- `Workflow(config:locator:logger:)` does not call `validate()`: configurations that built before still build.
+- `Condition.eval(_:)` returns `false` when a variable indexes past the end of a list, instead of crashing.
+
 ## 0.10.1 (2026-11-23)
 
 Bug Fix:
