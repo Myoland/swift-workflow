@@ -360,8 +360,9 @@ public extension Workflow.Config {
     ///     caller's sample inputs: `["workflow": ["inputs": ["query": "a"]]]`. Values that a node writes
     ///     (`<node id>.output`, `workflow.output.<key>`) are not taken from it. `nil`: no value is known.
     ///   - limit: The maximum number of paths; the number of paths grows exponentially with unknown branches.
-    /// - Returns: The paths, depth first in edge order. `isComplete == false` means the enumeration stopped at
-    ///   `limit` and more paths exist.
+    /// - Returns: The paths, depth first in edge order. `isComplete == false` means the enumeration stopped early:
+    ///   at `limit` paths, or after a bounded amount of work (about `1000 × max(limit, 256)` evaluation steps), so
+    ///   a crafted configuration cannot make it run for long. More paths may exist.
     func runPaths(context: [String: AnySendable]? = nil, limit: Int = defaultRunPathLimit) -> RunPaths {
         var nodeIndex: [Node.ID: Int] = [:]
         for (index, node) in nodes.enumerated() where nodeIndex[node.id] == nil {
@@ -374,6 +375,15 @@ public extension Workflow.Config {
         var paths: [RunPath] = []
         var seen: Set<RunPath> = []
         var isComplete = true
+
+        // Bounds the work, not only the paths: condition outcomes multiply before any path is emitted.
+        var steps = 0
+        let maxSteps = max(limit, Self.defaultRunPathLimit) * 1_000
+        func spend() -> Bool {
+            steps += 1
+            if steps > maxSteps { isComplete = false }
+            return isComplete
+        }
 
         func overlap(_ variable: ContextStorePath, _ writes: [[String]]) -> Bool {
             let keys = variable.keys.map(\.strValue)
@@ -400,6 +410,7 @@ public extension Workflow.Config {
         func evaluate(
             _ condition: Condition, _ facts: [ComparisonFact], on path: [Int]
         ) -> [(outcome: ConditionOutcome, facts: [ComparisonFact])] {
+            guard spend() else { return [] }
             switch condition {
             case .and(let conditions), .or(let conditions):
                 // `and` goes on while the sub-conditions hold, `or` while they fail.
@@ -473,7 +484,7 @@ public extension Workflow.Config {
         }
 
         func walk(_ nodeIndices: [Int], _ edgeIndices: [Int], _ facts: [ComparisonFact]) {
-            guard isComplete, let last = nodeIndices.last else { return }
+            guard spend(), let last = nodeIndices.last else { return }
             let node = nodes[last]
             guard !(node is EndNode) else {
                 emit(RunPath(nodeIndices: nodeIndices, edgeIndices: edgeIndices, termination: .end))
