@@ -576,6 +576,29 @@ struct WorkflowValidateTests {
         #expect(problems.first?.path == "nodes[0]")
     }
 
+    @Test("A crafted condition cannot make path enumeration run long: the work is bounded")
+    func boundedWork() {
+        // and: [or: [u, v], …] on 24 pairs of unknown values: 2^24 ways to take the edge.
+        let condition = Condition.and((0 ..< 24).map { index in
+            .or([
+                .string(.equal(variable: ContextStorePath("workflow.inputs.u\(index)"), value: "a")),
+                .string(.equal(variable: ContextStorePath("workflow.inputs.v\(index)"), value: "a")),
+            ])
+        })
+        let config = Workflow.Config(
+            nodes: [StartNode(id: "s", inputs: [:]), TemplateNode(id: "a", name: nil, template: "a"), EndNode(id: "e", name: nil)],
+            edges: [
+                .init(from: "s", to: "a", condition: condition), .init(from: "s", to: "e", condition: nil),
+                .init(from: "a", to: "e", condition: nil),
+            ]
+        )
+        let clock = ContinuousClock()
+        var paths: Workflow.Config.RunPaths?
+        let elapsed = clock.measure { paths = config.runPaths() }
+        #expect(paths?.isComplete == false)
+        #expect(elapsed < .seconds(10))
+    }
+
     // MARK: Conditions
 
     @Test("constantValue: true or false when a condition does not read the context, nil otherwise")
