@@ -223,7 +223,13 @@ struct WorkflowValidateTests {
         let stuck = try config(Self.branched(startEdges: both)).validate()
         #expect(stuck.map(\.rule) == [.deadEnd], "\(stuck)")
         #expect(stuck.first?.path == "nodes[0]")
-        #expect(try paths(Self.branched(startEdges: both)).ids == [["start_id", "a_id", "end_id"], ["start_id", "b_id", "end_id"]])
+        // The run may also stop at START (no edge holds): that path is listed too.
+        let stuckPaths = try config(Self.branched(startEdges: both)).runPaths()
+        #expect(stuckPaths.paths == [
+            Workflow.Config.RunPath(nodeIndices: [0, 1, 3], edgeIndices: [0, 2]),
+            Workflow.Config.RunPath(nodeIndices: [0, 2, 3], edgeIndices: [1, 3]),
+            Workflow.Config.RunPath(nodeIndices: [0], edgeIndices: [], termination: .noMatchingEdge),
+        ])
 
         // C, then not C (either order): one of them always holds.
         let notA = """
@@ -411,7 +417,116 @@ struct WorkflowValidateTests {
         let condition = Condition.string(.equal(variable: "workflow.inputs.items.5", value: "a"))
         let config = Self.twoSplits(condition)
         let context: Context.Store = ["workflow": ["inputs": ["items": ["a"] as [AnySendable]] as [String: AnySendable]]]
-        #expect(ids(config, config.runPaths(context: context)) == [["start_id"]])
+        #expect(config.runPaths(context: context).paths == [
+            Workflow.Config.RunPath(nodeIndices: [0], edgeIndices: [], termination: .evaluationError(edge: 0)),
+        ])
+    }
+
+    /// START → a_id (when `condition` holds) | b_id → END; `items: [String]`.
+    static func listCondition(_ condition: String) -> String {
+        """
+        nodes:
+          - id: start_id
+            type: START
+            inputs:
+              items: "[String]"
+          - id: a_id
+            type: TEMPLATE
+            template: "A"
+          - id: b_id
+            type: TEMPLATE
+            template: "B"
+          - id: end_id
+            type: END
+        edges:
+          - from: start_id
+            to: a_id
+            condition:
+        \(condition)
+          - from: start_id
+            to: b_id
+          - from: a_id
+            to: end_id
+          - from: b_id
+            to: end_id
+
+        """
+    }
+
+    static func items(_ items: [String]) -> Context.Store {
+        ["workflow": ["inputs": ["items": items as [AnySendable]] as [String: AnySendable]] as [String: AnySendable]]
+    }
+
+    @Test("A configuration that passes validate() can still stop at a list read: that stop is listed")
+    func validButMayThrow() throws {
+        let yaml = Self.listCondition("      equal:\n        variable: workflow.inputs.items.0\n        value: a")
+        let config = try config(yaml)
+        #expect(config.validate().isEmpty)
+        let stop = Workflow.Config.RunPath(nodeIndices: [0], edgeIndices: [], termination: .evaluationError(edge: 0))
+        let a = Workflow.Config.RunPath(nodeIndices: [0, 1, 3], edgeIndices: [0, 2])
+        let b = Workflow.Config.RunPath(nodeIndices: [0, 2, 3], edgeIndices: [1, 3])
+        // Unknown list: holds, throws or fails, in the engine's order, even though another outcome takes an edge.
+        #expect(config.runPaths().paths == [a, stop, b])
+        #expect(config.runPaths(context: Self.items(["a"])).paths == [a])
+        #expect(config.runPaths(context: Self.items(["b"])).paths == [b])
+        #expect(config.runPaths(context: Self.items([])).paths == [stop])
+    }
+
+    @Test("or: [known true, unknown]: the engine takes the edge without reading the unknown value")
+    func shortCircuitOr() throws {
+        let yaml = Self.listCondition("""
+                  or:
+                    - equal:
+                        variable: workflow.inputs.items.0
+                        value: a
+                    - equal:
+                        variable: a_id.output
+                        value: x
+            """)
+        let config = try config(yaml)
+        let a = Workflow.Config.RunPath(nodeIndices: [0, 1, 3], edgeIndices: [0, 2])
+        let b = Workflow.Config.RunPath(nodeIndices: [0, 2, 3], edgeIndices: [1, 3])
+        #expect(config.runPaths(context: Self.items(["a"])).paths == [a])
+        // Known false: the engine reads the unknown value, which may hold or not (and cannot throw: no list index).
+        #expect(config.runPaths(context: Self.items(["b"])).paths == [a, b])
+    }
+
+    @Test("A read before a constant part still runs first: it may throw, so the stop is listed")
+    func readBeforeConstant() throws {
+        let yaml = Self.listCondition("""
+                  or:
+                    - equal:
+                        variable: workflow.inputs.items.3
+                        value: a
+                    - and: []
+            """)
+        let config = try config(yaml)
+        // Always true once evaluated (constantValue), so validate() finds no dead end.
+        #expect(config.validate().isEmpty)
+        #expect(config.edges[0].condition?.constantValue == true)
+        let a = Workflow.Config.RunPath(nodeIndices: [0, 1, 3], edgeIndices: [0, 2])
+        let stop = Workflow.Config.RunPath(nodeIndices: [0], edgeIndices: [], termination: .evaluationError(edge: 0))
+        #expect(config.runPaths(context: Self.items(["a"])).paths == [stop])
+        #expect(config.runPaths(context: Self.items(["a", "b", "c", "d"])).paths == [a])
+        #expect(config.runPaths().paths == [a, stop])
+    }
+
+    @Test("Edges to a missing node or back on the path end the path with their reason")
+    func missingAndCycleTerminations() {
+        let condition = Self.queryIsA
+        let config = Workflow.Config(
+            nodes: [StartNode(id: "s", inputs: ["query": .single(.string)]), TemplateNode(id: "m", name: nil, template: "t"), EndNode(id: "e", name: nil)],
+            edges: [
+                .init(from: "s", to: "m", condition: nil),
+                .init(from: "m", to: "ghost", condition: condition), .init(from: "m", to: "s", condition: Condition.string(.empty(variable: "workflow.inputs.query"))),
+                .init(from: "m", to: "e", condition: nil),
+            ]
+        )
+        #expect(config.runPaths().paths == [
+            Workflow.Config.RunPath(nodeIndices: [0, 1], edgeIndices: [0], termination: .missingNode(edge: 1)),
+            Workflow.Config.RunPath(nodeIndices: [0, 1], edgeIndices: [0], termination: .cycle(edge: 2)),
+            Workflow.Config.RunPath(nodeIndices: [0, 1, 2], edgeIndices: [0, 3]),
+        ])
     }
 
     @Test("A later edge with the same condition as an earlier one is never taken (and not reported)")

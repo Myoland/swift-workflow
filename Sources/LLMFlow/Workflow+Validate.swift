@@ -264,14 +264,32 @@ public extension Workflow.Config {
 
     /// A sequence of nodes the engine can run, from START.
     struct RunPath: Hashable, Sendable {
+        /// How a path ends.
+        public enum Termination: Hashable, Sendable {
+            /// At an END node: the run completes.
+            case end
+            /// The run may fail here: no outgoing edge, or none whose condition holds (`CanNotMatchAnEdge`).
+            case noMatchingEdge
+            /// The run may fail here: evaluating the condition of `edges[edge]` may throw (a variable that indexes a
+            /// list out of range).
+            case evaluationError(edge: Int)
+            /// The run may fail here: `edges[edge]` may be taken and leads to a node that does not exist.
+            case missingNode(edge: Int)
+            /// `edges[edge]` may be taken and leads back to a node already on the path (a cycle; the path stops).
+            case cycle(edge: Int)
+        }
+
         /// Indices into ``Workflow/Config/nodes``; the first is START.
         public let nodeIndices: [Int]
         /// Indices into ``Workflow/Config/edges``: `edgeIndices[k]` leads from `nodeIndices[k]` to `nodeIndices[k + 1]`.
         public let edgeIndices: [Int]
+        /// How the path ends, after its last node.
+        public let termination: Termination
 
-        public init(nodeIndices: [Int], edgeIndices: [Int]) {
+        public init(nodeIndices: [Int], edgeIndices: [Int], termination: Termination = .end) {
             self.nodeIndices = nodeIndices
             self.edgeIndices = edgeIndices
+            self.termination = termination
         }
     }
 
@@ -316,24 +334,26 @@ public extension Workflow.Config {
     /// The paths the engine can take from START, at most `limit` of them, for dry runs that run each path in its
     /// own context.
     ///
-    /// After each node, the edges of ``evaluatedEdges(from:)`` are considered in order, as the engine evaluates them.
-    /// A condition's result is known when
-    /// - it does not read the context (``Condition/constantValue``),
-    /// - the same condition (or its `not`) was already evaluated on this path and no node run since writes what it
-    ///   reads: two splits on the same input give two paths, not four, and a later edge with the same condition as an
-    ///   earlier one at the same node is never taken,
-    /// - or every variable it reads is in `context` and no node other than START writes it.
+    /// After each node, the outgoing edges are considered in ``edges`` order, and each condition sub-expression by
+    /// sub-expression in the engine's order (`and` stops at the first that fails, `or` at the first that holds).
+    /// A comparison's result is known when
+    /// - the same comparison was already evaluated on this path and no node run since writes what it reads: two splits
+    ///   on the same input give two paths, not four, and a later edge with the same condition as an earlier one at the
+    ///   same node is never taken;
+    /// - or the variable it reads is in `context` (or indexes a list of `context` out of range) and no node other than
+    ///   START writes it.
     ///
-    /// A known result is followed exactly: the edge is taken (and the later edges are not), skipped, or, when the
-    /// evaluation throws (``ContextStorePath/IndexOutOfRangeError``), the path ends at that node. When the result is
-    /// unknown (for example a condition on an LLM answer), both are possible: the path branches into one that takes
-    /// the edge and one that goes on with the next edge. A path ends at END (the engine stops there), at a node where
-    /// the engine cannot take any edge, or before an edge to a missing node or back to a node already on the path
-    /// (``validate()`` reports those).
+    /// A known result is followed exactly. An unknown one (for example a comparison on an LLM answer) may hold or
+    /// not, and the path branches at the edge; when its variable has a list index, its evaluation may also throw.
     ///
-    /// The result is exact when every condition is known. Branches on unknown values are a conservative
-    /// over-approximation: every path the engine can take is listed, and some listed paths may be impossible at run
-    /// time (for example when two different conditions read the same unknown value).
+    /// Every way a run can go is listed, including where it stops (``RunPath/termination``): at END, or where it may
+    /// fail (no edge whose condition holds, an evaluation that throws, an edge to a missing node) or loop (an edge
+    /// back to a node on the path). A configuration that passes ``validate()`` can still have such paths, for example
+    /// a condition that reads `workflow.inputs.items.0` of a list that may be empty.
+    ///
+    /// The result is exact when every comparison is known. Branches on unknown values are a conservative
+    /// over-approximation: some listed paths may be impossible at run time (for example when two different
+    /// comparisons read the same unknown value). Identical paths are listed once.
     ///
     /// - Parameters:
     ///   - context: Values known before the run, as the context store holds them after START, for example the
@@ -352,21 +372,20 @@ public extension Workflow.Config {
         }
 
         var paths: [RunPath] = []
+        var seen: Set<RunPath> = []
         var isComplete = true
 
-        func overlap(_ variables: [ContextStorePath], _ writes: [[String]]) -> Bool {
-            variables.contains { variable in
-                let keys = variable.keys.map(\.strValue)
-                return writes.contains { $0.starts(with: keys) || keys.starts(with: $0) }
-            }
+        func overlap(_ variable: ContextStorePath, _ writes: [[String]]) -> Bool {
+            let keys = variable.keys.map(\.strValue)
+            return writes.contains { $0.starts(with: keys) || keys.starts(with: $0) }
         }
 
-        /// Whether a node on `path` after `position` may write a value that `variables` read.
-        func mayChange(_ variables: [ContextStorePath], after position: Int, on path: [Int]) -> Bool {
+        /// Whether a node on `path` after `position` may write a value that `variable` reads.
+        func mayChange(_ variable: ContextStorePath, after position: Int, on path: [Int]) -> Bool {
             path.indices.contains { later in
                 guard later > position else { return false }
                 guard let writes = Self.writtenKeyPaths(of: nodes[path[later]]) else { return true }
-                return overlap(variables, writes)
+                return overlap(variable, writes)
             }
         }
 
@@ -376,92 +395,147 @@ public extension Workflow.Config {
             return writes + more
         }
 
-        func outcome(of condition: Condition, on path: [Int], facts: [ConditionFact]) -> ConditionOutcome {
-            if let value = condition.constantValue {
-                return value ? .holds : .fails
+        /// The possible results of evaluating `condition` as ``Condition/evaluate(_:)`` does, each with what is known
+        /// afterwards.
+        func evaluate(
+            _ condition: Condition, _ facts: [ComparisonFact], on path: [Int]
+        ) -> [(outcome: ConditionOutcome, facts: [ComparisonFact])] {
+            switch condition {
+            case .and(let conditions), .or(let conditions):
+                // `and` goes on while the sub-conditions hold, `or` while they fail.
+                let goOn: ConditionOutcome = if case .and = condition { .holds } else { .fails }
+                var results: [(outcome: ConditionOutcome, facts: [ComparisonFact])] = []
+                var pending = [facts]
+                for condition in conditions {
+                    var next: [[ComparisonFact]] = []
+                    for facts in pending {
+                        for result in evaluate(condition, facts, on: path) {
+                            if result.outcome == goOn { next.append(result.facts) } else { results.append(result) }
+                        }
+                    }
+                    pending = next
+                }
+                return results + pending.map { (goOn, $0) }
+            case .not(let condition):
+                return evaluate(condition, facts, on: path).map { result in
+                    switch result.outcome {
+                    case .holds: (.fails, result.facts)
+                    case .fails: (.holds, result.facts)
+                    case .throws: (.throws, result.facts)
+                    }
+                }
+            case .string, .int:
+                guard let variable = condition.variables.first else { return [] }
+                for fact in facts.reversed() where fact.comparison == condition && !mayChange(variable, after: fact.position, on: path) {
+                    return [(fact.value ? .holds : .fails, facts)]
+                }
+                if let context, let writtenByNodes, !overlap(variable, writtenByNodes) {
+                    // Known: present, or a list of `context` indexed out of range.
+                    let known: Bool
+                    do {
+                        known = try variable.lookup(in: context) != nil
+                    } catch {
+                        known = true
+                    }
+                    if known {
+                        do {
+                            return [(try condition.evaluate(context) ? .holds : .fails, facts)]
+                        } catch {
+                            return [(.throws, facts)]
+                        }
+                    }
+                }
+                let position = path.count - 1
+                var results: [(outcome: ConditionOutcome, facts: [ComparisonFact])] = [
+                    (.holds, facts + [ComparisonFact(comparison: condition, value: true, position: position)]),
+                    (.fails, facts + [ComparisonFact(comparison: condition, value: false, position: position)]),
+                ]
+                if variable.keys.contains(where: { $0.intValue != nil }) {
+                    results.append((.throws, facts))
+                }
+                return results
             }
-            let variables = condition.variables
-            for fact in facts.reversed() where !mayChange(variables, after: fact.position, on: path) {
-                if fact.condition == condition {
-                    return fact.value ? .holds : .fails
-                }
-                if fact.condition == .not(condition) || condition == .not(fact.condition) {
-                    return fact.value ? .fails : .holds
-                }
-            }
-            if let context, let writtenByNodes, !overlap(variables, writtenByNodes) {
-                // A lookup that throws reads a known list out of range: the evaluation below decides.
-                let known = variables.allSatisfy { variable in
-                    do { return try variable.lookup(in: context) != nil } catch { return true }
-                }
-                guard known else { return .unknown }
-                do {
-                    return try condition.evaluate(context) ? .holds : .fails
-                } catch {
-                    return .throws
-                }
-            }
-            return .unknown
         }
 
-        func walk(_ path: RunPath, _ facts: [ConditionFact]) {
-            guard isComplete, let last = path.nodeIndices.last else { return }
+        func emit(_ path: RunPath) {
+            guard !seen.contains(path) else { return }
+            if paths.count < limit {
+                paths.append(path)
+                seen.insert(path)
+            } else {
+                isComplete = false
+            }
+        }
+
+        enum Step {
+            case take(edge: Int, facts: [ComparisonFact])
+            case stop(RunPath.Termination)
+        }
+
+        func walk(_ nodeIndices: [Int], _ edgeIndices: [Int], _ facts: [ComparisonFact]) {
+            guard isComplete, let last = nodeIndices.last else { return }
             let node = nodes[last]
-            let position = path.nodeIndices.count - 1
-
-            var taken: [(edge: Int, facts: [ConditionFact])] = []
-            if !(node is EndNode) {
-                var facts = facts
-                scan: for edge in evaluatedEdges(from: node.id).indices {
-                    guard let condition = edges[edge].condition else {
-                        taken.append((edge, facts))
-                        break scan
-                    }
-                    switch outcome(of: condition, on: path.nodeIndices, facts: facts) {
-                    case .holds:
-                        taken.append((edge, facts))
-                        break scan
-                    case .fails:
-                        continue
-                    case .throws:
-                        break scan
-                    case .unknown:
-                        taken.append((edge, facts + [ConditionFact(condition: condition, value: true, position: position)]))
-                        facts.append(ConditionFact(condition: condition, value: false, position: position))
-                    }
-                }
-            }
-
-            let next = taken.compactMap { edge, facts -> (node: Int, edge: Int, facts: [ConditionFact])? in
-                guard let target = nodeIndex[edges[edge].to], !path.nodeIndices.contains(target) else { return nil }
-                return (target, edge, facts)
-            }
-            guard !next.isEmpty else {
-                if paths.count < limit {
-                    paths.append(path)
-                } else {
-                    isComplete = false
-                }
+            guard !(node is EndNode) else {
+                emit(RunPath(nodeIndices: nodeIndices, edgeIndices: edgeIndices, termination: .end))
                 return
             }
-            for (target, edge, facts) in next {
-                walk(RunPath(nodeIndices: path.nodeIndices + [target], edgeIndices: path.edgeIndices + [edge]), facts)
+
+            // What the engine may do after `node`, in its order.
+            var steps: [Step] = []
+            var pending = [facts] // the ways of getting to the next edge: every earlier condition failed
+            for edge in edges.indices where edges[edge].from == node.id && !pending.isEmpty {
+                var next: [[ComparisonFact]] = []
+                var mayThrow = false
+                for facts in pending {
+                    guard let condition = edges[edge].condition else {
+                        steps.append(.take(edge: edge, facts: facts))
+                        continue
+                    }
+                    for result in evaluate(condition, facts, on: nodeIndices) {
+                        switch result.outcome {
+                        case .holds: steps.append(.take(edge: edge, facts: result.facts))
+                        case .fails: next.append(result.facts)
+                        case .throws: mayThrow = true
+                        }
+                    }
+                }
+                if mayThrow { steps.append(.stop(.evaluationError(edge: edge))) }
+                pending = next
+            }
+            if !pending.isEmpty { steps.append(.stop(.noMatchingEdge)) }
+
+            for step in steps {
+                switch step {
+                case .stop(let termination):
+                    emit(RunPath(nodeIndices: nodeIndices, edgeIndices: edgeIndices, termination: termination))
+                case .take(let edge, let facts):
+                    guard let target = nodeIndex[edges[edge].to] else {
+                        emit(RunPath(nodeIndices: nodeIndices, edgeIndices: edgeIndices, termination: .missingNode(edge: edge)))
+                        continue
+                    }
+                    guard !nodeIndices.contains(target) else {
+                        emit(RunPath(nodeIndices: nodeIndices, edgeIndices: edgeIndices, termination: .cycle(edge: edge)))
+                        continue
+                    }
+                    walk(nodeIndices + [target], edgeIndices + [edge], facts)
+                }
             }
         }
 
-        walk(RunPath(nodeIndices: [start], edgeIndices: []), [])
+        walk([start], [], [])
         return .init(paths: paths, isComplete: isComplete)
     }
 }
 
-/// What ``Workflow/Config/runPaths(context:limit:)`` knows of an edge condition.
+/// A possible result of evaluating an edge condition in ``Workflow/Config/runPaths(context:limit:)``.
 private enum ConditionOutcome {
-    case holds, fails, `throws`, unknown
+    case holds, fails, `throws`
 }
 
-/// A condition the engine evaluated on a path, with its result, after the node at `position` on the path.
-private struct ConditionFact {
-    let condition: Condition
+/// A comparison (``Condition/string(_:)`` or ``Condition/int(_:)``) the engine evaluated on a path, with its result,
+/// after the node at `position` on the path.
+private struct ComparisonFact {
+    let comparison: Condition
     let value: Bool
     let position: Int
 }
