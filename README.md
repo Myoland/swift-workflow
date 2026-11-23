@@ -175,7 +175,48 @@ print("Workflow finished.")
 check-jsonschema --schemafile schema/workflow.schema.json path/to/workflow.yaml
 ```
 
-The schema checks structure only. Graph rules (unique node ids, one START, edges point to existing nodes, no cycles, every node reachable) and Jinja template compilation must be checked by the application. Fixtures live in `Tests/Fixtures/WorkflowSchema`; `schema/check-fixtures.sh` runs them.
+The schema checks structure only; `Workflow.Config.validate()` (below) checks the graph. Jinja template compilation must be checked by the application. Fixtures live in `Tests/Fixtures/WorkflowSchema`; `schema/check-fixtures.sh` runs them.
+
+### Validate a Workflow.Config
+
+`validate()` reports what makes a run fail, or what the engine never runs, without running anything:
+
+```swift
+let config = try YAMLDecoder().decode(Workflow.Config.self, from: yaml)
+for problem in config.validate() {
+    print(problem.rule, problem.path, problem.message) // e.g. lint.dead-end nodes[0] …
+}
+```
+
+| Rule | Path | Meaning |
+| --- | --- | --- |
+| `lint.type-decl` | `nodes[i].inputs.<key>` | A START input type a workflow file cannot declare (only `String`, `Int`, `Any`, `[T]`, `[String: T]`, whole value). |
+| `lint.duplicate-id` | `nodes[i].id` | Two nodes share an id. |
+| `lint.start` | `nodes` / `nodes[i]` | No START node, or more than one. |
+| `lint.end` | `nodes` | No END node. |
+| `lint.edge` | `edges[j].from` / `edges[j].to` | The edge references a node that does not exist. |
+| `lint.cycle` | `edges[j]` | The edges form a cycle (`edges[j]` closes it). |
+| `lint.unreachable` | `nodes[i]` | No chain of edges from START reaches the node. |
+| `lint.end-edges` | `edges[j]` | An edge out of END: the run ends at END and never takes it. |
+| `lint.no-exit` | `nodes[i]` | A node other than END without outgoing edges. |
+| `lint.dead-end` | `nodes[i]` | All outgoing edges have a condition and none is sure to hold (no edge without a condition, no condition that always holds such as `and: []`, no pair `C` / `not: C`). |
+
+`Workflow(config:locator:)` does not call `validate()`, so existing configurations keep building.
+
+For dry runs, `runPaths(limit:)` lists the paths the engine can take, as node and edge indices. The engine takes the first outgoing edge (in file order) whose condition holds, so edges after an edge without a condition (or after `C` and `not: C`) are never taken, and an edge whose condition never holds (`or: []`) is skipped. A path ends at END. Run each path in its own `Context` to find values that only another branch produces:
+
+```swift
+let result = config.runPaths()           // at most Workflow.Config.defaultRunPathLimit (256) paths
+if !result.isComplete { /* more paths than the limit */ }
+for path in result.paths {
+    let nodes = path.nodeIndices.map { config.nodes[$0] }
+    // path.edgeIndices[k] leads from nodes[k] to nodes[k + 1]
+}
+```
+
+`evaluatedEdges(from:)` returns the edges the engine may evaluate after a node; `Condition.constantValue` and `Condition.isExhaustive(_:)` are the checks behind `lint.dead-end`.
+
+A `$` reference or an edge condition that indexes past the end of a list (`workflow.inputs.items.5` on a two-element list, or a negative index) throws: `ModelDecl.render(_:)` throws `DecodingError.dataCorrupted` at the field, `Condition.evaluate(_:)` and the engine throw `ContextStorePath.IndexOutOfRangeError`. `Condition.eval(_:)` returns `false`.
 
 ### Why Perfer YAML ?
 
