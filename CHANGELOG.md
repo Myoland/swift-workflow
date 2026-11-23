@@ -2,7 +2,7 @@
 
 ## 0.9.1 (2026-11-23)
 
-Backport of the 0.10.2 validation API and of the 0.10.1 and 0.10.2 crash fixes to the 0.9 line. Dependencies are unchanged (swift-gpt 0.9.x).
+Backport of the 0.10.2 validation API and of the 0.10.1 and 0.10.2 crash fixes to the 0.9 line. Dependencies are unchanged: swift-gpt stays pinned at 0.9.0 (`Package.resolved`; `Package.swift` keeps `from: "0.9.0"`).
 
 Bug Fix:
 
