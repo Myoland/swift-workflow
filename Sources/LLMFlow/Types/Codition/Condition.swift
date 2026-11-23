@@ -132,8 +132,12 @@ extension Condition: Evaluatable {
 // MARK: Condition + Static Analysis
 
 public extension Condition {
-    /// The value of the condition whatever the context: `true` or `false` when it does not read any variable
-    /// (`and: []` always holds, `or: []` never does), `nil` when it depends on the context.
+    /// The Boolean result when evaluation succeeds without reading the context: `true` or `false` when it does not
+    /// depend on any variable (`and: []` always holds, `or: []` never does), `nil` when it depends on the context.
+    ///
+    /// Evaluation still reads the sub-conditions before the one that decides, so it can throw: `and: [<reads a list
+    /// out of range>, or: []]` has the constant value `false`, but ``evaluate(_:)`` throws
+    /// ``ContextStorePath/IndexOutOfRangeError``.
     var constantValue: Bool? {
         switch self {
         case .and(let conditions):
@@ -146,6 +150,20 @@ public extension Condition {
             return condition.constantValue.map { !$0 }
         case .string, .int:
             return nil
+        }
+    }
+
+    /// The variables the condition reads, in order.
+    internal var variables: [ContextStorePath] {
+        switch self {
+        case .and(let conditions), .or(let conditions):
+            conditions.flatMap(\.variables)
+        case .not(let condition):
+            condition.variables
+        case .string(.equal(let variable, _)), .string(.empty(let variable)), .string(.contains(let variable, _, _)),
+             .int(.equal(let variable, _)), .int(.greater(let variable, _)), .int(.greater_or_equal(let variable, _)),
+             .int(.smaller(let variable, _)), .int(.smaller_or_equal(let variable, _)):
+            [variable]
         }
     }
 

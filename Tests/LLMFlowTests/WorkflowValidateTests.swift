@@ -307,8 +307,9 @@ struct WorkflowValidateTests {
     static func diamonds(_ count: Int) -> Workflow.Config {
         var nodes: [any RunnableNode] = [StartNode(id: "j0", inputs: ["query": .single(.string)])]
         var edges: [Workflow.Edge] = []
-        let condition = Condition.string(.equal(variable: "workflow.inputs.query", value: "a"))
         for index in 0 ..< count {
+            // A different condition per diamond: the same one would decide every diamond alike.
+            let condition = Condition.string(.equal(variable: "workflow.inputs.query", value: "a\(index)"))
             nodes += [TemplateNode(id: "a\(index)", name: nil, template: "a"), TemplateNode(id: "b\(index)", name: nil, template: "b")]
             nodes.append(TemplateNode(id: "j\(index + 1)", name: nil, template: "j"))
             edges += [
@@ -340,6 +341,124 @@ struct WorkflowValidateTests {
         #expect(limited.paths.count == 4)
         #expect(!limited.isComplete)
         #expect(Self.diamonds(2).runPaths(limit: 4).isComplete)
+    }
+
+    /// START → a1 | b1 → j1 → a2 | b2 → END; both splits test `condition` (a1 / a2 when it holds).
+    static func twoSplits(_ condition: Condition, between: [any RunnableNode] = []) -> Workflow.Config {
+        let chain = ["j1"] + between.map(\.id)
+        var edges: [Workflow.Edge] = [
+            .init(from: "start_id", to: "a1", condition: condition), .init(from: "start_id", to: "b1", condition: nil),
+            .init(from: "a1", to: "j1", condition: nil), .init(from: "b1", to: "j1", condition: nil),
+        ]
+        for (from, to) in zip(chain, chain.dropFirst()) {
+            edges.append(.init(from: from, to: to, condition: nil))
+        }
+        edges += [
+            .init(from: chain.last!, to: "a2", condition: condition), .init(from: chain.last!, to: "b2", condition: nil),
+            .init(from: "a2", to: "end_id", condition: nil), .init(from: "b2", to: "end_id", condition: nil),
+        ]
+        let nodes: [any RunnableNode] = [StartNode(id: "start_id", inputs: ["query": .single(.string)])]
+            + ["a1", "b1", "j1"].map { TemplateNode(id: $0, name: nil, template: "x") } + between
+            + ["a2", "b2"].map { TemplateNode(id: $0, name: nil, template: "x") } + [EndNode(id: "end_id", name: nil)]
+        return Workflow.Config(nodes: nodes, edges: edges)
+    }
+
+    func ids(_ config: Workflow.Config, _ paths: Workflow.Config.RunPaths) -> [[String]] {
+        paths.paths.map { $0.nodeIndices.map { config.nodes[$0].id } }
+    }
+
+    static let queryIsA = Condition.string(.equal(variable: "workflow.inputs.query", value: "a"))
+    static let realAA = ["start_id", "a1", "j1", "a2", "end_id"]
+    static let realBB = ["start_id", "b1", "j1", "b2", "end_id"]
+
+    @Test("Two splits on the same unchanged input: only AA and BB, so impossible paths do not eat the cap")
+    func sameInputTwice() {
+        let config = Self.twoSplits(Self.queryIsA)
+        #expect(config.validate().isEmpty)
+        let all = config.runPaths()
+        #expect(ids(config, all) == [Self.realAA, Self.realBB])
+        #expect(all.isComplete)
+        let two = config.runPaths(limit: 2)
+        #expect(ids(config, two) == [Self.realAA, Self.realBB])
+        #expect(two.isComplete)
+    }
+
+    @Test("With a context, conditions on known values follow the one edge the engine takes")
+    func knownContext() {
+        let config = Self.twoSplits(Self.queryIsA)
+        let a: Context.Store = ["workflow": ["inputs": ["query": "a"] as [String: AnySendable]] as [String: AnySendable]]
+        let b: Context.Store = ["workflow": ["inputs": ["query": "b"] as [String: AnySendable]] as [String: AnySendable]]
+        #expect(ids(config, config.runPaths(context: a)) == [Self.realAA])
+        #expect(ids(config, config.runPaths(context: b)) == [Self.realBB])
+        #expect(ids(config, config.runPaths(context: b, limit: 1)) == [Self.realBB])
+        #expect(config.runPaths(context: b, limit: 1).isComplete)
+        // A value the context does not have (for example an LLM answer) is unknown: both edges may be taken.
+        #expect(ids(config, config.runPaths(context: ["workflow": ["inputs": [:] as [String: AnySendable]] as [String: AnySendable]])) == [Self.realAA, Self.realBB])
+    }
+
+    @Test("A value a node writes between two splits may change: the second split branches again")
+    func valueChangesBetweenSplits() {
+        let condition = Condition.string(.equal(variable: "t.output", value: "a"))
+        let config = Self.twoSplits(condition, between: [TemplateNode(id: "t", name: nil, template: "a")])
+        #expect(config.validate().isEmpty)
+        #expect(config.runPaths().paths.count == 4)
+        // The context holds values as after START: node outputs written later are not taken from it.
+        #expect(config.runPaths(context: ["t": ["output": "a"] as [String: AnySendable]]).paths.count == 4)
+    }
+
+    @Test("A known condition that reads past the end of a list ends the path where the engine throws")
+    func knownOutOfRange() {
+        let condition = Condition.string(.equal(variable: "workflow.inputs.items.5", value: "a"))
+        let config = Self.twoSplits(condition)
+        let context: Context.Store = ["workflow": ["inputs": ["items": ["a"] as [AnySendable]] as [String: AnySendable]]]
+        #expect(ids(config, config.runPaths(context: context)) == [["start_id"]])
+    }
+
+    @Test("A later edge with the same condition as an earlier one is never taken (and not reported)")
+    func duplicateCondition() throws {
+        let yaml = Self.branched(startEdges: "  - from: start_id\n    to: a_id\n" + Self.whenA
+            + "\n  - from: start_id\n    to: b_id\n" + Self.whenA + "\n  - from: start_id\n    to: end_id")
+        #expect(try config(yaml).validate().isEmpty)
+        #expect(try paths(yaml).ids == [["start_id", "a_id", "end_id"], ["start_id", "end_id"]])
+    }
+
+    @Test("Two edges to the same node are two paths: what they imply differs later")
+    func twoEdgesToOneNode() {
+        let condition = Self.queryIsA
+        let config = Workflow.Config(
+            nodes: [StartNode(id: "s", inputs: ["query": .single(.string)])]
+                + ["m", "x", "y"].map { TemplateNode(id: $0, name: nil, template: "t") } + [EndNode(id: "e", name: nil)],
+            edges: [
+                .init(from: "s", to: "m", condition: condition), .init(from: "s", to: "m", condition: nil),
+                .init(from: "m", to: "x", condition: condition), .init(from: "m", to: "y", condition: nil),
+                .init(from: "x", to: "e", condition: nil), .init(from: "y", to: "e", condition: nil),
+            ]
+        )
+        let paths = config.runPaths()
+        #expect(paths.paths == [
+            Workflow.Config.RunPath(nodeIndices: [0, 1, 2, 4], edgeIndices: [0, 2, 4]),
+            Workflow.Config.RunPath(nodeIndices: [0, 1, 3, 4], edgeIndices: [1, 3, 5]),
+        ])
+    }
+
+    /// A node of another type marked START, as a programmatic configuration could have it.
+    struct MarkedStart: RunnableNode {
+        let id: String
+        var type: NodeType { .START }
+        func run(executor _: Executor) async throws -> NodeOutput? { nil }
+        func update(_: Context, value _: Context.Value) throws {}
+    }
+
+    @Test("A node marked START that is not a StartNode is reported: the workflow cannot be built")
+    func markedStart() {
+        let config = Workflow.Config(
+            nodes: [MarkedStart(id: "s"), EndNode(id: "e", name: nil)],
+            edges: [.init(from: "s", to: "e", condition: nil)]
+        )
+        #expect(throws: ConstructError.self) { try Workflow(config: config, locator: ReferenceOutOfRangeTests.Locator()) }
+        let problems = config.validate()
+        #expect(problems.map(\.rule) == [.start], "\(problems)")
+        #expect(problems.first?.path == "nodes[0]")
     }
 
     // MARK: Conditions
